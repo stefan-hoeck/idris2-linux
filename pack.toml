@@ -1,0 +1,10 @@
+[custom.all.linux]
+type = "local"
+path = "."
+ipkg = "linux.ipkg"
+
+[custom.all.cptr]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-cptr"
+commit = "latest:main"
+ipkg   = "cptr.ipkg"
