@@ -1,7 +1,8 @@
 // Copyright 2024 Stefan Höck
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void *print_errortype() {
@@ -421,4 +422,6 @@ void *main() {
   print_errortype();
   print_errorcodes();
   print_errortext();
+
+  exit(0);
 }
