@@ -1,9 +1,9 @@
 // Copyright 2024 Stefan Höck
 
-#include <stdio.h>
 #include <errno.h>
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void *print_errortype() {
   printf("public export\ndata Error : Type where\n");
