@@ -28,4 +28,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build lib
-        run: pack install linux
+        run: pack --no-prompt install linux
