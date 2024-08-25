@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 make -C codegen all
+make -C support all
 
 cat >src/System/Linux/Error/Type.idr <<EOT
 -- Note: This module is automatically generated when Idris builds
