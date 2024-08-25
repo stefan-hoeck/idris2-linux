@@ -2,12 +2,12 @@ module System.Linux.File
 
 import Data.Bits
 import Data.C.Integer
-import Data.FilePath
+import public Data.FilePath
 
 import Derive.Finite
 import Derive.Prelude
 
-import System.Linux.Error
+import public System.Linux.Error
 
 %default total
 %language ElabReflection
