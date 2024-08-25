@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 void *print_errortype() {
   printf("public export\ndata Error : Type where\n");
@@ -421,4 +422,6 @@ void *main() {
   print_errortype();
   print_errorcodes();
   print_errortext();
+
+  exit(0);
 }
