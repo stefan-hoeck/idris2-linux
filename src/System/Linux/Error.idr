@@ -9,12 +9,16 @@ import public System.Linux.Error.Type
 -- FFI
 --------------------------------------------------------------------------------
 
-%foreign "C:li_errno, linux-idris"
+export %foreign "C:li_errno, linux-idris"
 prim__errno : PrimIO Bits32
 
 --------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
+
+export %inline
+Interpolation Error where
+  interpolate = errorText
 
 %default total
 codeMap : SortedMap Bits32 Error
@@ -32,3 +36,9 @@ fromCode x = fromMaybe EOTHER (lookup x codeMap)
 export %inline
 lastError : IO Error
 lastError = map fromCode (fromPrim prim__errno)
+
+export %inline
+primError : (Error -> e) -> PrimIO (Either e a)
+primError f w =
+  let MkIORes x w := prim__errno w
+   in MkIORes (Left . f $ fromCode x) w
