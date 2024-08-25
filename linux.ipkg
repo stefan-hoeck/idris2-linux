@@ -1,0 +1,16 @@
+package linux
+version = 0.1.0
+authors = "stefan-hoeck"
+brief   = "System utilities for using Idris2 on GNU/Linux"
+
+depends = base >= 0.6.0
+        , bytestring
+        , cptr
+        , elab-util
+        , finite
+
+modules = System.Linux.Error
+
+sourcedir = "src"
+
+prebuild = "bash gencode.sh"
