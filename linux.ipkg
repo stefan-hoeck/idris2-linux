@@ -15,3 +15,5 @@ modules = System.Linux.Error
 sourcedir = "src"
 
 prebuild = "bash gencode.sh"
+
+preinstall = "make -C support install"

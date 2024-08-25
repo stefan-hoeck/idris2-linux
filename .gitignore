@@ -2,3 +2,5 @@ build/
 *.*~
 lib/
 codegen/error_gen
+support/linux.o
+support/linux-idris
