@@ -4,6 +4,7 @@ authors = "stefan-hoeck"
 
 depends = linux
         , quantifiers-extra
+        , getopts
 
 sourcedir = "src"
 

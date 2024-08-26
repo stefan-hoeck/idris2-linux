@@ -37,6 +37,11 @@ fail : Has e es => e -> Prog es a
 fail v = throwError (inject v)
 
 export
+injectEither : Has e es => Either e a -> Prog es a
+injectEither (Left x)  = fail x
+injectEither (Right x) = pure x
+
+export
 injectIO : Has e es => IO (Either e a) -> Prog es a
 injectIO io =
   liftIO io >>= \case

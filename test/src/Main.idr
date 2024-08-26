@@ -1,11 +1,20 @@
 module Main
 
-import File
+import CP
 import Data.C.Integer
 import Data.Fuel
+import File
+import Opts
 import System
+import Tee
 
 %default total
+
+usage : String
+usage =
+  """
+  pack test linux [prog] [args...]
+  """
 
 bufferSize : Bits32
 bufferSize = 0x10000
@@ -23,15 +32,15 @@ parameters {auto has : Has FileErr es}
       Again          => putStrLn "currently no data"
       Bytes (BS m y) => putStrLn "read \{show m} bytes" >> readTill x (m+n) fd
 
-run : Prog [Error, FileErr] () -> IO ()
-run = runProg . handleErrors [prettyOut, prettyOut]
+covering
+prog : Prog [Error, FileErr, ArgErr] ()
+prog = do
+  (_::args) <- getArgs | [] => fail (WrongArgs usage)
+  case args of
+    "copy" :: t => copyProg t
+    "tee"  :: t => tee t
+    _           => withFile "linux.ipkg" 0 0 (readTill end 0)
 
 covering
 main : IO ()
-main = do
-  run $ withFile "linux.ipkg" 0 0 (readTill end 0)
-  run $ withFile "linups.ipkg" 0 0 (readTill end 0)
-  run $ tryClose (the Bits32 100)
-  run $ cp "linux.ipkg" "out"
-  run $ withFile "src" O_WRONLY 0 (const $ pure ())
-  run $ withFile "linux.ipkg" append 0 (\x => lseek x 0 SEEK_END >>= printLn)
+main = runProg $ handleErrors [prettyOut, prettyOut, prettyOut] prog
