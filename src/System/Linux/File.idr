@@ -15,6 +15,7 @@ import Derive.Prelude
 
 import public System.Linux.Error
 import public System.Linux.File.Flags
+import public System.Linux.File.Whence
 
 %default total
 %language ElabReflection
@@ -35,6 +36,9 @@ prim__read : (file : Bits32) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 
 %foreign "C__collect_safe:li_write, linux-idris"
 prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
+
+%foreign "C:lseek, linux-idris"
+prim__lseek : (file : Bits32) -> (off : OffT) -> (whence : CInt) -> PrimIO OffT
 
 --------------------------------------------------------------------------------
 -- FileDesc
@@ -102,6 +106,18 @@ Monoid Mode where neutral = M 0
 -- File Operations
 --------------------------------------------------------------------------------
 
+||| Flags for creating a file for output.
+export
+create : Flags
+create = O_WRONLY <+> O_CREAT <+> O_TRUNC
+
+||| Flags for creating a file for output.
+|||
+||| If the file exists, data is appended to it.
+export
+append : Flags
+append = O_WRONLY <+> O_CREAT <+> O_APPEND
+
 ||| Tries to open a file with the given flags and mode.
 export %inline
 openFile : FilePath -> Flags -> Mode -> IO (Either FileErr Bits32)
@@ -164,3 +180,8 @@ writeBytes fd (BS n $ BV b o _) =
 export
 write : {n : _} -> FileDesc a => a -> IBuffer n -> IO (Either FileErr WriteRes)
 write fd ibuf = writeBytes fd (fromIBuffer ibuf)
+
+export %inline
+lseek : HasIO io => FileDesc a => a -> OffT -> Whence -> io OffT
+lseek fd offset whence =
+  primIO $ prim__lseek (fileDesc fd) offset (cast $ whenceCode whence)

@@ -1,6 +1,7 @@
 module Main
 
 import File
+import Data.C.Integer
 import Data.Fuel
 import System
 
@@ -32,3 +33,5 @@ main = do
   run $ withFile "linups.ipkg" 0 0 (readTill end 0)
   run $ tryClose (the Bits32 100)
   run $ cp "linux.ipkg" "out"
+  run $ withFile "src" O_WRONLY 0 (const $ pure ())
+  run $ withFile "linux.ipkg" append 0 (\x => lseek x 0 SEEK_END >>= printLn)

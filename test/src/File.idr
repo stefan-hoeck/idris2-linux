@@ -52,6 +52,4 @@ parameters {auto has : Has FileErr es}
   export covering
   cp : FilePath -> FilePath -> Prog es ()
   cp i o =
-    withFile i 0 0 $ \fi =>
-      withFile o (O_WRONLY <+> O_CREAT <+> O_APPEND) 0o660 $ \fo =>
-        copy fi fo
+    withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copy fi fo
