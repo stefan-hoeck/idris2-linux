@@ -7,13 +7,6 @@ import Data.SortedMap
 import public System.Linux.Error.Type
 
 --------------------------------------------------------------------------------
--- FFI
---------------------------------------------------------------------------------
-
-export %foreign "C:li_errno, linux-idris"
-prim__errno : PrimIO Bits32
-
---------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
 
@@ -33,13 +26,10 @@ export
 fromCode : Bits32 -> Error
 fromCode x = fromMaybe EOTHER (lookup x codeMap)
 
-||| Reads the `errno` variable and converts it to an `Error`.
 export %inline
-lastError : IO Error
-lastError = map fromCode (fromPrim prim__errno)
+fromRes : Neg n => Cast n Bits32 => n -> Error
+fromRes = fromCode . cast . negate
 
 export %inline
-primError : (Error -> e) -> PrimIO (Either e a)
-primError f w =
-  let MkIORes x w := prim__errno w
-   in MkIORes (Left . f $ fromCode x) w
+resErr : Neg n => Cast n Bits32 => n -> (Error -> e) -> Either e a
+resErr x f = Left (f $ fromRes x)

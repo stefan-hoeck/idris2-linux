@@ -39,7 +39,11 @@ prog = do
   case args of
     "copy" :: t => copyProg t
     "tee"  :: t => tee t
-    _           => withFile "linux.ipkg" 0 0 (readTill end 0)
+    _           => do
+      withFile "linux.ipkg" 0 0 (readTill end 0)
+      injectIO $ addFlags Stdin O_NONBLOCK
+      readTill end 0 Stdin
+      withFile "out" O_CREAT 0o600 $ \fd => writeAll fd "hello world"
 
 covering
 main : IO ()

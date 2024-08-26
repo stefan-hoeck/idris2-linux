@@ -25,13 +25,13 @@ import public System.Linux.File.Whence
 -- FFI
 --------------------------------------------------------------------------------
 
-%foreign "C:open, linux-idris"
+%foreign "C:li_open, linux-idris"
 prim__open : String -> CInt -> ModeT -> PrimIO CInt
 
-%foreign "C:close, linux-idris"
+%foreign "C:li_close, linux-idris"
 prim__close : Bits32 -> PrimIO CInt
 
-%foreign "C__collect_safe:read, linux-idris"
+%foreign "C__collect_safe:li_read, linux-idris"
 prim__read : (file : Bits32) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 
 %foreign "C__collect_safe:li_write, linux-idris"
@@ -39,6 +39,12 @@ prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
 
 %foreign "C:lseek, linux-idris"
 prim__lseek : (file : Bits32) -> (off : OffT) -> (whence : CInt) -> PrimIO OffT
+
+%foreign "C:li_set_flags, linux-idris"
+prim__setFlags : (file : Bits32) -> (flags : CInt) -> PrimIO CInt
+
+%foreign "C:li_get_flags, linux-idris"
+prim__getFlags : (file : Bits32) -> PrimIO CInt
 
 --------------------------------------------------------------------------------
 -- FileDesc
@@ -74,6 +80,7 @@ data FileErr : Type where
   CloseErr : Error -> FileErr
   ReadErr  : Error -> FileErr
   WriteErr : Error -> FileErr
+  FlagsErr : Error -> FileErr
 
 %runElab derive "FileErr" [Show,Eq]
 
@@ -83,6 +90,7 @@ Interpolation FileErr where
   interpolate (CloseErr x)  = "Error when closing file descriptor: \{x}"
   interpolate (ReadErr x)   = "Error when reading from file descriptor: \{x}"
   interpolate (WriteErr x)  = "Error when writing to file descriptor: \{x}"
+  interpolate (FlagsErr x)  = "Error when setting/getting file descriptor flags: \{x}"
 
 --------------------------------------------------------------------------------
 -- Mode
@@ -122,17 +130,21 @@ append = O_WRONLY <+> O_CREAT <+> O_APPEND
 export %inline
 openFile : FilePath -> Flags -> Mode -> IO (Either FileErr Bits32)
 openFile pth (F f) (M m) =
-  fromPrim $ \w => case prim__open (interpolate pth) f m w of
-    MkIORes (-1) w => primError (OpenErr pth) w
-    MkIORes fd   w => MkIORes (Right $ cast fd) w
+  fromPrim $ \w =>
+    let MkIORes r w := prim__open (interpolate pth) f m w
+     in case r < 0 of
+          True  => MkIORes (resErr r $ OpenErr pth) w
+          False => MkIORes (Right $ cast r) w
 
 ||| Closes a file descriptor.
 export %inline
 close : FileDesc a => a -> IO (Either FileErr ())
 close fd =
-  fromPrim $ \w => case prim__close (fileDesc fd) w of
-    MkIORes (-1) w => primError CloseErr w
-    MkIORes _    w => MkIORes (Right ()) w
+  fromPrim $ \w =>
+    let MkIORes r w := prim__close (fileDesc fd) w
+     in case r < 0 of
+          True  => MkIORes (resErr r CloseErr) w
+          False => MkIORes (Right ()) w
 
 public export
 data ReadRes : Type where
@@ -149,11 +161,12 @@ read fd n =
     let MkIORes buf w := prim__newBuf n w
         MkIORes rd  w := prim__read (fileDesc fd) buf n w
      in case rd of
-          (-1) => case toPrim lastError w of
-            MkIORes EAGAIN w => MkIORes (Right Again) w
-            MkIORes x      w => MkIORes (Left $ ReadErr x) w
-          0    => MkIORes (Right EOF) w
-          x    => MkIORes (Right $ Bytes $ unsafeByteString (cast x) buf) w
+          0 => MkIORes (Right EOF) w
+          x => case x < 0 of
+            False => MkIORes (Right $ Bytes $ unsafeByteString (cast x) buf) w
+            True  => case fromRes x of
+              EAGAIN => MkIORes (Right Again) w
+              x      => MkIORes (Left $ ReadErr x) w
 
 public export
 data WriteRes : Type where
@@ -170,18 +183,44 @@ writeBytes :
   -> IO (Either FileErr WriteRes)
 writeBytes fd (BS n $ BV b o _) =
   fromPrim $ \w =>
-    let MkIORes wr w := prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) w
-     in case wr of
-          (-1) => case toPrim lastError w of
-            MkIORes EAGAIN w => MkIORes (Right WAgain) w
-            MkIORes x      w => MkIORes (Left $ WriteErr x) w
-          x => MkIORes (Right $ Written (cast x)) w
+    let MkIORes r w := prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) w
+     in case r < 0 of
+          True => case fromRes r of
+            EAGAIN => MkIORes (Right WAgain) w
+            x      => MkIORes (Left $ WriteErr x) w
+          False => MkIORes (Right $ Written (cast r)) w
 
 export
 write : {n : _} -> FileDesc a => a -> IBuffer n -> IO (Either FileErr WriteRes)
 write fd ibuf = writeBytes fd (fromIBuffer ibuf)
 
+||| Moves the file pointer to the given offset relative to the
+||| `Whence` value.
 export %inline
 lseek : HasIO io => FileDesc a => a -> OffT -> Whence -> io OffT
 lseek fd offset whence =
   primIO $ prim__lseek (fileDesc fd) offset (cast $ whenceCode whence)
+
+export
+getFlags : FileDesc a => a -> IO (Either FileErr Flags)
+getFlags fd =
+  fromPrim $ \w =>
+    let MkIORes r w := prim__getFlags (fileDesc fd) w
+     in case r < 0 of
+          True  => MkIORes (resErr r FlagsErr) w
+          False => MkIORes (Right $ F r) w
+
+export
+setFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
+setFlags fd (F fs) =
+  fromPrim $ \w =>
+    let MkIORes r w := prim__setFlags (fileDesc fd) fs w
+     in case r < 0 of
+          True  => MkIORes (resErr r FlagsErr) w
+          False => MkIORes (Right ()) w
+
+export
+addFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
+addFlags fd fs = do
+  Right x <- getFlags fd | Left err => pure (Left err)
+  setFlags fd (x <+> fs)
