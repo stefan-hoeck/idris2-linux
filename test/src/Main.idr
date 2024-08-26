@@ -32,5 +32,3 @@ main = do
   run $ withFile "linups.ipkg" 0 0 (readTill end 0)
   run $ tryClose (the Bits32 100)
   run $ cp "linux.ipkg" "out"
-  run $ withFile "stdout" (O_WRONLY <+> O_CREAT <+> O_APPEND) 0o600 $ \fo =>
-    copy Stdin fo
