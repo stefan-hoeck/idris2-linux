@@ -13,6 +13,7 @@ depends = base >= 0.7.0
 modules = System.Linux.Error
         , System.Linux.Error.Type
         , System.Linux.File
+        , System.Linux.File.Flags
 
 sourcedir = "src"
 

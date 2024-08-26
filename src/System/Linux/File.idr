@@ -14,6 +14,7 @@ import Derive.Finite
 import Derive.Prelude
 
 import public System.Linux.Error
+import public System.Linux.File.Flags
 
 %default total
 %language ElabReflection
@@ -34,12 +35,6 @@ prim__read : (file : Bits32) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 
 %foreign "C__collect_safe:li_write, linux-idris"
 prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
-
--- TODO: Export this in idris2-array
-%foreign "scheme:blodwen-new-buffer"
-         "RefC:newBuffer"
-         "node:lambda:s=>Buffer.alloc(s)"
-prim__newBuffer : Bits32 -> PrimIO Buffer
 
 --------------------------------------------------------------------------------
 -- FileDesc
@@ -70,38 +65,20 @@ FileDesc StdIO where
 --------------------------------------------------------------------------------
 
 public export
-data FileError : Type where
-  OpenErr  : FilePath -> Error -> FileError
-  CloseErr : Error -> FileError
-  ReadErr  : Error -> FileError
-  WriteErr : Error -> FileError
+data FileErr : Type where
+  OpenErr  : FilePath -> Error -> FileErr
+  CloseErr : Error -> FileErr
+  ReadErr  : Error -> FileErr
+  WriteErr : Error -> FileErr
 
-%runElab derive "FileError" [Show,Eq]
+%runElab derive "FileErr" [Show,Eq]
 
 export
-Interpolation FileError where
+Interpolation FileErr where
   interpolate (OpenErr p x) = "Error when opening \{p}: \{x}"
   interpolate (CloseErr x)  = "Error when closing file descriptor: \{x}"
   interpolate (ReadErr x)   = "Error when reading from file descriptor: \{x}"
   interpolate (WriteErr x)  = "Error when writing to file descriptor: \{x}"
-
---------------------------------------------------------------------------------
--- Flags
---------------------------------------------------------------------------------
-
-public export
-record Flags where
-  constructor F
-  flags : CInt
-
-%runElab derive "Flags" [Show,Eq,Ord]
-
-public export
-Semigroup Flags where
-  F x <+> F y = F $ x .|. y
-
-public export
-Monoid Flags where neutral = F 0
 
 --------------------------------------------------------------------------------
 -- Mode
@@ -112,7 +89,7 @@ record Mode where
   constructor M
   mode : ModeT
 
-%runElab derive "Mode" [Show,Eq,Ord]
+%runElab derive "Mode" [Show,Eq,Ord,FromInteger]
 
 public export
 Semigroup Mode where
@@ -127,7 +104,7 @@ Monoid Mode where neutral = M 0
 
 ||| Tries to open a file with the given flags and mode.
 export %inline
-openFile : FilePath -> Flags -> Mode -> IO (Either FileError Bits32)
+openFile : FilePath -> Flags -> Mode -> IO (Either FileErr Bits32)
 openFile pth (F f) (M m) =
   fromPrim $ \w => case prim__open (interpolate pth) f m w of
     MkIORes (-1) w => primError (OpenErr pth) w
@@ -135,53 +112,55 @@ openFile pth (F f) (M m) =
 
 ||| Closes a file descriptor.
 export %inline
-close : FileDesc a => a -> IO (Either FileError ())
+close : FileDesc a => a -> IO (Either FileErr ())
 close fd =
   fromPrim $ \w => case prim__close (fileDesc fd) w of
     MkIORes (-1) w => primError CloseErr w
     MkIORes _    w => MkIORes (Right ()) w
 
 public export
-data ReadResult : Type where
-  EOF   : ReadResult
-  Again : ReadResult
-  Err   : Error -> ReadResult
-  Bytes : (n : Nat) -> IBuffer n -> ReadResult
+data ReadRes : Type where
+  EOF   : ReadRes
+  Again : ReadRes
+  Bytes : ByteString -> ReadRes
 
-%runElab derive "ReadResult" [Show]
+%runElab derive "ReadRes" [Show]
 
 export
-read : FileDesc a => a -> (n : Bits32) -> IO ReadResult
+read : FileDesc a => a -> (n : Bits32) -> IO (Either FileErr ReadRes)
 read fd n =
   fromPrim $ \w =>
-    let MkIORes buf w := prim__newBuffer n w
+    let MkIORes buf w := prim__newBuf n w
         MkIORes rd  w := prim__read (fileDesc fd) buf n w
      in case rd of
           (-1) => case toPrim lastError w of
-            MkIORes EAGAIN w => MkIORes Again w
-            MkIORes x      w => MkIORes (Err x) w
-          0    => MkIORes EOF w
-          x    => MkIORes (Bytes (cast x) (unsafeMakeBuffer buf)) w
+            MkIORes EAGAIN w => MkIORes (Right Again) w
+            MkIORes x      w => MkIORes (Left $ ReadErr x) w
+          0    => MkIORes (Right EOF) w
+          x    => MkIORes (Right $ Bytes $ unsafeByteString (cast x) buf) w
 
 public export
-data WriteResult : Type where
-  WAgain  : WriteResult
-  WErr    : Error -> WriteResult
-  Written : (n : Nat) -> WriteResult
+data WriteRes : Type where
+  WAgain  : WriteRes
+  Written : (n : Nat) -> WriteRes
 
-%runElab derive "WriteResult" [Show]
+%runElab derive "WriteRes" [Show]
 
 export
-writeVect : {n : _} -> FileDesc a => a -> ByteVect n -> IO WriteResult
-writeVect fd (BV b o _) =
+writeBytes :
+     {auto fid : FileDesc a}
+  -> a
+  -> ByteString
+  -> IO (Either FileErr WriteRes)
+writeBytes fd (BS n $ BV b o _) =
   fromPrim $ \w =>
     let MkIORes wr w := prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) w
      in case wr of
           (-1) => case toPrim lastError w of
-            MkIORes EAGAIN w => MkIORes WAgain w
-            MkIORes x      w => MkIORes (WErr x) w
-          x => MkIORes (Written (cast x)) w
+            MkIORes EAGAIN w => MkIORes (Right WAgain) w
+            MkIORes x      w => MkIORes (Left $ WriteErr x) w
+          x => MkIORes (Right $ Written (cast x)) w
 
 export
-write : {n : _} -> FileDesc a => a -> IBuffer n -> IO WriteResult
-write fd ibuf = writeVect fd (BV ibuf 0 reflexive)
+write : {n : _} -> FileDesc a => a -> IBuffer n -> IO (Either FileErr WriteRes)
+write fd ibuf = writeBytes fd (fromIBuffer ibuf)

@@ -14,15 +14,15 @@ bracketCase : (Either (HSum es) a -> Prog fs b) -> Prog es a -> Prog fs b
 bracketCase f prog = MkEitherT $ runEitherT prog >>= runEitherT . f
 
 export
-weakenErr : Prog [] a -> Prog es a
-weakenErr =
+anyErr : Prog [] a -> Prog es a
+anyErr =
   bracketCase $ \case
     Left _ impossible
     Right v => pure v
 
 export
 guaranteeCase : (Either (HSum es) a -> Prog [] ()) -> Prog es a -> Prog es a
-guaranteeCase f = bracketCase $ \x => weakenErr (f x) >> liftEither x
+guaranteeCase f = bracketCase $ \x => anyErr (f x) >> liftEither x
 
 export
 clear : Prog es a -> Prog [] ()
@@ -43,16 +43,24 @@ injectIO io =
     Left x  => fail x
     Right v => pure v
 
+export %inline
+wrapIO : IO (Either e a) -> Prog [e] a
+wrapIO = injectIO
+
 public export
 0 Handler : Type -> Type
 Handler a = a -> Prog [] ()
 
 export
-handleErrors : (hs : All Handler es) -> Prog es () -> Prog [] ()
+handleErrors : (hs : All Handler es) -> Prog es () -> Prog fs ()
 handleErrors hs =
   bracketCase $ \case
-    Left x  => collapse' $ hzipWith id hs x
+    Left x  => anyErr $ collapse' $ hzipWith id hs x
     Right _ => pure ()
+
+export %inline
+handleError : Handler e -> Prog [e] () -> Prog fs ()
+handleError h = handleErrors [h]
 
 export
 runProg : Prog [] a -> IO a
@@ -60,3 +68,7 @@ runProg p =
   runEitherT p >>= \case
     Right v => pure v
     Left _ impossible
+
+export %inline
+prettyOut : Interpolation a => a -> Prog [] ()
+prettyOut = putStrLn . interpolate

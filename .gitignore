@@ -2,5 +2,6 @@ build/
 *.*~
 lib/
 codegen/error_gen
+codegen/flags_gen
 support/linux.o
 support/linux-idris
