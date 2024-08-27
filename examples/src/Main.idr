@@ -3,6 +3,7 @@ module Main
 import Data.C.Integer
 import Data.Fuel
 import Example.Ch4.Copy
+import Example.Ch4.CopyWithHoles
 import Example.Ch4.Seek
 import Example.Ch4.Tee
 import Example.Util.File
@@ -36,9 +37,10 @@ prog : Prog [Error, FileErr, ArgErr] ()
 prog = do
   (_::args) <- getArgs | [] => fail (WrongArgs usage)
   case args of
-    "copy" :: t => copyProg t
-    "tee"  :: t => tee t
-    "seek" :: t => seekProg t
+    "copy"  :: t => copyProg t
+    "copyh" :: t => copyh t
+    "tee"   :: t => tee t
+    "seek"  :: t => seekProg t
     _           => do
       pid  <- getpid
       ppid <- getppid
