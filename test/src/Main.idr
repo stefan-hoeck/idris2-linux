@@ -6,6 +6,7 @@ import Data.Fuel
 import File
 import Opts
 import System
+import System.Linux.Process
 import Tee
 
 %default total
@@ -40,6 +41,9 @@ prog = do
     "copy" :: t => copyProg t
     "tee"  :: t => tee t
     _           => do
+      pid  <- getpid
+      ppid <- getppid
+      putStrLn "Process ID: \{show pid} (parent: \{show ppid})"
       withFile "linux.ipkg" 0 0 (readTill end 0)
       injectIO $ addFlags Stdin O_NONBLOCK
       readTill end 0 Stdin
