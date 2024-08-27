@@ -3,6 +3,7 @@ module Main
 import Data.C.Integer
 import Data.Fuel
 import Example.Ch4.Copy
+import Example.Ch4.Seek
 import Example.Ch4.Tee
 import Example.Util.File
 import Example.Util.Opts
@@ -37,6 +38,7 @@ prog = do
   case args of
     "copy" :: t => copyProg t
     "tee"  :: t => tee t
+    "seek" :: t => seekProg t
     _           => do
       pid  <- getpid
       ppid <- getppid

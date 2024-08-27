@@ -21,6 +21,7 @@ data OptTag : Type where
   OPath   : OptTag
   OSize   : OptTag
   OBits32 : OptTag
+  OOff   : OptTag
 
 %runElab derive "OptTag" [Show,Eq,Ord]
 
@@ -29,12 +30,14 @@ Interpolation OptTag where
   interpolate OPath   = "path"
   interpolate OSize   = "size"
   interpolate OBits32 = "bits32"
+  interpolate OOff    = "offset"
 
 
 public export
 0 OptType : OptTag -> Type
 OptType OPath   = FilePath
 OptType OSize   = SizeT
+OptType OOff    = OffT
 OptType OBits32 = Bits32
 
 public export
@@ -54,17 +57,28 @@ Interpolation ArgErr where
     """
   interpolate (Invalid tag str) = "Invalid \{tag}: \"\{str}\""
 
-parseNat : Cast Nat t => String -> Either ArgErr t
-parseNat s =
-  let bs  := fromString {ty = ByteString} s
-      res := parseDecimalNat bs <|> parseHexadecimalNat bs
-   in maybe (Left $ Invalid OSize s) (Right . cast) res
+parameters (t      : OptTag)
+           {auto c : Cast Integer (OptType t)}
+           (s      : String)
+
+  parseNat : Either ArgErr (OptType t)
+  parseNat =
+    let bs  := fromString {ty = ByteString} s
+        res := parseDecimalNat bs
+     in maybe (Left $ Invalid t s) (Right . cast @{c} . cast) res
+
+  parseInt : Either ArgErr (OptType t)
+  parseInt =
+    let bs  := fromString {ty = ByteString} s
+        res := parseInteger bs
+     in maybe (Left $ Invalid t s) (Right . cast) res
 
 export
 readOpt : (t : OptTag) -> String -> Either ArgErr (OptType t)
 readOpt OPath   s = maybe (Left $ Invalid OPath s) Right $ parse s
-readOpt OSize   s = parseNat s
-readOpt OBits32 s = parseNat s
+readOpt OSize   s = parseNat OSize s
+readOpt OBits32 s = parseNat OBits32 s
+readOpt OOff    s = parseInt OOff s
 
 export
 readOptIO : Has ArgErr es => (t : OptTag) -> String -> Prog es (OptType t)

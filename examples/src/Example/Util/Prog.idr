@@ -2,6 +2,7 @@ module Example.Util.Prog
 
 import public Control.Monad.Either
 import public Data.List.Quantifiers.Extra
+import System.Linux.File
 
 %default total
 
@@ -101,3 +102,7 @@ runProgWith hs = runProg . handleErrors hs
 export %inline
 prettyOut : Interpolation a => a -> Prog [] ()
 prettyOut = putStrLn . interpolate
+
+export %inline
+prettyErr : Interpolation a => a -> Prog [] ()
+prettyErr = ignore . liftIO . writeBytes Stderr . fromString . interpolate

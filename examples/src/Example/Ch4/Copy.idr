@@ -2,7 +2,6 @@ module Example.Ch4.Copy
 
 import Example.Util.File
 import Example.Util.Opts
-import System
 
 %default total
 

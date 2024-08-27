@@ -14,7 +14,7 @@ tryLT m n with (m < n) proof eq
 
 export
 tryClose : FileDesc a => a -> Prog fs ()
-tryClose fd = handleError prettyOut (wrapIO $ close fd)
+tryClose fd = handleError prettyErr (wrapIO $ close fd)
 
 parameters {auto has : Has FileErr es}
 
