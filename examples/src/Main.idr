@@ -3,6 +3,8 @@ module Main
 import Data.C.Integer
 import Data.Fuel
 import Example.Ch4.Copy
+import Example.Ch4.CopyWithHoles
+import Example.Ch4.Seek
 import Example.Ch4.Tee
 import Example.Util.File
 import Example.Util.Opts
@@ -14,7 +16,9 @@ import System.Linux.Process
 usage : String
 usage =
   """
-  pack test linux [prog] [args...]
+  Usage: Install with `pack install-app linux-examples` and then run with
+
+         linux-examples [prog] [args]...
   """
 
 end : Fuel
@@ -35,8 +39,11 @@ prog : Prog [Error, FileErr, ArgErr] ()
 prog = do
   (_::args) <- getArgs | [] => fail (WrongArgs usage)
   case args of
-    "copy" :: t => copyProg t
-    "tee"  :: t => tee t
+    ["--help"]   => putStrLn usage
+    "copy"  :: t => copyProg t
+    "copyh" :: t => copyh t
+    "tee"   :: t => tee t
+    "seek"  :: t => seekProg t
     _           => do
       pid  <- getpid
       ppid <- getppid

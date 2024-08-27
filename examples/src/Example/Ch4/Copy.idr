@@ -2,16 +2,15 @@ module Example.Ch4.Copy
 
 import Example.Util.File
 import Example.Util.Opts
-import System
 
 %default total
 
 usage : String
 usage =
   """
-  Usage: pack test linux copy SOURCE DEST
+  Usage: linux-examples copy SOURCE DEST
 
-  Set `$LI_BUF_SIZE` to change the used buffer size (default: 1024).
+  Set `$LI_BUF_SIZE` to change the used buffer size (default: 65536).
   """
 
 parameters {auto hf : Has FileErr es}
@@ -31,6 +30,6 @@ parameters {auto hf : Has FileErr es}
   copyProg [i,o] = do
     fi  <- readOptIO OPath i
     fo  <- readOptIO OPath o
-    buf <- parseEnv OBits32 "LI_BUF_SIZE" 1024
+    buf <- parseEnv OBits32 "LI_BUF_SIZE" 0x10000
     cp buf fi fo
   copyProg _ = fail (WrongArgs usage)

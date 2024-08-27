@@ -190,9 +190,13 @@ writeBytes fd (BS n $ BV b o _) =
             x      => MkIORes (Left $ WriteErr x) w
           False => MkIORes (Right $ Written (cast r)) w
 
-export
+export %inline
 write : {n : _} -> FileDesc a => a -> IBuffer n -> IO (Either FileErr WriteRes)
 write fd ibuf = writeBytes fd (fromIBuffer ibuf)
+
+export %inline
+writeStr : FileDesc a => a -> String -> IO (Either FileErr WriteRes)
+writeStr fd = writeBytes fd . fromString
 
 ||| Moves the file pointer to the given offset relative to the
 ||| `Whence` value.

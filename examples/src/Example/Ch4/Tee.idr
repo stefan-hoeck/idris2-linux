@@ -8,7 +8,7 @@ import Example.Util.Opts
 usage : String
 usage =
   """
-  Usage: pack test linux tee [-a] DEST
+  Usage: linux-examples tee [-a] DEST
 
   Set `$LI_BUF_SIZE` to change the used buffer size (default: 1024).
   """
