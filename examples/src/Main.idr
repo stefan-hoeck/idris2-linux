@@ -31,7 +31,7 @@ parameters {auto has : Has FileErr es}
   readTill (More x) n fd =
     injectIO (read fd 0x10000) >>= \case
       EOF            => putStrLn "reached end of file after \{show n} bytes"
-      Again          => putStrLn "currently no data"
+      RAgain         => putStrLn "currently no data"
       Bytes (BS m y) => putStrLn "read \{show m} bytes" >> readTill x (m+n) fd
 
 covering
