@@ -201,6 +201,7 @@ lseek : HasIO io => FileDesc a => a -> OffT -> Whence -> io OffT
 lseek fd offset whence =
   primIO $ prim__lseek (fileDesc fd) offset (cast $ whenceCode whence)
 
+||| Gets the flags set at an open file descriptor.
 export
 getFlags : FileDesc a => a -> IO (Either FileErr Flags)
 getFlags fd =
@@ -210,6 +211,9 @@ getFlags fd =
           True  => MkIORes (resErr r FlagsErr) w
           False => MkIORes (Right $ F r) w
 
+||| Sets the flags of an open file descriptor.
+|||
+||| Note: This replaces the currently set flags. See also `addFlags`.
 export
 setFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
 setFlags fd (F fs) =
@@ -219,6 +223,8 @@ setFlags fd (F fs) =
           True  => MkIORes (resErr r FlagsErr) w
           False => MkIORes (Right ()) w
 
+||| Adds the given flags to the flags set for an open
+||| file descriptor by ORing them with the currently set flags.
 export
 addFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
 addFlags fd fs = do
