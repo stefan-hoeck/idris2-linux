@@ -20,6 +20,21 @@ int li_open(const char *name, int flags, mode_t mode) {
   CHECKRES
 }
 
+int li_dup(int fd) {
+  int res = dup(fd);
+  CHECKRES
+}
+
+int li_dup2(int fd, int dst) {
+  int res = dup2(fd, dst);
+  CHECKRES
+}
+
+int li_dupfd(int fd, int startfd) {
+  int res = fcntl(fd, F_DUPFD, startfd);
+  CHECKRES
+}
+
 int li_close(int fd) {
   int res = close(fd);
   CHECKRES

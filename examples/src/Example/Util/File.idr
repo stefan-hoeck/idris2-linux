@@ -42,5 +42,5 @@ parameters {auto has : Has FileErr es}
   stream fd buf run =
     injectIO (read fd buf) >>= \case
       EOF      => pure ()
-      Again    => stream fd buf run
+      RAgain   => stream fd buf run
       Bytes bs => run bs >> stream fd buf run

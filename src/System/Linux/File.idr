@@ -46,6 +46,15 @@ prim__setFlags : (file : Bits32) -> (flags : CInt) -> PrimIO CInt
 %foreign "C:li_get_flags, linux-idris"
 prim__getFlags : (file : Bits32) -> PrimIO CInt
 
+%foreign "C:li_dup, linux-idris"
+prim__dup : (file : Bits32) -> PrimIO CInt
+
+%foreign "C:li_dup2, linux-idris"
+prim__dup2 : (file, dst : Bits32) -> PrimIO CInt
+
+%foreign "C:li_dupfd, linux-idris"
+prim__dupfd : (file, startfd : Bits32) -> PrimIO CInt
+
 --------------------------------------------------------------------------------
 -- FileDesc
 --------------------------------------------------------------------------------
@@ -81,6 +90,7 @@ data FileErr : Type where
   ReadErr  : Error -> FileErr
   WriteErr : Error -> FileErr
   FlagsErr : Error -> FileErr
+  DupErr   : Error -> FileErr
 
 %runElab derive "FileErr" [Show,Eq]
 
@@ -91,6 +101,7 @@ Interpolation FileErr where
   interpolate (ReadErr x)   = "Error when reading from file descriptor: \{x}"
   interpolate (WriteErr x)  = "Error when writing to file descriptor: \{x}"
   interpolate (FlagsErr x)  = "Error when setting/getting file descriptor flags: \{x}"
+  interpolate (DupErr x)    = "Error when duplicating file descriptor: \{x}"
 
 --------------------------------------------------------------------------------
 -- Mode
@@ -111,6 +122,69 @@ public export
 Monoid Mode where neutral = M 0
 
 --------------------------------------------------------------------------------
+-- Results
+--------------------------------------------------------------------------------
+
+public export
+data ReadRes : Type where
+  EOF    : ReadRes
+  RAgain : ReadRes
+  Bytes  : ByteString -> ReadRes
+
+%runElab derive "ReadRes" [Show]
+
+public export
+data WriteRes : Type where
+  WAgain  : WriteRes
+  Written : (n : Nat) -> WriteRes
+
+%runElab derive "WriteRes" [Show]
+
+--------------------------------------------------------------------------------
+-- Utilities
+--------------------------------------------------------------------------------
+
+%inline
+toFD : (toErr : Lazy (Error -> e)) -> PrimIO CInt -> IO (Either e Bits32)
+toFD toErr act =
+  fromPrim $ \w =>
+    let MkIORes r w := act w
+     in case r < 0 of
+          True  => MkIORes (resErr r toErr) w
+          False => MkIORes (Right $ cast r) w
+
+%inline
+toUnit : (toErr : Lazy (Error -> e)) -> PrimIO CInt -> IO (Either e ())
+toUnit toErr act =
+  fromPrim $ \w =>
+    let MkIORes r w := act w
+     in case r < 0 of
+          True  => MkIORes (resErr r toErr) w
+          False => MkIORes (Right ()) w
+
+toReadRes : PrimIO (Buffer,SsizeT) -> IO (Either FileErr ReadRes)
+toReadRes act =
+  fromPrim $ \w =>
+    let MkIORes (buf,rd) w := act w
+     in case rd of
+          0 => MkIORes (Right EOF) w
+          x => case x < 0 of
+            False => MkIORes (Right $ Bytes $ unsafeByteString (cast x) buf) w
+            True  => case fromRes x of
+              EAGAIN => MkIORes (Right RAgain) w
+              x      => MkIORes (Left $ ReadErr x) w
+
+toWriteRes : PrimIO SsizeT -> IO (Either FileErr WriteRes)
+toWriteRes act =
+  fromPrim $ \w =>
+    let MkIORes r w := act w
+     in case r < 0 of
+          True => case fromRes r of
+            EAGAIN => MkIORes (Right WAgain) w
+            x      => MkIORes (Left $ WriteErr x) w
+          False => MkIORes (Right $ Written (cast r)) w
+
+--------------------------------------------------------------------------------
 -- File Operations
 --------------------------------------------------------------------------------
 
@@ -129,51 +203,20 @@ append = O_WRONLY <+> O_CREAT <+> O_APPEND
 ||| Tries to open a file with the given flags and mode.
 export %inline
 openFile : FilePath -> Flags -> Mode -> IO (Either FileErr Bits32)
-openFile pth (F f) (M m) =
-  fromPrim $ \w =>
-    let MkIORes r w := prim__open (interpolate pth) f m w
-     in case r < 0 of
-          True  => MkIORes (resErr r $ OpenErr pth) w
-          False => MkIORes (Right $ cast r) w
+openFile p (F f) (M m) = toFD (OpenErr p) ( prim__open (interpolate p) f m)
 
 ||| Closes a file descriptor.
 export %inline
 close : FileDesc a => a -> IO (Either FileErr ())
-close fd =
-  fromPrim $ \w =>
-    let MkIORes r w := prim__close (fileDesc fd) w
-     in case r < 0 of
-          True  => MkIORes (resErr r CloseErr) w
-          False => MkIORes (Right ()) w
-
-public export
-data ReadRes : Type where
-  EOF   : ReadRes
-  Again : ReadRes
-  Bytes : ByteString -> ReadRes
-
-%runElab derive "ReadRes" [Show]
+close fd = toUnit CloseErr (prim__close (fileDesc fd))
 
 export
 read : FileDesc a => a -> (n : Bits32) -> IO (Either FileErr ReadRes)
 read fd n =
-  fromPrim $ \w =>
+  toReadRes $ \w =>
     let MkIORes buf w := prim__newBuf n w
         MkIORes rd  w := prim__read (fileDesc fd) buf n w
-     in case rd of
-          0 => MkIORes (Right EOF) w
-          x => case x < 0 of
-            False => MkIORes (Right $ Bytes $ unsafeByteString (cast x) buf) w
-            True  => case fromRes x of
-              EAGAIN => MkIORes (Right Again) w
-              x      => MkIORes (Left $ ReadErr x) w
-
-public export
-data WriteRes : Type where
-  WAgain  : WriteRes
-  Written : (n : Nat) -> WriteRes
-
-%runElab derive "WriteRes" [Show]
+     in MkIORes (buf,rd) w
 
 export
 writeBytes :
@@ -182,13 +225,7 @@ writeBytes :
   -> ByteString
   -> IO (Either FileErr WriteRes)
 writeBytes fd (BS n $ BV b o _) =
-  fromPrim $ \w =>
-    let MkIORes r w := prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) w
-     in case r < 0 of
-          True => case fromRes r of
-            EAGAIN => MkIORes (Right WAgain) w
-            x      => MkIORes (Left $ WriteErr x) w
-          False => MkIORes (Right $ Written (cast r)) w
+  toWriteRes $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
 
 export %inline
 write : {n : _} -> FileDesc a => a -> IBuffer n -> IO (Either FileErr WriteRes)
@@ -198,12 +235,20 @@ export %inline
 writeStr : FileDesc a => a -> String -> IO (Either FileErr WriteRes)
 writeStr fd = writeBytes fd . fromString
 
+--------------------------------------------------------------------------------
+-- File seeking
+--------------------------------------------------------------------------------
+
 ||| Moves the file pointer to the given offset relative to the
 ||| `Whence` value.
 export %inline
 lseek : HasIO io => FileDesc a => a -> OffT -> Whence -> io OffT
 lseek fd offset whence =
   primIO $ prim__lseek (fileDesc fd) offset (cast $ whenceCode whence)
+
+--------------------------------------------------------------------------------
+-- Setting and getting file flags
+--------------------------------------------------------------------------------
 
 ||| Gets the flags set at an open file descriptor.
 export
@@ -220,12 +265,7 @@ getFlags fd =
 ||| Note: This replaces the currently set flags. See also `addFlags`.
 export
 setFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
-setFlags fd (F fs) =
-  fromPrim $ \w =>
-    let MkIORes r w := prim__setFlags (fileDesc fd) fs w
-     in case r < 0 of
-          True  => MkIORes (resErr r FlagsErr) w
-          False => MkIORes (Right ()) w
+setFlags fd (F fs) = toUnit FlagsErr $ prim__setFlags (fileDesc fd) fs
 
 ||| Adds the given flags to the flags set for an open
 ||| file descriptor by ORing them with the currently set flags.
@@ -234,3 +274,31 @@ addFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
 addFlags fd fs = do
   Right x <- getFlags fd | Left err => pure (Left err)
   setFlags fd (x <+> fs)
+
+--------------------------------------------------------------------------------
+-- Duplicating file descriptors
+--------------------------------------------------------------------------------
+
+||| Duplicates the given open file descriptor.
+|||
+||| The duplicate is guaranteed to be given the smallest available
+||| file descriptor.
+export %inline
+dup : FileDesc a => a -> IO (Either FileErr Bits32)
+dup fd = toFD DupErr $ prim__dup (fileDesc fd)
+
+||| Duplicates the given open file descriptor.
+|||
+||| The new file descriptor vill have the integer value of `fd2`.
+||| This is an atomic operation that will close `fd2` if it is still open.
+export %inline
+dup2 : FileDesc a => FileDesc b => a -> (fd2 : b) -> IO (Either FileErr Bits32)
+dup2 fd fd2 = toFD DupErr $ prim__dup2 (fileDesc fd) (fileDesc fd2)
+
+||| Duplicates the given open file descriptor.
+|||
+||| The new file descriptor vill have the integer value of `fd2`.
+||| This is an atomic operation that will close `fd2` if it is still open.
+export %inline
+dupfd : FileDesc a => a -> (start : Bits32) -> IO (Either FileErr Bits32)
+dupfd fd fd2 = toFD DupErr $ prim__dupfd (fileDesc fd) fd2
