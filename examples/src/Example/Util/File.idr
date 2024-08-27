@@ -1,8 +1,8 @@
-module File
+module Example.Util.File
 
 import Data.Maybe0
 import Data.Array.Index
-import public Prog
+import public Example.Util.Prog
 import public System.Linux.File
 
 %default total
@@ -44,12 +44,3 @@ parameters {auto has : Has FileErr es}
       EOF      => pure ()
       Again    => stream fd buf run
       Bytes bs => run bs >> stream fd buf run
-
-  export covering
-  copy : FileDesc a => FileDesc b => a -> b -> Prog es ()
-  copy i o = stream i 0x10000 (writeAll o)
-
-  export covering
-  cp : FilePath -> FilePath -> Prog es ()
-  cp i o =
-    withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copy fi fo

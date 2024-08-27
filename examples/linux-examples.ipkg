@@ -1,4 +1,4 @@
-package test-linux
+package linux-examples
 version = 0.1.0
 authors = "stefan-hoeck"
 
@@ -10,4 +10,4 @@ sourcedir = "src"
 
 main = Main
 
-executable = "test-linux"
+executable = "linux-examples"

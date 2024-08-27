@@ -2,7 +2,11 @@
 type = "local"
 path = "."
 ipkg = "linux.ipkg"
-test = "test/test.ipkg"
+
+[custom.all.linux-examples]
+type = "local"
+path = "."
+ipkg = "examples/linux-examples.ipkg"
 
 [custom.all.cptr]
 type   = "git"

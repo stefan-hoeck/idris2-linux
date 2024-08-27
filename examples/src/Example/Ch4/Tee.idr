@@ -1,14 +1,16 @@
-module Tee
+module Example.Ch4.Tee
 
-import File
-import Opts
+import Example.Util.File
+import Example.Util.Opts
 
 %default total
 
 usage : String
 usage =
   """
-  pack test linux tee [-a] DEST
+  Usage: pack test linux tee [-a] DEST
+
+  Set `$LI_BUF_SIZE` to change the used buffer size (default: 1024).
   """
 
 parameters {auto ha : Has ArgErr es}
@@ -17,9 +19,10 @@ parameters {auto ha : Has ArgErr es}
   covering
   run : Flags -> String -> Prog es ()
   run fs dst = do
-    fo <- readOptIO OPath dst
+    fo  <- readOptIO OPath dst
+    buf <- parseEnv OBits32 "LI_BUF_SIZE" 1024
     withFile fo fs 0o666 $ \fd =>
-      stream Stdin 0x10000 $ \bs =>
+      stream Stdin buf $ \bs =>
         writeAll fd bs >> writeAll Stdout bs
 
   export covering
