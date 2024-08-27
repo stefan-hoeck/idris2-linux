@@ -16,7 +16,9 @@ import System.Linux.Process
 usage : String
 usage =
   """
-  pack test linux [prog] [args...]
+  Usage: Install with `pack install-app linux-examples` and then run with
+
+         linux-examples [prog] [args]...
   """
 
 end : Fuel
@@ -37,6 +39,7 @@ prog : Prog [Error, FileErr, ArgErr] ()
 prog = do
   (_::args) <- getArgs | [] => fail (WrongArgs usage)
   case args of
+    ["--help"]   => putStrLn usage
     "copy"  :: t => copyProg t
     "copyh" :: t => copyh t
     "tee"   :: t => tee t

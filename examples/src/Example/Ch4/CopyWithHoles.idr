@@ -8,7 +8,10 @@ import Example.Util.Opts
 usage : String
 usage =
   """
-  Usage: pack test linux copyh SOURCE DEST
+  Usage: linux-examples copyh SOURCE DEST
+
+  This works like `copy` but keeps file holes while `copy` will fill holes
+  with explicit zeroes.
 
   Set `$LI_BUF_SIZE` to change the used buffer size (default: 65536).
   """

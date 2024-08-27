@@ -9,7 +9,7 @@ import Example.Util.Pretty
 usage : String
 usage =
   """
-  Usage: pack test linux seek DEST [cmd]...
+  Usage: linux-examples seek DEST [cmd]...
 
   Commands:
   s[offset] seek to the given offset

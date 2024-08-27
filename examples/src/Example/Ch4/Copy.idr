@@ -8,7 +8,7 @@ import Example.Util.Opts
 usage : String
 usage =
   """
-  Usage: pack test linux copy SOURCE DEST
+  Usage: linux-examples copy SOURCE DEST
 
   Set `$LI_BUF_SIZE` to change the used buffer size (default: 65536).
   """
