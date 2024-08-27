@@ -47,7 +47,7 @@ parameters {auto hf : Has FileErr es}
   readHere b fd n =
     injectIO (read fd n) >>= \case
       EOF     => putStrLn "\{rd b n}: end of file"
-      Again   => putStrLn "\{rd b n}: no data read"
+      RAgain  => putStrLn "\{rd b n}: no data read"
       Bytes x => putStrLn "\{rd b n}: \{disp b x}"
 
   seek : List Cmd -> (fd : Bits32) -> Prog es ()
