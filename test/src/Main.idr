@@ -43,7 +43,7 @@ prog = do
       withFile "linux.ipkg" 0 0 (readTill end 0)
       injectIO $ addFlags Stdin O_NONBLOCK
       readTill end 0 Stdin
-      withFile "out" O_CREAT 0o600 $ \fd => writeAll fd "hello world"
+      withFile "build/out" O_CREAT 0o600 $ \fd => writeAll fd "hello world"
 
 covering
 main : IO ()
