@@ -34,8 +34,14 @@ prim__close : Bits32 -> PrimIO CInt
 %foreign "C__collect_safe:li_read, linux-idris"
 prim__read : (file : Bits32) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 
+%foreign "C__collect_safe:li_pread, linux-idris"
+prim__pread : (file : Bits32) -> Buffer -> (max : Bits32) -> OffT -> PrimIO SsizeT
+
 %foreign "C__collect_safe:li_write, linux-idris"
 prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
+
+%foreign "C__collect_safe:li_pwrite, linux-idris"
+prim__pwrite : (file : Bits32) -> Buffer -> (off,max : Bits32) -> OffT -> PrimIO SsizeT
 
 %foreign "C:lseek, linux-idris"
 prim__lseek : (file : Bits32) -> (off : OffT) -> (whence : CInt) -> PrimIO OffT
@@ -218,14 +224,50 @@ read fd n =
         MkIORes rd  w := prim__read (fileDesc fd) buf n w
      in MkIORes (buf,rd) w
 
+||| Atomically reads up to `n` bytes from the given file at
+||| the given file offset.
+|||
+||| Notes: This will only work with seekable files but not with
+|||        arbitrary data streams such as pipes or sockets.
+|||        Also, it will not change the position of the open file description.
+export
+pread : FileDesc a => a -> (n : Bits32) -> OffT -> IO (Either FileErr ReadRes)
+pread fd n off =
+  toReadRes $ \w =>
+    let MkIORes buf w := prim__newBuf n w
+        MkIORes rd  w := prim__pread (fileDesc fd) buf n off w
+     in MkIORes (buf,rd) w
+
+||| Writes up to the number of bytes in the bytestring
+||| to the given file.
+|||
+||| Note: This is an atomic operation if `fd` is a regular file that
+|||       was opened in "append" mode (with the `O_APPEND` flag).
 export
 writeBytes :
      {auto fid : FileDesc a}
-  -> a
+  -> (fd : a)
   -> ByteString
   -> IO (Either FileErr WriteRes)
 writeBytes fd (BS n $ BV b o _) =
   toWriteRes $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
+
+
+||| Atomically writes up to the number of bytes in the bytestring
+||| to the given file at the given file offset.
+|||
+||| Notes: This will only work with seekable files but not with
+|||        arbitrary data streams such as pipes or sockets.
+|||        Also, it will not change the position of the open file description.
+export
+pwriteBytes :
+     {auto fid : FileDesc a}
+  -> a
+  -> ByteString
+  -> OffT
+  -> IO (Either FileErr WriteRes)
+pwriteBytes fd (BS n $ BV b o _) off =
+  toWriteRes $ prim__pwrite (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) off
 
 export %inline
 write : {n : _} -> FileDesc a => a -> IBuffer n -> IO (Either FileErr WriteRes)

@@ -45,8 +45,18 @@ ssize_t li_read(int fd, char *buf, size_t bytes) {
   CHECKRES
 }
 
+ssize_t li_pread(int fd, char *buf, size_t bytes, off_t off) {
+  int res = pread(fd, buf, bytes, off);
+  CHECKRES
+}
+
 ssize_t li_write(int fd, char *buf, size_t off, size_t bytes) {
   int res = write(fd, buf + off, bytes);
+  CHECKRES
+}
+
+ssize_t li_pwrite(int fd, char *buf, size_t offset, size_t bytes, off_t off) {
+  int res = pwrite(fd, buf + offset, bytes, off);
   CHECKRES
 }
 
