@@ -2,9 +2,22 @@
 type = "local"
 path = "."
 ipkg = "linux.ipkg"
+test = "test/test.ipkg"
 
 [custom.all.cptr]
 type   = "git"
 url    = "https://github.com/stefan-hoeck/idris2-cptr"
 commit = "latest:main"
 ipkg   = "cptr.ipkg"
+
+[custom.all.array]
+type   = "github"
+url    = "https://github.com/stefan-hoeck/idris2-array"
+commit = "latest:main"
+ipkg   = "array.ipkg"
+
+[custom.all.bytestring]
+type   = "github"
+url    = "https://github.com/stefan-hoeck/idris2-bytestring"
+commit = "latest:main"
+ipkg   = "bytestring.ipkg"

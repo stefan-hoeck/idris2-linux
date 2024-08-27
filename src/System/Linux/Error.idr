@@ -1,20 +1,18 @@
 module System.Linux.Error
 
+import Debug.Trace
 import Data.Finite
 import Data.Maybe
 import Data.SortedMap
 import public System.Linux.Error.Type
 
 --------------------------------------------------------------------------------
--- FFI
---------------------------------------------------------------------------------
-
-%foreign "C:li_errno, linux-idris"
-prim__errno : PrimIO Bits32
-
---------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
+
+export %inline
+Interpolation Error where
+  interpolate = errorText
 
 %default total
 codeMap : SortedMap Bits32 Error
@@ -28,7 +26,10 @@ export
 fromCode : Bits32 -> Error
 fromCode x = fromMaybe EOTHER (lookup x codeMap)
 
-||| Reads the `errno` variable and converts it to an `Error`.
 export %inline
-lastError : IO Error
-lastError = map fromCode (fromPrim prim__errno)
+fromRes : Neg n => Cast n Bits32 => n -> Error
+fromRes = fromCode . cast . negate
+
+export %inline
+resErr : Neg n => Cast n Bits32 => n -> (Error -> e) -> Either e a
+resErr x f = Left (f $ fromRes x)

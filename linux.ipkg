@@ -7,10 +7,15 @@ depends = base >= 0.7.0
         , bytestring
         , cptr
         , elab-util
+        , filepath
         , finite
 
 modules = System.Linux.Error
         , System.Linux.Error.Type
+
+        , System.Linux.File
+        , System.Linux.File.Flags
+        , System.Linux.File.Whence
 
 sourcedir = "src"
 
