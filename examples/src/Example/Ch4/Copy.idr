@@ -11,6 +11,9 @@ usage =
   Usage: linux-examples copy SOURCE DEST
 
   Set `$LI_BUF_SIZE` to change the used buffer size (default: 65536).
+
+  Note: To use this in a pipe, set SOURCE to /dev/stdin and/or
+        DEST to /dev/stdout.
   """
 
 parameters {auto hf : Has FileErr es}
