@@ -8,6 +8,7 @@ import Example.Ch4.CopyWithHoles
 import Example.Ch4.Seek
 import Example.Ch4.Tee
 
+import Example.Ch5.Seek0Append
 import Example.Ch5.AtomicAppend
 
 import Example.Util.File
@@ -49,6 +50,7 @@ prog = do
     "tee"    :: t => tee t
     "seek"   :: t => seekProg t
     "atomic_append" :: t => atomicProg t
+    "seek0_append" :: t => seekAppendProg t
     _           => do
       pid  <- getpid
       ppid <- getppid
