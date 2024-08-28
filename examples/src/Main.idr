@@ -2,10 +2,14 @@ module Main
 
 import Data.C.Integer
 import Data.Fuel
+
 import Example.Ch4.Copy
 import Example.Ch4.CopyWithHoles
 import Example.Ch4.Seek
 import Example.Ch4.Tee
+
+import Example.Ch5.AtomicAppend
+
 import Example.Util.File
 import Example.Util.Opts
 import System
@@ -40,10 +44,11 @@ prog = do
   (_::args) <- getArgs | [] => fail (WrongArgs usage)
   case args of
     ["--help"]   => putStrLn usage
-    "copy"  :: t => copyProg t
-    "copyh" :: t => copyh t
-    "tee"   :: t => tee t
-    "seek"  :: t => seekProg t
+    "copy"   :: t => copyProg t
+    "copyh"  :: t => copyh t
+    "tee"    :: t => tee t
+    "seek"   :: t => seekProg t
+    "atomic_append" :: t => atomicProg t
     _           => do
       pid  <- getpid
       ppid <- getppid

@@ -21,7 +21,8 @@ data OptTag : Type where
   OPath   : OptTag
   OSize   : OptTag
   OBits32 : OptTag
-  OOff   : OptTag
+  ONat    : OptTag
+  OOff    : OptTag
 
 %runElab derive "OptTag" [Show,Eq,Ord]
 
@@ -30,6 +31,7 @@ Interpolation OptTag where
   interpolate OPath   = "path"
   interpolate OSize   = "size"
   interpolate OBits32 = "bits32"
+  interpolate ONat    = "nat"
   interpolate OOff    = "offset"
 
 
@@ -39,6 +41,7 @@ OptType OPath   = FilePath
 OptType OSize   = SizeT
 OptType OOff    = OffT
 OptType OBits32 = Bits32
+OptType ONat    = Nat
 
 public export
 data ArgErr : Type where
@@ -79,6 +82,7 @@ readOpt OPath   s = maybe (Left $ Invalid OPath s) Right $ parse s
 readOpt OSize   s = parseNat OSize s
 readOpt OBits32 s = parseNat OBits32 s
 readOpt OOff    s = parseInt OOff s
+readOpt ONat    s = parseNat ONat s
 
 export
 readOptIO : Has ArgErr es => (t : OptTag) -> String -> Prog es (OptType t)
