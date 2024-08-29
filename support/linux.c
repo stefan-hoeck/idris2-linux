@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define CHECKRES                                                               \
@@ -67,5 +68,20 @@ int li_set_flags(int fd, int flags) {
 
 int li_get_flags(int fd) {
   int res = fcntl(fd, F_GETFL);
+  CHECKRES
+}
+
+int li_ftruncate(int fd, off_t len) {
+  int res = ftruncate(fd, len);
+  CHECKRES
+}
+
+int li_truncate(const char *path, off_t len) {
+  int res = truncate(path, len);
+  CHECKRES
+}
+
+int li_mkstemp(char *path) {
+  int res = mkstemp(path);
   CHECKRES
 }

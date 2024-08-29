@@ -60,6 +60,15 @@ prim__dup2 : (file, dst : Bits32) -> PrimIO CInt
 %foreign "C:li_dupfd, linux-idris"
 prim__dupfd : (file, startfd : Bits32) -> PrimIO CInt
 
+%foreign "C:li_ftruncate, linux-idris"
+prim__ftruncate : (file : Bits32) -> (len : OffT) -> PrimIO CInt
+
+%foreign "C:li_truncate, linux-idris"
+prim__truncate : (file : String) -> (len : OffT) -> PrimIO CInt
+
+%foreign "C:li_mkstemp, linux-idris"
+prim__mkstemp : Buffer -> PrimIO CInt
+
 --------------------------------------------------------------------------------
 -- FileDesc
 --------------------------------------------------------------------------------
@@ -96,6 +105,7 @@ data FileErr : Type where
   WriteErr : Error -> FileErr
   FlagsErr : Error -> FileErr
   DupErr   : Error -> FileErr
+  FilErr   : Error -> FileErr
 
 %runElab derive "FileErr" [Show,Eq]
 
@@ -107,6 +117,7 @@ Interpolation FileErr where
   interpolate (WriteErr x)  = "Error when writing to file descriptor: \{x}"
   interpolate (FlagsErr x)  = "Error when setting/getting file descriptor flags: \{x}"
   interpolate (DupErr x)    = "Error when duplicating file descriptor: \{x}"
+  interpolate (FilErr x)    = "File error: \{x}"
 
 --------------------------------------------------------------------------------
 -- Mode
@@ -297,7 +308,7 @@ getFlags fd =
 ||| Sets the flags of an open file descriptor.
 |||
 ||| Note: This replaces the currently set flags. See also `addFlags`.
-export
+export %inline
 setFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
 setFlags fd (F fs) = toUnit FlagsErr $ prim__setFlags (fileDesc fd) fs
 
@@ -308,6 +319,30 @@ addFlags : FileDesc a => a -> Flags -> IO (Either FileErr ())
 addFlags fd fs = do
   Right x <- getFlags fd | Left err => pure (Left err)
   setFlags fd (x <+> fs)
+
+||| Truncates a file to the given length.
+export %inline
+ftruncate : FileDesc a => a -> OffT -> IO (Either FileErr ())
+ftruncate fd len = toUnit FilErr $ prim__ftruncate (fileDesc fd) len
+
+||| Truncates a file to the given length.
+export %inline
+truncate : String -> OffT -> IO (Either FileErr ())
+truncate f len = toUnit FilErr $ prim__truncate f len
+
+||| Atomically creates and opens a temporary, unique file.
+export
+mkstemp : FilePath -> IO (Either FileErr (Bits32, String))
+mkstemp f =
+  let pat := "\{f}XXXXXX"
+      len := stringByteLength pat
+   in do
+        buf <- fromPrim $ prim__newBuf (cast len)
+        setString buf 0 pat
+        Right fd <- toFD (OpenErr f) (prim__mkstemp buf)
+          | Left x => pure (Left x)
+        str <- getString buf 0 len
+        pure $ Right (fd, str)
 
 --------------------------------------------------------------------------------
 -- Duplicating file descriptors
