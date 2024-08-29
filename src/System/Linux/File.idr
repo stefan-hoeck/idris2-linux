@@ -2,7 +2,6 @@ module System.Linux.File
 
 import Data.Bits
 import Data.Buffer
-import Data.Buffer.Core
 import Data.C.Integer
 
 import public Data.Buffer.Core
@@ -150,24 +149,6 @@ data WriteRes : Type where
 -- Utilities
 --------------------------------------------------------------------------------
 
-%inline
-toFD : (toErr : Lazy (Error -> e)) -> PrimIO CInt -> IO (Either e Bits32)
-toFD toErr act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r < 0 of
-          True  => MkIORes (resErr r toErr) w
-          False => MkIORes (Right $ cast r) w
-
-%inline
-toUnit : (toErr : Lazy (Error -> e)) -> PrimIO CInt -> IO (Either e ())
-toUnit toErr act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r < 0 of
-          True  => MkIORes (resErr r toErr) w
-          False => MkIORes (Right ()) w
-
 toReadRes : PrimIO (Buffer,SsizeT) -> IO (Either FileErr ReadRes)
 toReadRes act =
   fromPrim $ \w =>
@@ -216,6 +197,12 @@ export %inline
 close : FileDesc a => a -> IO (Either FileErr ())
 close fd = toUnit CloseErr (prim__close (fileDesc fd))
 
+||| Reads at most `n` bytes from a file into a bytestring.
+export %inline
+readRaw : FileDesc a => a -> Buffer -> (n : Bits32) -> IO (Either FileErr Bits32)
+readRaw fd buf n = toSize ReadErr $ prim__read (fileDesc fd) buf n
+
+||| Reads at most `n` bytes from a file into a bytestring.
 export
 read : FileDesc a => a -> (n : Bits32) -> IO (Either FileErr ReadRes)
 read fd n =
@@ -251,6 +238,11 @@ writeBytes :
   -> IO (Either FileErr WriteRes)
 writeBytes fd (BS n $ BV b o _) =
   toWriteRes $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
+
+||| Reads at most `n` bytes from a file into a bytestring.
+export %inline
+writeRaw : FileDesc a => a -> Buffer -> (offset,n : Bits32) -> IO (Either FileErr Bits32)
+writeRaw fd buf o n = toSize ReadErr $ prim__write (fileDesc fd) buf o n
 
 
 ||| Atomically writes up to the number of bytes in the bytestring
