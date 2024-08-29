@@ -85,3 +85,23 @@ int li_mkstemp(char *path) {
   int res = mkstemp(path);
   CHECKRES
 }
+
+int li_setuid(uid_t uid) {
+  int res = setuid(uid);
+  CHECKRES
+}
+
+int li_setgid(gid_t gid) {
+  int res = setgid(gid);
+  CHECKRES
+}
+
+int li_seteuid(uid_t uid) {
+  int res = seteuid(uid);
+  CHECKRES
+}
+
+int li_setegid(gid_t gid) {
+  int res = setegid(gid);
+  CHECKRES
+}
