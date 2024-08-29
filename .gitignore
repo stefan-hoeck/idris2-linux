@@ -4,5 +4,6 @@ lib/
 codegen/error_gen
 codegen/flags_gen
 codegen/whence_gen
+codegen/limits_gen
 support/linux.o
 support/linux-idris
