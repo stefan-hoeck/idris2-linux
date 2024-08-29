@@ -88,3 +88,30 @@ whenceCode : Whence -> Bits8
 EOT
 
 codegen/whence_gen >>src/System/Linux/File/Whence.idr
+
+cat >src/System/Linux/Limits.idr <<EOT
+-- Note: This module is automatically generated when Idris builds
+-- the library and the constants will be replaced with values
+-- matching the system this is generated on.
+--
+-- The placeholders are here so that it works with tools like the LSP
+-- without first compiling the library. They were generated on an x86_64
+-- GNU/Linux system with GCC. If you are on a similar system, your numbers
+-- might very well be identical.
+module System.Linux.Limits
+
+import Data.C.Integer
+
+%default total
+
+export %foreign "C:sysconf, linux-idris"
+sysconf : Bits32 -> Long
+
+export %foreign "C:pathconf, linux-idris"
+pathconf : String -> Bits32 -> Long
+
+export %foreign "C:fpathconf, linux-idris"
+fpathconf : Bits32 -> Bits32 -> Long
+EOT
+
+codegen/limits_gen >>src/System/Linux/Limits.idr
