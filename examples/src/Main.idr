@@ -57,6 +57,10 @@ prog = do
       putStrLn "Process ID: \{show pid} (parent: \{show ppid})"
       withFile "linux.ipkg" 0 0 (readTill end 0)
       injectIO $ addFlags Stdin O_NONBLOCK
+      (fd,str) <- injectIO (mkstemp "build/hello")
+      putStrLn "opened temporary file: \{str}"
+      writeAll fd "a temporary hello world\n"
+      tryClose fd
       readTill end 0 Stdin
       withFile "build/out" O_CREAT 0o600 $ \fd => writeAll fd "hello world"
 
