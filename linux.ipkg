@@ -15,10 +15,12 @@ modules = System.Linux.Error
 
         , System.Linux.File
         , System.Linux.File.Flags
+        , System.Linux.File.Stats
         , System.Linux.File.Whence
 
         , System.Linux.Limits
         , System.Linux.Process
+        , System.Linux.Time
 
 sourcedir = "src"
 

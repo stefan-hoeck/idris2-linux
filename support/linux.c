@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/statvfs.h>
 #include <unistd.h>
 
 #define CHECKRES                                                               \
@@ -105,3 +106,27 @@ int li_setegid(gid_t gid) {
   int res = setegid(gid);
   CHECKRES
 }
+
+struct statvfs *li_allocStatvfs() {
+  return (struct statvfs *)calloc(1, sizeof(struct statvfs));
+}
+
+void *li_freeStatvfs(struct statvfs *v) { free(v); }
+
+struct stat *li_allocStat() {
+  return (struct stat *)calloc(1, sizeof(struct stat));
+}
+
+void *li_freeStat(struct stat *v) { free(v); }
+
+struct timespec *li_allocTimespec() {
+  return (struct timespec *)calloc(1, sizeof(struct timespec));
+}
+
+void *li_freeTimespec(struct timespec *v) { free(v); }
+
+struct timespec *li_atime(struct stat *v) { return &(v->st_atim); }
+
+struct timespec *li_ctime(struct stat *v) { return &(v->st_ctim); }
+
+struct timespec *li_mtime(struct stat *v) { return &(v->st_mtim); }
