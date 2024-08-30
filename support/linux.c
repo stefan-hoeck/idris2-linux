@@ -125,8 +125,8 @@ struct timespec *li_allocTimespec() {
 
 void *li_freeTimespec(struct timespec *v) { free(v); }
 
-struct timespec *li_atime(struct stat *v) {return &(v->st_atim);}
+struct timespec *li_atime(struct stat *v) { return &(v->st_atim); }
 
-struct timespec *li_ctime(struct stat *v) {return &(v->st_ctim);}
+struct timespec *li_ctime(struct stat *v) { return &(v->st_ctim); }
 
-struct timespec *li_mtime(struct stat *v) {return &(v->st_mtim);}
+struct timespec *li_mtime(struct stat *v) { return &(v->st_mtim); }
