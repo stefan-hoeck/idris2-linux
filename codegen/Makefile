@@ -11,7 +11,7 @@ else
 endif
 
 .PHONY: all
-all: error_gen flags_gen whence_gen limits_gen
+all: error_gen flags_gen whence_gen limits_gen filetype_gen
 
 error_gen: error.c
 	$(CC) $(LDFLAGS) -o error_gen error.c
@@ -24,3 +24,6 @@ whence_gen: whence.c
 
 limits_gen: limits.c
 	$(CC) $(LDFLAGS) -o limits_gen limits.c
+
+filetype_gen: filetype.c
+	$(CC) $(LDFLAGS) -o filetype_gen filetype.c

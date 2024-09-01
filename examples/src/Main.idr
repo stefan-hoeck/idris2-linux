@@ -14,6 +14,7 @@ import Example.Ch5.AtomicAppend
 import Example.Util.File
 import Example.Util.Opts
 import System
+import System.Linux.File.Stats
 import System.Linux.Process
 
 %default total
@@ -61,6 +62,10 @@ prog = do
       putStrLn "opened temporary file: \{str}"
       writeAll fd "a temporary hello world\n"
       tryClose fd
+      injectIO (statvfs "linux.ipkg") >>= printLn
+      injectIO (lstat "linux.ipkg") >>= printLn
+      injectIO (lstat "src") >>= printLn
+      injectIO (lstat "/home/gundi/playground/linux.ipkg") >>= printLn
       readTill end 0 Stdin
       withFile "build/out" O_CREAT 0o600 $ \fd => writeAll fd "hello world"
 

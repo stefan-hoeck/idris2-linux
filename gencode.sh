@@ -115,3 +115,41 @@ fpathconf : Bits32 -> Bits32 -> Long
 EOT
 
 codegen/limits_gen >>src/System/Linux/Limits.idr
+
+cat >src/System/Linux/File/Type.idr <<EOT
+-- Note: This module is automatically generated when Idris builds
+-- the library and the constants will be replaced with values
+-- matching the system this is generated on.
+--
+-- The placeholders are here so that it works with tools like the LSP
+-- without first compiling the library. They were generated on an x86_64
+-- GNU/Linux system with GCC. If you are on a similar system, your numbers
+-- might very well be identical.
+module System.Linux.File.Type
+
+import Data.Bits
+import Data.C.Integer
+import Derive.Finite
+import Derive.Prelude
+
+%default total
+%language ElabReflection
+
+public export
+data FileType : Type where
+  Regular     : FileType
+  Directory   : FileType
+  CharDevice  : FileType
+  BlockDevice : FileType
+  Pipe        : FileType
+  Socket      : FileType
+  Link        : FileType
+  Other       : FileType
+
+%runElab derive "FileType" [Show,Eq,Ord,Finite]
+
+public export
+fromMode : ModeT -> FileType
+EOT
+
+codegen/filetype_gen >>src/System/Linux/File/Type.idr
