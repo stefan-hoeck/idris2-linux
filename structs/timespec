@@ -1,0 +1,6 @@
+timespec
+Timespec
+TS
+linux-idris
+time_t,tv_sec,seconds,TimeT
+long,tv_nsec,nanoseconds,NsecT

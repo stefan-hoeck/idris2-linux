@@ -1,0 +1,17 @@
+stat
+FileStats
+FS
+linux-idris
+dev_t,st_dev,dev,DevT
+ino_t,st_ino,ino,InoT
+mode_t,st_mode,mode,ModeT
+nlink_t,st_nlink,nlink,NlinkT
+uid_t,st_uid,uid,UidT
+gid_t,st_gid,gid,GidT
+dev_t,st_rdev,rdev,DevT
+off_t,st_size,size,SizeT
+size_t,st_blksize,blksize,BlkSizeT
+blkcnt_t,st_blocks,blocks,BlkCntT
+struct timespec,st_atim,atime,AnyPtr
+struct timespec,st_mtim,mtime,AnyPtr
+struct timespec,st_ctim,ctime,AnyPtr

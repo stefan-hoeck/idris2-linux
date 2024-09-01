@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/statvfs.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <unistd.h>
 
 #define CHECKRES                                                               \
@@ -108,36 +108,77 @@ int li_setegid(gid_t gid) {
   CHECKRES
 }
 
-struct statvfs *li_allocStatvfs() {
-  return (struct statvfs *)calloc(1, sizeof(struct statvfs));
-}
-
-void *li_freeStatvfs(struct statvfs *v) { free(v); }
-
-struct stat *li_allocStat() {
-  return (struct stat *)calloc(1, sizeof(struct stat));
-}
-
-void *li_freeStat(struct stat *v) { free(v); }
-
 int li_stat(const char *pth, struct stat *m) {
   int res = stat(pth, m);
-  printf("Dev  : %d\n", m->st_dev);
-  printf("Ino  : %d\n", m->st_ino);
-  printf("Mode : %d\n", m->st_mode);
-  printf("Gid  : %d\n", m->st_gid);
-  printf("Rdev : %d\n", m->st_rdev);
   CHECKRES
 }
 
-struct timespec *li_allocTimespec() {
-  return (struct timespec *)calloc(1, sizeof(struct timespec));
+// timespec
+
+time_t get_timespec_tv_sec(struct timespec *v) { return v->tv_sec; }
+
+long get_timespec_tv_nsec(struct timespec *v) { return v->tv_nsec; }
+
+void set_timespec_tv_sec(struct timespec *v, time_t val) { v->tv_sec = val; }
+
+void set_timespec_tv_nsec(struct timespec *v, long val) { v->tv_nsec = val; }
+
+// statvs
+
+struct statvfs *calloc_statvfs() {
+  return (struct statvfs *)calloc(1, sizeof(struct statvfs));
 }
 
-void *li_freeTimespec(struct timespec *v) { free(v); }
+unsigned long get_statvfs_f_bsize(struct statvfs *v) { return v->f_bsize; }
 
-struct timespec *li_atime(struct stat *v) { return &(v->st_atim); }
+unsigned long get_statvfs_f_frsize(struct statvfs *v) { return v->f_frsize; }
 
-struct timespec *li_ctime(struct stat *v) { return &(v->st_ctim); }
+fsblkcnt_t get_statvfs_f_blocks(struct statvfs *v) { return v->f_blocks; }
 
-struct timespec *li_mtime(struct stat *v) { return &(v->st_mtim); }
+fsblkcnt_t get_statvfs_f_bfree(struct statvfs *v) { return v->f_bfree; }
+
+fsblkcnt_t get_statvfs_f_bavail(struct statvfs *v) { return v->f_bavail; }
+
+fsfilcnt_t get_statvfs_f_files(struct statvfs *v) { return v->f_files; }
+
+fsfilcnt_t get_statvfs_f_ffree(struct statvfs *v) { return v->f_ffree; }
+
+fsfilcnt_t get_statvfs_f_favail(struct statvfs *v) { return v->f_favail; }
+
+unsigned long get_statvfs_f_fsid(struct statvfs *v) { return v->f_fsid; }
+
+unsigned long get_statvfs_f_flag(struct statvfs *v) { return v->f_flag; }
+
+unsigned long get_statvfs_f_namemax(struct statvfs *v) { return v->f_namemax; }
+
+// stat
+
+struct stat *calloc_stat() {
+  return (struct stat *)calloc(1, sizeof(struct stat));
+}
+
+dev_t get_stat_st_dev(struct stat *v) { return v->st_dev; }
+
+ino_t get_stat_st_ino(struct stat *v) { return v->st_ino; }
+
+mode_t get_stat_st_mode(struct stat *v) { return v->st_mode; }
+
+nlink_t get_stat_st_nlink(struct stat *v) { return v->st_nlink; }
+
+uid_t get_stat_st_uid(struct stat *v) { return v->st_uid; }
+
+gid_t get_stat_st_gid(struct stat *v) { return v->st_gid; }
+
+dev_t get_stat_st_rdev(struct stat *v) { return v->st_rdev; }
+
+off_t get_stat_st_size(struct stat *v) { return v->st_size; }
+
+size_t get_stat_st_blksize(struct stat *v) { return v->st_blksize; }
+
+blkcnt_t get_stat_st_blocks(struct stat *v) { return v->st_blocks; }
+
+struct timespec *get_stat_st_atim(struct stat *v) { return &(v->st_atim); }
+
+struct timespec *get_stat_st_mtim(struct stat *v) { return &(v->st_mtim); }
+
+struct timespec *get_stat_st_ctim(struct stat *v) { return &(v->st_ctim); }

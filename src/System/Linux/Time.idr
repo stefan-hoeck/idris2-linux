@@ -6,23 +6,20 @@ import Derive.Prelude
 import public System.Clock
 
 %default total
-%language ElabReflection
 
---------------------------------------------------------------------------------
--- Structs
---------------------------------------------------------------------------------
+export %foreign "C:calloc_timespec, linux-idris"
+calloc_timespec: PrimIO AnyPtr
 
-public export
-0 Timespec : Type
-Timespec =
-  Struct "timespec"
-    [ ("tv_sec", TimeT)
-    , ("tv_nsec", NsecT)
-    ]
+export %foreign "C:get_timespec_tv_sec, linux-idris"
+get_timespec_tv_sec: AnyPtr -> PrimIO TimeT
+
+export %foreign "C:get_timespec_tv_nsec, linux-idris"
+get_timespec_tv_nsec: AnyPtr -> PrimIO NsecT
 
 export
-toClock : {t : _} -> Timespec -> Clock t
-toClock s =
-  MkClock
-    (cast {from = TimeT} $ getField s "tv_sec")
-    (cast {from = NsecT} $ getField s "tv_nsec")
+toClock : AnyPtr -> IO (Clock UTC)
+toClock p = do
+  x0 <- fromPrim $ get_timespec_tv_sec p
+  x1 <- fromPrim $ get_timespec_tv_nsec p
+  pure (MkClock (cast x0) (cast x1))
+

@@ -63,7 +63,9 @@ prog = do
       writeAll fd "a temporary hello world\n"
       tryClose fd
       injectIO (statvfs "linux.ipkg") >>= printLn
-      injectIO (stat "linux.ipkg") >>= printLn
+      injectIO (lstat "linux.ipkg") >>= printLn
+      injectIO (lstat "src") >>= printLn
+      injectIO (lstat "/home/gundi/playground/linux.ipkg") >>= printLn
       readTill end 0 Stdin
       withFile "build/out" O_CREAT 0o600 $ \fd => writeAll fd "hello world"
 

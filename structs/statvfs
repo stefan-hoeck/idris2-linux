@@ -1,0 +1,15 @@
+statvfs
+Statvfs
+SF
+linux-idris
+unsigned long,f_bsize,blockSize,ULong
+unsigned long,f_frsize,fundamentalBlockSize,ULong
+fsblkcnt_t,f_blocks,blocks,FsBlkCntT
+fsblkcnt_t,f_bfree,freeBlocks,FsBlkCntT
+fsblkcnt_t,f_bavail,availableBlocks,FsBlkCntT
+fsfilcnt_t,f_files,files,FsFilCntT
+fsfilcnt_t,f_ffree,freeFiles,FsFilCntT
+fsfilcnt_t,f_favail,availableFiles,FsFilCntT
+unsigned long,f_fsid,fsID,ULong
+unsigned long,f_flag,flags,ULong
+unsigned long,f_namemax,namemax,ULong
