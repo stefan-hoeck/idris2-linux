@@ -117,11 +117,11 @@ int li_stat(const char *pth, struct stat *m) {
 
 time_t get_timespec_tv_sec(struct timespec *v) { return v->tv_sec; }
 
-long get_timespec_tv_nsec(struct timespec *v) { return v->tv_nsec; }
+int64_t get_timespec_tv_nsec(struct timespec *v) { return v->tv_nsec; }
 
 void set_timespec_tv_sec(struct timespec *v, time_t val) { v->tv_sec = val; }
 
-void set_timespec_tv_nsec(struct timespec *v, long val) { v->tv_nsec = val; }
+void set_timespec_tv_nsec(struct timespec *v, int64_t val) { v->tv_nsec = val; }
 
 // statvs
 
@@ -129,9 +129,9 @@ struct statvfs *calloc_statvfs() {
   return (struct statvfs *)calloc(1, sizeof(struct statvfs));
 }
 
-unsigned long get_statvfs_f_bsize(struct statvfs *v) { return v->f_bsize; }
+uint64_t get_statvfs_f_bsize(struct statvfs *v) { return v->f_bsize; }
 
-unsigned long get_statvfs_f_frsize(struct statvfs *v) { return v->f_frsize; }
+uint64_t get_statvfs_f_frsize(struct statvfs *v) { return v->f_frsize; }
 
 fsblkcnt_t get_statvfs_f_blocks(struct statvfs *v) { return v->f_blocks; }
 
@@ -145,11 +145,11 @@ fsfilcnt_t get_statvfs_f_ffree(struct statvfs *v) { return v->f_ffree; }
 
 fsfilcnt_t get_statvfs_f_favail(struct statvfs *v) { return v->f_favail; }
 
-unsigned long get_statvfs_f_fsid(struct statvfs *v) { return v->f_fsid; }
+uint64_t get_statvfs_f_fsid(struct statvfs *v) { return v->f_fsid; }
 
-unsigned long get_statvfs_f_flag(struct statvfs *v) { return v->f_flag; }
+uint64_t get_statvfs_f_flag(struct statvfs *v) { return v->f_flag; }
 
-unsigned long get_statvfs_f_namemax(struct statvfs *v) { return v->f_namemax; }
+uint64_t get_statvfs_f_namemax(struct statvfs *v) { return v->f_namemax; }
 
 // stat
 
