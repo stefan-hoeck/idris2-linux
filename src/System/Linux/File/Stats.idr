@@ -5,6 +5,7 @@ import Data.C.Struct
 import Derive.Prelude
 import System.Linux.Error
 import System.Linux.File
+import System.Linux.File.Type
 import System.Linux.Time
 
 %default total
@@ -87,6 +88,7 @@ record FileStats where
   dev     : DevT
   ino     : InoT
   mode    : ModeT
+  type    : FileType
   nlink   : NlinkT
   uid     : UidT
   gid     : GidT
@@ -94,9 +96,9 @@ record FileStats where
   size    : OffT
   blksize : BlkSizeT
   blkcnt  : BlkCntT
-  atime   : Time
-  mtime   : Time
-  ctime   : Time
+  atime   : Clock UTC
+  mtime   : Clock UTC
+  ctime   : Clock UTC
 
 %runElab derive "FileStats" [Show,Eq]
 
@@ -115,6 +117,7 @@ toFileStats s =
   FS
     { dev     = getField s "st_dev"
     , ino     = getField s "st_ino"
+    , type    = fromMode $ getField s "st_mode"
     , mode    = getField s "st_mode"
     , nlink   = getField s "st_nlink"
     , uid     = getField s "st_uid"
@@ -123,9 +126,9 @@ toFileStats s =
     , size    = getField s "st_size"
     , blksize = getField s "st_blksize"
     , blkcnt  = getField s "st_blkcnt"
-    , atime   = toTime $ atime s
-    , mtime   = toTime $ mtime s
-    , ctime   = toTime $ ctime s
+    , atime   = toClock $ atime s
+    , mtime   = toClock $ mtime s
+    , ctime   = toClock $ ctime s
     }
 
 --------------------------------------------------------------------------------
@@ -150,7 +153,7 @@ prim__allocStat : PrimIO Stat
 export %foreign "C:li_freeStat, linux-idris"
 prim__freeStat : Stat -> PrimIO ()
 
-%foreign "C:stat, linux-idris"
+%foreign "C:li_stat, linux-idris"
 prim__stat : String -> Stat -> PrimIO CInt
 
 %foreign "C:lstat, linux-idris"

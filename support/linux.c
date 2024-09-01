@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/statvfs.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #define CHECKRES                                                               \
@@ -118,6 +119,16 @@ struct stat *li_allocStat() {
 }
 
 void *li_freeStat(struct stat *v) { free(v); }
+
+int li_stat(const char *pth, struct stat *m) {
+  int res = stat(pth, m);
+  printf("Dev  : %d\n", m->st_dev);
+  printf("Ino  : %d\n", m->st_ino);
+  printf("Mode : %d\n", m->st_mode);
+  printf("Gid  : %d\n", m->st_gid);
+  printf("Rdev : %d\n", m->st_rdev);
+  CHECKRES
+}
 
 struct timespec *li_allocTimespec() {
   return (struct timespec *)calloc(1, sizeof(struct timespec));

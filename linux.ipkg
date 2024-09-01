@@ -16,6 +16,7 @@ modules = System.Linux.Error
         , System.Linux.File
         , System.Linux.File.Flags
         , System.Linux.File.Stats
+        , System.Linux.File.Type
         , System.Linux.File.Whence
 
         , System.Linux.Limits

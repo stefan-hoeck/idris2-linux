@@ -3,6 +3,7 @@ module System.Linux.Time
 import Data.C.Integer
 import Data.C.Struct
 import Derive.Prelude
+import public System.Clock
 
 %default total
 %language ElabReflection
@@ -19,18 +20,9 @@ Timespec =
     , ("tv_nsec", NsecT)
     ]
 
-public export
-record Time where
-  constructor T
-  seconds     : TimeT
-  nanoseconds : NsecT
-
-%runElab derive "Time" [Show,Eq,Ord]
-
 export
-toTime : Timespec -> Time
-toTime s =
-  T
-    { seconds     = getField s "tv_sec"
-    , nanoseconds = getField s "tv_nsec"
-    }
+toClock : {t : _} -> Timespec -> Clock t
+toClock s =
+  MkClock
+    (cast {from = TimeT} $ getField s "tv_sec")
+    (cast {from = NsecT} $ getField s "tv_nsec")
