@@ -93,3 +93,7 @@ The following will probably not be implemented:
   a system daemon
 
 Note: Different types of clocks are implemented in `System.Clock` in base.
+
+### Chapter 11
+
+- [x] implement `sysconf`, `pathconf`, and `fpathconf`
