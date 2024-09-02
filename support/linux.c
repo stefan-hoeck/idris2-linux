@@ -1,10 +1,12 @@
 // Copyright 2024 Stefan Höck
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
@@ -45,6 +47,11 @@ int li_close(int fd) {
 
 ssize_t li_read(int fd, char *buf, size_t bytes) {
   int res = read(fd, buf, bytes);
+  CHECKRES
+}
+
+ssize_t li_readlink(const char *pth, char *buf, size_t bytes) {
+  int res = readlink(pth, buf, bytes);
   CHECKRES
 }
 
@@ -112,6 +119,112 @@ int li_stat(const char *pth, struct stat *m) {
   int res = stat(pth, m);
   CHECKRES
 }
+
+int li_link(const char *pth, const char *lnk) {
+  int res = link(pth, lnk);
+  CHECKRES
+}
+
+int li_symlink(const char *pth, const char *lnk) {
+  int res = symlink(pth, lnk);
+  CHECKRES
+}
+
+int li_rename(const char *pth, const char *lnk) {
+  int res = rename(pth, lnk);
+  CHECKRES
+}
+
+int li_unlink(const char *pth) {
+  int res = unlink(pth);
+  CHECKRES
+}
+
+int li_mkdir(const char *pth, mode_t mode) {
+  int res = mkdir(pth, mode);
+  CHECKRES
+}
+
+int li_remove(const char *pth) {
+  int res = remove(pth);
+  CHECKRES
+}
+
+int li_rmdir(const char *pth) {
+  int res = rmdir(pth);
+  CHECKRES
+}
+
+typedef struct {
+  DIR *dirptr;
+} DirInfo;
+
+DirInfo *calloc_dir() { return (DirInfo *)calloc(1, sizeof(DirInfo)); }
+
+int li_opendir(const char *pth, DirInfo *di) {
+  DIR *res = opendir(pth);
+  if (res == NULL) {
+    free(di);
+    return -errno;
+  } else {
+    di->dirptr = res;
+    return 0;
+  }
+}
+
+int li_fdopendir(int fd, DirInfo *di) {
+  DIR *res = fdopendir(fd);
+  if (res == NULL) {
+    free(di);
+    return -errno;
+  } else {
+    di->dirptr = res;
+    return 0;
+  }
+}
+
+int li_closedir(DirInfo *di) {
+  int res = closedir(di->dirptr);
+  free(di);
+  CHECKRES
+}
+
+void li_rewinddir(DirInfo *di) { rewinddir(di->dirptr); }
+
+ssize_t li_readdir(DirInfo *di, char *buf) {
+  errno = 0;
+  struct dirent *res = readdir(di->dirptr);
+  if (res == NULL) {
+    return -errno;
+  } else {
+    strcpy(buf, res->d_name);
+    return strlen(res->d_name);
+  }
+}
+
+ssize_t li_getcwd(char *buf, size_t len) {
+  errno = 0;
+  char *res = getcwd(buf, len);
+  if (res == NULL) {
+    return -errno;
+  } else {
+    return strlen(buf);
+  }
+}
+
+int li_chdir(const char *buf) {
+  int res = chdir(buf);
+  CHECKRES
+}
+
+int li_chroot(const char *buf) {
+  int res = chroot(buf);
+  CHECKRES
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Structs
+////////////////////////////////////////////////////////////////////////////////
 
 // timespec
 

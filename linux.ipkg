@@ -10,7 +10,9 @@ depends = base >= 0.7.0
         , filepath
         , finite
 
-modules = System.Linux.Error
+modules = System.Linux.Dir
+
+        , System.Linux.Error
         , System.Linux.Error.Type
 
         , System.Linux.File

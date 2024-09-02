@@ -30,16 +30,16 @@ prim__open : String -> CInt -> ModeT -> PrimIO CInt
 %foreign "C:li_close, linux-idris"
 prim__close : Bits32 -> PrimIO CInt
 
-%foreign "C__collect_safe:li_read, linux-idris"
+%foreign "C:li_read, linux-idris"
 prim__read : (file : Bits32) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 
-%foreign "C__collect_safe:li_pread, linux-idris"
+%foreign "C:li_pread, linux-idris"
 prim__pread : (file : Bits32) -> Buffer -> (max : Bits32) -> OffT -> PrimIO SsizeT
 
-%foreign "C__collect_safe:li_write, linux-idris"
+%foreign "C:li_write, linux-idris"
 prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
 
-%foreign "C__collect_safe:li_pwrite, linux-idris"
+%foreign "C:li_pwrite, linux-idris"
 prim__pwrite : (file : Bits32) -> Buffer -> (off,max : Bits32) -> OffT -> PrimIO SsizeT
 
 %foreign "C:lseek, linux-idris"
@@ -68,6 +68,24 @@ prim__truncate : (file : String) -> (len : OffT) -> PrimIO CInt
 
 %foreign "C:li_mkstemp, linux-idris"
 prim__mkstemp : Buffer -> PrimIO CInt
+
+%foreign "C:li_link, linux-idris"
+prim__link : String -> String -> PrimIO CInt
+
+%foreign "C:li_symlink, linux-idris"
+prim__symlink : String -> String -> PrimIO CInt
+
+%foreign "C:li_rename, linux-idris"
+prim__rename : String -> String -> PrimIO CInt
+
+%foreign "C:li_unlink, linux-idris"
+prim__unlink : String -> PrimIO CInt
+
+%foreign "C:li_remove, linux-idris"
+prim__remove : String -> PrimIO CInt
+
+%foreign "C:li_readlink, linux-idris"
+prim__readlink : (file : String) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 
 --------------------------------------------------------------------------------
 -- FileDesc
@@ -106,6 +124,9 @@ data FileErr : Type where
   FlagsErr : Error -> FileErr
   DupErr   : Error -> FileErr
   FilErr   : Error -> FileErr
+  OpenDir  : Error -> FileErr
+  CloseDir : Error -> FileErr
+  ReadDir  : Error -> FileErr
 
 %runElab derive "FileErr" [Show,Eq]
 
@@ -118,6 +139,9 @@ Interpolation FileErr where
   interpolate (FlagsErr x)  = "Error when setting/getting file descriptor flags: \{x}"
   interpolate (DupErr x)    = "Error when duplicating file descriptor: \{x}"
   interpolate (FilErr x)    = "File error: \{x}"
+  interpolate (OpenDir x)   = "Error when opening directory: \{x}"
+  interpolate (CloseDir x)  = "Error when closing directory: \{x}"
+  interpolate (ReadDir x)   = "Error when reading from directory: \{x}"
 
 --------------------------------------------------------------------------------
 -- Mode
@@ -171,6 +195,31 @@ toReadRes act =
             True  => case fromRes x of
               EAGAIN => MkIORes (Right RAgain) w
               x      => MkIORes (Left $ ReadErr x) w
+
+||| Converts a number of bytes read into a buffer to a `ByteString`
+export
+toBytes : PrimIO (Buffer,SsizeT) -> IO (Either FileErr ByteString)
+toBytes act =
+  fromPrim $ \w =>
+    let MkIORes (buf,rd) w := act w
+     in case rd < 0 of
+          False => MkIORes (Right $ unsafeByteString (cast rd) buf) w
+          True  => MkIORes (Left $ ReadErr $ fromRes rd) w
+
+||| Converts a number of bytes read into a buffer to a `ByteString`
+||| This returns `Right Nothing` in case of zero bytes read.
+export
+toBytesMaybe :
+     PrimIO (Buffer,SsizeT)
+  -> IO (Either FileErr $ Maybe ByteString)
+toBytesMaybe act =
+  fromPrim $ \w =>
+    let MkIORes (buf,rd) w := act w
+     in case rd < 0 of
+          False => case rd == 0 of
+            False => MkIORes (Right . Just $ unsafeByteString (cast rd) buf) w
+            True  => MkIORes (Right Nothing) w
+          True  => MkIORes (Left $ ReadErr $ fromRes rd) w
 
 toWriteRes : PrimIO SsizeT -> IO (Either FileErr WriteRes)
 toWriteRes act =
@@ -371,3 +420,54 @@ dup2 fd fd2 = toFD DupErr $ prim__dup2 (fileDesc fd) (fileDesc fd2)
 export %inline
 dupfd : FileDesc a => a -> (start : Bits32) -> IO (Either FileErr Bits32)
 dupfd fd fd2 = toFD DupErr $ prim__dupfd (fileDesc fd) fd2
+
+--------------------------------------------------------------------------------
+-- Links
+--------------------------------------------------------------------------------
+
+||| Creates a (hard) link to a file.
+export %inline
+link : (file, link : FilePath) -> IO (Either FileErr ())
+link f l = toUnit FilErr $ prim__link "\{f}" "\{l}"
+
+||| Creates a (hard) link to a file.
+export %inline
+symlink : (file, link : FilePath) -> IO (Either FileErr ())
+symlink f l = toUnit FilErr $ prim__symlink "\{f}" "\{l}"
+
+||| Deletes a (hard) link to a file.
+|||
+||| If this is the last link to the file, the file is removed.
+|||
+||| Note: Files with open file descriptors will only be deleted after the last
+|||       open file descriptor is closed, but the file name will already
+|||       disapper from the file system before that.
+export %inline
+unlink : (file : FilePath) -> IO (Either FileErr ())
+unlink f = toUnit FilErr $ prim__unlink "\{f}"
+
+||| Removes a file or (empty) directory calling `unlink` or `rmdir`
+||| internally.
+export %inline
+remove : (file : FilePath) -> IO (Either FileErr ())
+remove f = toUnit FilErr $ prim__remove "\{f}"
+
+||| Renames a file within a file system.
+|||
+||| Note: This will fail if the two paths point to different file systems.
+|||       In that case, the file needs to be copied from one FS to the other.
+export %inline
+rename : (file, link : FilePath) -> IO (Either FileErr ())
+rename f l = toUnit FilErr $ prim__rename "\{f}" "\{l}"
+
+||| Returns the path of a file a symbolic link points to
+|||
+||| This allocates a buffer of 4096 bytes for the byte array holding
+||| the result.
+export
+readlink : (file : FilePath) -> IO (Either FileErr ByteString)
+readlink f =
+  toBytes $ \w =>
+    let MkIORes buf w := prim__newBuf 4096 w
+        MkIORes rd  w := prim__readlink "\{f}" buf 4096 w
+     in MkIORes (buf,rd) w
