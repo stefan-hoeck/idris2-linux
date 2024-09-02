@@ -102,3 +102,12 @@ Note: Different types of clocks are implemented in `System.Clock` in base.
 
 - [ ] implement `uname`
 - [ ] solve exercises
+
+### Chapter 13
+
+- [ ] implement `fileno`
+- [ ] implement `fdopen`
+- [ ] do the exercises
+
+Notes: Currently, I am more interested in the raw system calls. Buffered
+file I/O is available from `System.File` in base.
