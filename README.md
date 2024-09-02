@@ -14,20 +14,34 @@ through the chapters, the todo list below will continuously grow.
 
 ### Chapter 4
 
-- [x] Implement `open` plus flags and mode.
-- [x] Implement `read` for raw buffers and `ByteString`.
-- [x] Implement `write` for raw buffers and `ByteString`.
-- [x] Implement `close`.
-- [x] Implement `lseek` including different `whence` constants.
-- [x] Solve exercises in Idris.
+- [x] implement `open` plus flags and mode
+- [x] implement `read` for raw buffers and `ByteString`
+- [x] implement `write` for raw buffers and `ByteString`
+- [x] implement `close`
+- [x] implement `lseek` including different `whence` constants
+- [x] solve exercises in Idris
 
 ### Chapter 5
 
-- [x] Get and set file flags using `fcntl`.
-- [x] Implement file duplication: `dup`, `dup2`, and via `fcntl`.
-- [x] Implement `pread` and `pwrite`.
-- [ ] Implement the scatter and gather versions of read and write.
-- [x] Implement `truncate` and `ftruncate`.
-- [x] Implement `mkstemp`.
-- [ ] Implement `tmpfile`.
-- [x] Solve (most) exercises in Idris.
+- [x] get and set file flags using `fcntl`
+- [x] implement file duplication: `dup`, `dup2`, and via `fcntl`
+- [x] implement `pread` and `pwrite`
+- [x] implement `truncate` and `ftruncate`
+- [x] implement `mkstemp`
+- [x] solve (most) exercises in Idris
+
+The following will probably not be implemented:
+
+* scatter and gather versions of `read` and `write`
+* `tmpfile` as it operates on `FILE *`
+* `dup3` as it is not part of POSIX
+
+### Chapter 6
+
+- [x] Implement `getpid` and `getppid`.
+
+The following will probably not be implemented:
+
+* `setjmp` and `longjmp` as they belong strictly to C land
+* exercises, as they deal either with non-implementable stuff or with the
+  environment, and we already have that from base
