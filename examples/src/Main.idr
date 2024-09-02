@@ -11,6 +11,8 @@ import Example.Ch4.Tee
 import Example.Ch5.Seek0Append
 import Example.Ch5.AtomicAppend
 
+import Example.Ch12.Processes
+
 import Example.Util.File
 import Example.Util.Opts
 import System
@@ -53,6 +55,7 @@ prog = do
     "seek"   :: t => seekProg t
     "atomic_append" :: t => atomicProg t
     "seek0_append" :: t => seekAppendProg t
+    "processes" :: t => processes t
     _           => do
       pid  <- getpid
       ppid <- getppid

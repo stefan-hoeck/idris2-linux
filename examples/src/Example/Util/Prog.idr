@@ -105,4 +105,4 @@ prettyOut = putStrLn . interpolate
 
 export %inline
 prettyErr : Interpolation a => a -> Prog [] ()
-prettyErr = ignore . liftIO . writeBytes Stderr . fromString . interpolate
+prettyErr = ignore . liftIO . writeStrLn Stderr . interpolate

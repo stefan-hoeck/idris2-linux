@@ -329,6 +329,10 @@ export %inline
 writeStr : FileDesc a => a -> String -> IO (Either FileErr WriteRes)
 writeStr fd = writeBytes fd . fromString
 
+export %inline
+writeStrLn : FileDesc a => a -> String -> IO (Either FileErr WriteRes)
+writeStrLn fd = writeStr fd . (++ "\n")
+
 --------------------------------------------------------------------------------
 -- File seeking
 --------------------------------------------------------------------------------
