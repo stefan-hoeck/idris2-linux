@@ -132,3 +132,13 @@ The following will probably not be implemented:
 
 * `access` as its use is discouraged
 * setting of i-node flags as these are non-standard
+
+### Chapter 16
+
+Extended attributes are non-standard and will not be supported
+for the time being.
+
+### Chapter 17
+
+Access control lists are non-standard and will not be supported
+for the time being.
