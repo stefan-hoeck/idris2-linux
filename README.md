@@ -38,10 +38,20 @@ The following will probably not be implemented:
 
 ### Chapter 6
 
-- [x] Implement `getpid` and `getppid`.
+- [x] implement `getpid` and `getppid`.
 
 The following will probably not be implemented:
 
 * `setjmp` and `longjmp` as they belong strictly to C land
 * exercises, as they deal either with non-implementable stuff or with the
   environment, and we already have that from base
+
+### Chapter 7
+
+- [ ] implement `realloc`
+
+The following will probably not be implemented:
+
+* `alloca` because it is mostly useful in C land
+* `memalign` and `posix_memalign` because they are non-standard
+
