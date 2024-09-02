@@ -118,3 +118,17 @@ file I/O is available from `System.File` in base.
 - [ ] implement `umount` and `umount2`
 - [x] implement `statvfs` and `fstatvfs`
 - [ ] do the exercise
+
+### Chapter 15
+
+- [x] implement `stat`, `lstat`, and `fstat`
+- [ ] implement `utimes`, `futimes`, and `lutimes`
+- [ ] implement `chown`, `lchown`, and `fchown`
+- [ ] implement `umask`
+- [ ] implement `chmod` and `fchmod`
+- [ ] do the exercises
+
+The following will probably not be implemented:
+
+* `access` as its use is discouraged
+* setting of i-node flags as these are non-standard
