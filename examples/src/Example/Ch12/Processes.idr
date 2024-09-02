@@ -39,16 +39,9 @@ hasUID n m =
 
 parameters {auto hf : Has FileErr es}
 
-  printFileErr : Either (HSum es) ReadRes -> Prog es ReadRes
-  printFileErr (Right r)  = pure r
-  printFileErr (Left err) =
-    case project FileErr err of
-      Just x  => anyErr (prettyErr x) $> EOF
-      Nothing => throwError err
-
   inDir : UidT -> FilePath -> Prog es ()
   inDir u p = do
-    res <- bracketCase printFileErr $
+    res <- logAndDropErr {e = FileErr} (($> EOF) . prettyErr) $
       withFile (p /> "status") O_RDONLY 0 $ \fd => do
         injectIO {es} (read fd 0x10000)
     case res of

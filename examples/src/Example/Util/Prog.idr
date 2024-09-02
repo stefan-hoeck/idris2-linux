@@ -86,6 +86,13 @@ export %inline
 handleError : Handler e -> Prog [e] () -> Prog fs ()
 handleError h = handleErrors [h]
 
+export
+logAndDropErr : Has e es => (e -> Prog [] a) -> Prog es a -> Prog es a
+logAndDropErr h =
+  bracketCase $ \case
+    Right v => pure v
+    Left  x => maybe (throwError x) (anyErr . h) (project e x)
+
 --------------------------------------------------------------------------------
 -- Running programs
 --------------------------------------------------------------------------------
