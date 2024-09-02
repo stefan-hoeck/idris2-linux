@@ -79,3 +79,17 @@ Note: Calls to `crypt` are available from [idris2-crypt](https://github.com/stef
 The following will probably not be implemented:
 
 * `getresuid`, `getresgid`, `setfsuid`, and `setfsgid` (all are non-standard)
+
+### Chapter 10
+
+- [ ] implement `gmtime_r`
+- [ ] implement `localtime_r`
+- [ ] implement `mktime`
+- [ ] implement `strftime_l`
+
+The following will probably not be implemented:
+
+* `settimeofday` and `adjtime` because these are typically handled by
+  a system daemon
+
+Note: Different types of clocks are implemented in `System.Clock` in base.
