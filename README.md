@@ -66,3 +66,16 @@ The following will probably not be implemented:
 - [ ] implement `getspent`, `setspent`, and `endspent`
 
 Note: Calls to `crypt` are available from [idris2-crypt](https://github.com/stefan-hoeck/idris2-crypt).
+
+### Chapter 9
+
+- [x] implement `getuid`, `geteuid`, `setuid`, and `seteuid`
+- [x] implement `getgid`, `getegid`, `setgid`, and `setegid`
+- [ ] implement `setreuid` and `setregid`
+- [ ] implement `getgroups`
+- [ ] implement `setgroups`
+- [ ] implement `initgroups`
+
+The following will probably not be implemented:
+
+* `getresuid`, `getresgid`, `setfsuid`, and `setfsgid` (all are non-standard)
