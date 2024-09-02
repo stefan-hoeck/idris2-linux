@@ -142,3 +142,25 @@ for the time being.
 
 Access control lists are non-standard and will not be supported
 for the time being.
+
+### Chapter 18
+
+- [x] implement `link` and `unlink`
+- [x] implement `rename`
+- [x] implement `symlink` and `readlink`
+- [x] implement `mkidr`, `rmdir`, and something similar to `mkdir -p`
+- [x] implement `remove`
+- [x] implement `opendir` and `fopendir`
+- [x] implement `rewinddir` and `closedir`
+- [x] implement `readdir`
+- [x] implement `getcwd`
+- [x] implement `chdir`
+- [x] implement `chroot`
+- [ ] do the exercises
+
+
+The following will probably not be implemented:
+
+* `nfwt`: We should probably write our tree-walking routines in
+  Idris proper instead of messing around with C callbacks.
+* `realpath` because it's even more broken than `getcwd`

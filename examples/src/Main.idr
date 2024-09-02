@@ -14,6 +14,7 @@ import Example.Ch5.AtomicAppend
 import Example.Util.File
 import Example.Util.Opts
 import System
+import System.Linux.Dir
 import System.Linux.File.Stats
 import System.Linux.Process
 
@@ -66,8 +67,16 @@ prog = do
       injectIO (lstat "linux.ipkg") >>= printLn
       injectIO (lstat "src") >>= printLn
       injectIO (lstat "/home/gundi/playground/linux.ipkg") >>= printLn
+      injectIO (readlink "/home/gundi/playground/linux.ipkg") >>= ignore . injectIO . writeBytes Stdout
+      injectIO (mkpdir "/home/gundi/playground/foo/bar/baz/quux" 0o700)
+      putStrLn ""
       readTill end 0 Stdin
-      withFile "build/out" O_CREAT 0o600 $ \fd => writeAll fd "hello world"
+      injectIO getcwd >>= ignore . injectIO . writeBytes Stdout
+      putStrLn ""
+      injectIO (chdir "..")
+      injectIO getcwd >>= ignore . injectIO . writeBytes Stdout
+      putStrLn ""
+      injectIO (chroot "/etc")
 
 covering
 main : IO ()
