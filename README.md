@@ -14,9 +14,9 @@ through the chapters, the todo list below will continuously grow.
 
 ### Chapter 4
 
--[x] Implement `open` plus flags and mode
--[x] Implement `read` for raw buffers and `ByteString`
--[x] Implement `write` for raw buffers and `ByteString`
--[x] Implement `close`
--[x] Implement `lseek` including different `whence` constants
--[x] Solve exercises in Idris
+- [x] Implement `open` plus flags and mode
+- [x] Implement `read` for raw buffers and `ByteString`
+- [x] Implement `write` for raw buffers and `ByteString`
+- [x] Implement `close`
+- [x] Implement `lseek` including different `whence` constants
+- [x] Solve exercises in Idris
