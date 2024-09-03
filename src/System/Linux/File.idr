@@ -1,9 +1,9 @@
 module System.Linux.File
 
 import Data.Bits
-import Data.Buffer
 import Data.C.Integer
 
+import public Data.Buffer
 import public Data.Buffer.Core
 import public Data.ByteString
 import public Data.ByteVect
@@ -328,6 +328,10 @@ write fd ibuf = writeBytes fd (fromIBuffer ibuf)
 export %inline
 writeStr : FileDesc a => a -> String -> IO (Either FileErr WriteRes)
 writeStr fd = writeBytes fd . fromString
+
+export %inline
+writeStrLn : FileDesc a => a -> String -> IO (Either FileErr WriteRes)
+writeStrLn fd = writeStr fd . (++ "\n")
 
 --------------------------------------------------------------------------------
 -- File seeking

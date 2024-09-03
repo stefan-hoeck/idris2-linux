@@ -88,10 +88,10 @@ mkpdir (FP p) (M m) =
 
 ||| Opens a directory.
 export
-opendir : String -> IO (Either FileErr Dir)
+opendir : FilePath -> IO (Either FileErr Dir)
 opendir s = do
   p <- fromPrim $ prim__calloc_dir
-  toRes OpenDir (pure $ MkDir p) $ prim__opendir s p
+  toRes OpenDir (pure $ MkDir p) $ prim__opendir "\{s}" p
 
 ||| Opens a directory from a file descriptor.
 export

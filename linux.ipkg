@@ -24,6 +24,7 @@ modules = System.Linux.Dir
         , System.Linux.Limits
         , System.Linux.Process
         , System.Linux.Time
+        , System.Linux.User.Passwd
 
 sourcedir = "src"
 

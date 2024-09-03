@@ -2,6 +2,7 @@ module System.Linux.Process
 
 import Data.C.Integer
 import System.Linux.Error
+import System.Linux.File
 
 %default total
 

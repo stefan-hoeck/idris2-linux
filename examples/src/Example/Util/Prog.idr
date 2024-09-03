@@ -86,6 +86,20 @@ export %inline
 handleError : Handler e -> Prog [e] () -> Prog fs ()
 handleError h = handleErrors [h]
 
+export
+dropErr : Has e es => (e -> a) -> Prog es a -> Prog es a
+dropErr f =
+  bracketCase $ \case
+    Right v => pure v
+    Left  x => maybe (throwError x) (pure . f) (project e x)
+
+export
+logAndDropErr : Has e es => (e -> Prog [] a) -> Prog es a -> Prog es a
+logAndDropErr h =
+  bracketCase $ \case
+    Right v => pure v
+    Left  x => maybe (throwError x) (anyErr . h) (project e x)
+
 --------------------------------------------------------------------------------
 -- Running programs
 --------------------------------------------------------------------------------
@@ -105,4 +119,4 @@ prettyOut = putStrLn . interpolate
 
 export %inline
 prettyErr : Interpolation a => a -> Prog [] ()
-prettyErr = ignore . liftIO . writeBytes Stderr . fromString . interpolate
+prettyErr = ignore . liftIO . writeStrLn Stderr . interpolate
