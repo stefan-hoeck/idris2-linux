@@ -100,7 +100,7 @@ Note: Different types of clocks are implemented in `System.Clock` in base.
 ### Chapter 12
 
 - [ ] implement `uname`
-- [ ] solve exercises
+- [x] solve process tree exercise
 
 ### Chapter 13
 
