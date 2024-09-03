@@ -12,7 +12,7 @@ import public System.Posix.File
 -- FFI
 --------------------------------------------------------------------------------
 
-%foreign "C:li_inotify_init, linux-idris"
+%foreign "C:li_inotify_init1, linux-idris"
 prim__inotify_init1 : Bits32 -> PrimIO CInt
 
 %foreign "C:li_inotify_add_watch, linux-idris"
@@ -63,7 +63,7 @@ public export
 record InotifyRes where
   constructor IR
   watch  : Watch
-  mask   : InotifyEvent
+  mask   : InotifyMask
   cookie : Bits32
   name   : String
 
@@ -80,23 +80,38 @@ inotifyInit (IF f) = toVal (I . cast) $ prim__inotify_init1 f
 
 ||| Watches a file for the given events.
 export %inline
-inotifyAddWatch : Inotify -> String -> InotifyEvent -> IO (Either Errno Watch)
-inotifyAddWatch (I f) s (IE e) = toVal (W . cast) $ prim__inotify_add_watch f s e
+inotifyAddWatch : Inotify -> String -> InotifyMask -> IO (Either Errno Watch)
+inotifyAddWatch (I f) s (IM m) = toVal (W . cast) $ prim__inotify_add_watch f s m
 
 export %inline
 inotifyRm : Inotify -> Watch -> IO (Either Errno ())
 inotifyRm (I f) (W w) = toUnit $ prim__inotify_rm f w
 
+results : SnocList InotifyRes -> AnyPtr -> AnyPtr -> Bits32 -> List InotifyRes
+
+||| Reads at most `buf` from an `inotify` file descriptor.
+|||
+||| This will block the
+export
+inotifyRead : (buf : Bits32) -> Inotify -> IO (Either Errno $ List InotifyRes)
+inotifyRead buf i =
+  withPtr (cast buf) $ \p => readPtr i p buf >>= \case
+    Left x  => pure (Left x)
+    Right x => pure (Right $ results [<] p p x)
+
+--------------------------------------------------------------------------------
+-- Extracting Results
+--------------------------------------------------------------------------------
+
 reslt : AnyPtr -> InotifyRes
 reslt p =
   IR
     { watch  = W $ prim__inotify_wd p
-    , mask   = IE $ prim__inotify_mask p
+    , mask   = IM $ prim__inotify_mask p
     , cookie = prim__inotify_cookie p
     , name   = ""
     }
 
-results : SnocList InotifyRes -> AnyPtr -> AnyPtr -> Bits32 -> List InotifyRes
 results sx orig cur sz =
   case prim__inotify_more orig cur sz of
     0 => sx <>> []
@@ -106,10 +121,3 @@ results sx orig cur sz =
         orig
         (assert_smaller cur $ prim__inotify_next cur)
         sz
-
-export
-inotifyRead : (buf : Bits32) -> Inotify -> IO (Either Errno $ List InotifyRes)
-inotifyRead buf i =
-  withPtr (cast buf) $ \p => readPtr i p buf >>= \case
-    Left x  => pure (Left x)
-    Right x => pure (Right $ results [<] p p x)
