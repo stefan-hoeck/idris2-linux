@@ -8,3 +8,6 @@ posix/codegen/limits_gen
 posix/codegen/filetype_gen
 posix/support/posix.o
 posix/support/posix-idris
+linux/codegen/inotify_gen
+linux/support/linux.o
+linux/support/linux-idris

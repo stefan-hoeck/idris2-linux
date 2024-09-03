@@ -14,6 +14,8 @@ import Example.Ch5.AtomicAppend
 import Example.Ch12.Processes
 import Example.Ch12.HasFileOpen
 
+import Example.Ch19.Inotify
+
 import Example.Util.File
 import Example.Util.Opts
 import System
@@ -43,6 +45,9 @@ parameters {auto has : Has Errno es}
       BS 0 _ => putStrLn "reached end of file after \{show n} bytes"
       BS m y => putStrLn "read \{show m} bytes" >> readTill x (m+n) fd
 
+linuxIpkg : String
+linuxIpkg = "linux/linux.ipkg"
+
 covering
 prog : Prog [Errno, ArgErr] ()
 prog = do
@@ -57,18 +62,19 @@ prog = do
     "seek0_append" :: t => seekAppendProg t
     "processes" :: t => processes t
     "has_open" :: t => hasOpen t
+    "inotify" :: t => inotify t
     _           => do
       pid  <- getpid
       ppid <- getppid
       putStrLn "Process ID: \{show pid} (parent: \{show ppid})"
-      withFile "linux.ipkg" 0 0 (readTill end 0)
+      withFile linuxIpkg 0 0 (readTill end 0)
       injectIO $ addFlags Stdin O_NONBLOCK
-      (fd,str) <- injectIO (mkstemp "build/hello")
+      (fd,str) <- injectIO (mkstemp "linux/build/hello")
       putStrLn "opened temporary file: \{str}"
       writeAll fd "a temporary hello world\n"
       tryClose fd
-      injectIO (statvfs "linux.ipkg") >>= printLn
-      injectIO (lstat "linux.ipkg") >>= printLn
+      injectIO (statvfs linuxIpkg) >>= printLn
+      injectIO (lstat linuxIpkg) >>= printLn
       injectIO (lstat "src") >>= printLn
       injectIO (lstat "/home/gundi/playground/linux.ipkg") >>= printLn
       injectIO (readlink "/home/gundi/playground/linux.ipkg") >>= ignore . injectIO . writeBytes Stdout

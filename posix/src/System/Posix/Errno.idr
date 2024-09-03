@@ -58,3 +58,12 @@ toRes wrap act =
   toUnit act >>= \case
     Right () => Right <$> wrap
     Left x   => pure (Left x)
+
+export %inline
+toVal : (CInt -> a) -> PrimIO CInt -> IO (Either Errno a)
+toVal wrap act =
+  fromPrim $ \w =>
+    let MkIORes r w := act w
+     in case r < 0 of
+          True  => MkIORes (negErr r) w
+          False => MkIORes (Right $ wrap r) w

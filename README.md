@@ -163,3 +163,8 @@ The following will probably not be implemented:
 * `nfwt`: We should probably write our tree-walking routines in
   Idris proper instead of messing around with C callbacks.
 * `realpath` because it's even more broken than `getcwd`
+
+### Chapter 19
+
+- [x] implement `inotify` utilities for monitoring files
+- [ ] do the exercise
