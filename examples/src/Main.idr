@@ -17,9 +17,9 @@ import Example.Ch12.HasFileOpen
 import Example.Util.File
 import Example.Util.Opts
 import System
-import System.Linux.Dir
-import System.Linux.File.Stats
-import System.Linux.Process
+import System.Posix.Dir
+import System.Posix.File.Stats
+import System.Posix.Process
 
 %default total
 
@@ -34,18 +34,17 @@ usage =
 end : Fuel
 end = limit 1_000_000
 
-parameters {auto has : Has FileErr es}
+parameters {auto has : Has Errno es}
 
   readTill : FileDesc a => Fuel -> Nat -> a -> Prog es ()
   readTill Dry      n fd = putStrLn "out of fuel"
   readTill (More x) n fd =
     injectIO (read fd 0x10000) >>= \case
-      EOF            => putStrLn "reached end of file after \{show n} bytes"
-      RAgain         => putStrLn "currently no data"
-      Bytes (BS m y) => putStrLn "read \{show m} bytes" >> readTill x (m+n) fd
+      BS 0 _ => putStrLn "reached end of file after \{show n} bytes"
+      BS m y => putStrLn "read \{show m} bytes" >> readTill x (m+n) fd
 
 covering
-prog : Prog [Error, FileErr, ArgErr] ()
+prog : Prog [Errno, ArgErr] ()
 prog = do
   (_::args) <- getArgs | [] => fail (WrongArgs usage)
   case args of
@@ -73,7 +72,6 @@ prog = do
       injectIO (lstat "src") >>= printLn
       injectIO (lstat "/home/gundi/playground/linux.ipkg") >>= printLn
       injectIO (readlink "/home/gundi/playground/linux.ipkg") >>= ignore . injectIO . writeBytes Stdout
-      injectIO (mkpdir "/home/gundi/playground/foo/bar/baz/quux" 0o700)
       putStrLn ""
       readTill end 0 Stdin
       injectIO getcwd >>= ignore . injectIO . writeBytes Stdout
@@ -85,4 +83,4 @@ prog = do
 
 covering
 main : IO ()
-main = runProg $ handleErrors [prettyOut, prettyOut, prettyOut] prog
+main = runProg $ handleErrors [prettyOut, prettyOut] prog

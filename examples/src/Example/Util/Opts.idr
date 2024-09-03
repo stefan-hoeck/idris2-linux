@@ -1,7 +1,6 @@
 module Example.Util.Opts
 
 import Data.ByteString
-import Data.FilePath
 import Derive.Prelude
 import System
 import System.GetOpts
@@ -39,7 +38,7 @@ Interpolation OptTag where
 
 public export
 0 OptType : OptTag -> Type
-OptType OPath   = FilePath
+OptType OPath   = String
 OptType OSize   = SizeT
 OptType OOff    = OffT
 OptType OBits32 = Bits32
@@ -81,7 +80,7 @@ parameters (t      : OptTag)
 
 export
 readOpt : (t : OptTag) -> String -> Either ArgErr (OptType t)
-readOpt OPath   s = maybe (Left $ Invalid OPath s) Right $ parse s
+readOpt OPath   s = pure s
 readOpt OSize   s = parseNat OSize s
 readOpt OBits32 s = parseNat OBits32 s
 readOpt OOff    s = parseInt OOff s

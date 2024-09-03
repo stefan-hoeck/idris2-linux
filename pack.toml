@@ -1,6 +1,11 @@
+[custom.all.posix]
+type = "local"
+path = "posix"
+ipkg = "posix.ipkg"
+
 [custom.all.linux]
 type = "local"
-path = "."
+path = "linux"
 ipkg = "linux.ipkg"
 
 [custom.all.linux-examples]

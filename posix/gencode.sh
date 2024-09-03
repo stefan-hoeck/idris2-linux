@@ -3,7 +3,7 @@
 make -C codegen all
 make -C support all
 
-cat >src/System/Linux/Error/Type.idr <<EOT
+cat >src/System/Posix/Errno/Type.idr <<EOT
 -- Note: This module is automatically generated when Idris builds
 -- the library and the constants will be replaced with values
 -- matching the system this is generated on.
@@ -12,7 +12,7 @@ cat >src/System/Linux/Error/Type.idr <<EOT
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.Error.Type
+module System.Posix.Errno.Type
 
 import Derive.Finite
 import Derive.Prelude
@@ -22,9 +22,9 @@ import Derive.Prelude
 
 EOT
 
-codegen/error_gen >>src/System/Linux/Error/Type.idr
+codegen/error_gen >>src/System/Posix/Errno/Type.idr
 
-cat >src/System/Linux/File/Flags.idr <<EOT
+cat >src/System/Posix/File/Flags.idr <<EOT
 -- Note: This module is automatically generated when Idris builds
 -- the library and the constants will be replaced with values
 -- matching the system this is generated on.
@@ -33,7 +33,7 @@ cat >src/System/Linux/File/Flags.idr <<EOT
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.File.Flags
+module System.Posix.File.Flags
 
 import Data.Bits
 import Data.C.Integer
@@ -58,9 +58,25 @@ Monoid Flags where neutral = F 0
 
 EOT
 
-codegen/flags_gen >>src/System/Linux/File/Flags.idr
+codegen/flags_gen >>src/System/Posix/File/Flags.idr
 
-cat >src/System/Linux/File/Whence.idr <<EOT
+cat >>src/System/Posix/File/Flags.idr <<EOT
+
+||| Flags for creating a file for output.
+export
+create : Flags
+create = O_WRONLY <+> O_CREAT <+> O_TRUNC
+
+||| Flags for creating a file for output.
+|||
+||| If the file exists, data is appended to it.
+export
+append : Flags
+append = O_WRONLY <+> O_CREAT <+> O_APPEND
+
+EOT
+
+cat >src/System/Posix/File/Whence.idr <<EOT
 -- Note: This module is automatically generated when Idris builds
 -- the library and the constants will be replaced with values
 -- matching the system this is generated on.
@@ -69,7 +85,7 @@ cat >src/System/Linux/File/Whence.idr <<EOT
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.File.Whence
+module System.Posix.File.Whence
 
 import Data.C.Integer
 import Derive.Finite
@@ -87,9 +103,9 @@ export
 whenceCode : Whence -> Bits8
 EOT
 
-codegen/whence_gen >>src/System/Linux/File/Whence.idr
+codegen/whence_gen >>src/System/Posix/File/Whence.idr
 
-cat >src/System/Linux/Limits.idr <<EOT
+cat >src/System/Posix/Limits.idr <<EOT
 -- Note: This module is automatically generated when Idris builds
 -- the library and the constants will be replaced with values
 -- matching the system this is generated on.
@@ -98,25 +114,25 @@ cat >src/System/Linux/Limits.idr <<EOT
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.Limits
+module System.Posix.Limits
 
 import Data.C.Integer
 
 %default total
 
-export %foreign "C:sysconf, linux-idris"
+export %foreign "C:sysconf, posix-idris"
 sysconf : Bits32 -> Long
 
-export %foreign "C:pathconf, linux-idris"
+export %foreign "C:pathconf, posix-idris"
 pathconf : String -> Bits32 -> Long
 
-export %foreign "C:fpathconf, linux-idris"
+export %foreign "C:fpathconf, posix-idris"
 fpathconf : Bits32 -> Bits32 -> Long
 EOT
 
-codegen/limits_gen >>src/System/Linux/Limits.idr
+codegen/limits_gen >>src/System/Posix/Limits.idr
 
-cat >src/System/Linux/File/Type.idr <<EOT
+cat >src/System/Posix/File/Type.idr <<EOT
 -- Note: This module is automatically generated when Idris builds
 -- the library and the constants will be replaced with values
 -- matching the system this is generated on.
@@ -125,7 +141,7 @@ cat >src/System/Linux/File/Type.idr <<EOT
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.File.Type
+module System.Posix.File.Type
 
 import Data.Bits
 import Data.C.Integer
@@ -152,4 +168,4 @@ public export
 fromMode : ModeT -> FileType
 EOT
 
-codegen/filetype_gen >>src/System/Linux/File/Type.idr
+codegen/filetype_gen >>src/System/Posix/File/Type.idr

@@ -6,7 +6,7 @@ import Data.Buffer.Core
 import Data.C.Integer
 
 import public Example.Util.Prog
-import public System.Linux.File
+import public System.Posix.File
 
 %default total
 
@@ -19,33 +19,28 @@ export
 tryClose : FileDesc a => a -> Prog fs ()
 tryClose fd = handleError prettyErr (wrapIO $ close fd)
 
-parameters {auto has : Has FileErr es}
+parameters {auto has : Has Errno es}
 
   export
-  withFile : FilePath -> Flags -> Mode -> (Bits32 -> Prog es a) -> Prog es a
+  withFile : String -> Flags -> Mode -> (Fd -> Prog es a) -> Prog es a
   withFile pth fs m run = do
     fd <- injectIO $ openFile pth fs m
     finally (tryClose fd) (run fd)
 
   export
-  readFile : FilePath -> Bits32 -> Prog es ByteString
+  readFile : String -> Bits32 -> Prog es ByteString
   readFile pth buf =
-    withFile pth O_RDONLY 0 (\x => injectIO (read x buf)) >>= \case
-      EOF     => pure ""
-      RAgain  => fail (ReadErr EAGAIN)
-      Bytes x => pure x
+    withFile pth O_RDONLY 0 (\x => injectIO (read x buf))
 
   export
-  readStr : FilePath -> Bits32 -> Prog es String
+  readStr : String -> Bits32 -> Prog es String
   readStr pth buf = toString <$> readFile pth buf
 
   export covering
   writeAll : FileDesc a => a -> ByteString -> Prog es ()
   writeAll fd (BS 0 _) = pure ()
   writeAll fd bs       =
-    injectIO (writeBytes fd bs) >>= \case
-      WAgain    => writeAll fd bs
-      Written m => writeAll fd (drop m bs)
+    injectIO (writeBytes fd bs) >>= \m => writeAll fd (drop (cast m) bs)
 
   export covering
   writeRawAll : FileDesc a => a -> Bits32 -> Buffer -> Bits32 -> Prog es ()
@@ -62,9 +57,8 @@ parameters {auto has : Has FileErr es}
     -> Prog es ()
   stream fd buf run =
     injectIO (read fd buf) >>= \case
-      EOF      => pure ()
-      RAgain   => stream fd buf run
-      Bytes bs => run bs >> stream fd buf run
+      BS 0 _ => pure ()
+      bs     => run bs >> stream fd buf run
 
   export covering
   streamRaw :

@@ -1,10 +1,10 @@
 build/
 *.*~
 lib/
-codegen/error_gen
-codegen/flags_gen
-codegen/whence_gen
-codegen/limits_gen
-codegen/filetype_gen
-support/linux.o
-support/linux-idris
+posix/codegen/error_gen
+posix/codegen/flags_gen
+posix/codegen/whence_gen
+posix/codegen/limits_gen
+posix/codegen/filetype_gen
+posix/support/posix.o
+posix/support/posix-idris

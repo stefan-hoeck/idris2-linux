@@ -6,19 +6,19 @@
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.Limits
+module System.Posix.Limits
 
 import Data.C.Integer
 
 %default total
 
-export %foreign "C:sysconf, linux-idris"
+export %foreign "C:sysconf, posix-idris"
 sysconf : Bits32 -> Long
 
-export %foreign "C:pathconf, linux-idris"
+export %foreign "C:pathconf, posix-idris"
 pathconf : String -> Bits32 -> Long
 
-export %foreign "C:fpathconf, linux-idris"
+export %foreign "C:fpathconf, posix-idris"
 fpathconf : Bits32 -> Bits32 -> Long
 
 public export

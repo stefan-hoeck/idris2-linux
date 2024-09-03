@@ -6,7 +6,7 @@
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.File.Flags
+module System.Posix.File.Flags
 
 import Data.Bits
 import Data.C.Integer
@@ -89,3 +89,16 @@ O_NONBLOCK = 2048
 public export
 O_SYNC : Flags
 O_SYNC = 1052672
+
+||| Flags for creating a file for output.
+export
+create : Flags
+create = O_WRONLY <+> O_CREAT <+> O_TRUNC
+
+||| Flags for creating a file for output.
+|||
+||| If the file exists, data is appended to it.
+export
+append : Flags
+append = O_WRONLY <+> O_CREAT <+> O_APPEND
+

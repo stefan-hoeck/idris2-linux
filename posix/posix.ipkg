@@ -1,0 +1,31 @@
+package posix
+version = 0.1.0
+authors = "stefan-hoeck"
+brief   = "POSIX compliant system calls"
+
+depends = base >= 0.7.0
+        , bytestring
+        , cptr
+        , elab-util
+        , finite
+
+modules = System.Posix.Dir
+
+        , System.Posix.Errno
+        , System.Posix.Errno.Type
+
+        , System.Posix.File
+        , System.Posix.File.Flags
+        , System.Posix.File.Stats
+        , System.Posix.File.Type
+        , System.Posix.File.Whence
+
+        , System.Posix.Limits
+        , System.Posix.Process
+        , System.Posix.Time
+
+sourcedir = "src"
+
+prebuild = "bash gencode.sh"
+
+preinstall = "make -C support install"

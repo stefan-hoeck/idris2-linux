@@ -14,7 +14,7 @@ usage =
   """
 
 parameters {auto ha : Has ArgErr es}
-           {auto hf : Has FileErr es}
+           {auto hf : Has Errno es}
 
   covering
   run : Flags -> String -> Prog es ()

@@ -28,14 +28,14 @@ usage =
   the same time.
   """
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
-  appendBytes : Nat -> Bits32 -> Prog es ()
+  appendBytes : Nat -> Fd -> Prog es ()
   appendBytes 0     fd = pure ()
   appendBytes (S k) fd =
     ignore (injectIO $ writeBytes fd "A") >> appendBytes k fd
 
-  seekWriteBytes : Nat -> Bits32 -> Prog es ()
+  seekWriteBytes : Nat -> Fd -> Prog es ()
   seekWriteBytes 0     fd = pure ()
   seekWriteBytes (S k) fd = do
     ignore $ lseek fd 0 SEEK_END

@@ -1,13 +1,14 @@
 module Example.Util.User
 
 import Data.C.Integer
+import Data.List
 import public System.Linux.User.Passwd
 import public Example.Util.File
 import public Example.Util.Prog
 
 %default total
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
   export
   entries : (buf : Bits32) -> Prog es (List PasswdEntry)
