@@ -29,6 +29,9 @@ prim__open : String -> CInt -> ModeT -> PrimIO CInt
 %foreign "C:li_close, posix-idris"
 prim__close : Bits32 -> PrimIO CInt
 
+%foreign "C__collect_safe:li_read, posix-idris"
+prim__readptr : (file : Bits32) -> AnyPtr -> (max : Bits32) -> PrimIO SsizeT
+
 %foreign "C:li_read, posix-idris"
 prim__read : (file : Bits32) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 
@@ -163,12 +166,7 @@ toBytes n act =
 
 export %inline
 toFD : PrimIO CInt -> IO (Either Errno Fd)
-toFD act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r < 0 of
-          True  => MkIORes (negErr r) w
-          False => MkIORes (Right . MkFd $ cast r) w
+toFD = toVal (MkFd . cast)
 
 --------------------------------------------------------------------------------
 -- File Operations
@@ -186,6 +184,11 @@ parameters {auto fid : FileDesc a}
   export %inline
   close : IO (Either Errno ())
   close = toUnit (prim__close $ fileDesc fd)
+
+  ||| Reads at most `n` bytes from a file into an allocated pointer.
+  export %inline
+  readPtr : AnyPtr -> (n : Bits32) -> IO (Either Errno Bits32)
+  readPtr ptr n = toSize $ prim__readptr (fileDesc fd) ptr n
 
   ||| Reads at most `n` bytes from a file into a buffer.
   export %inline

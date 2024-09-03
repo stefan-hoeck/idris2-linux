@@ -9,3 +9,7 @@ depends = base >= 0.7.0
 modules = System.Linux.User.Passwd
 
 sourcedir = "src"
+
+prebuild = "bash gencode.sh"
+
+preinstall = "make -C support install"
