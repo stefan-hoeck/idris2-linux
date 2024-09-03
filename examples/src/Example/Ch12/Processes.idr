@@ -2,6 +2,7 @@ module Example.Ch12.Processes
 
 import Data.List
 import Data.List1
+import Data.String
 import Data.SortedMap
 import Example.Util.Dir
 import Example.Util.File
@@ -39,14 +40,14 @@ hasUID n m =
       h::_ => cast h == n
       []   => False
 
-toEOF : FileErr -> ByteString
+toEOF : Errno -> ByteString
 toEOF = const ""
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
-  inDir : UidT -> Body -> Prog es ()
+  inDir : UidT -> String -> Prog es ()
   inDir u p = do
-    r <- dropErr toEOF (readFile ("/proc" /> p /> "status") 0x10000)
+    r <- dropErr toEOF (readFile "/proc/\{p}/status" 0x10000)
     let m := processInfo r
     case (lookup "Name" m, hasUID u m) of
       (Just n,True) => liftIO (ignore $ writeStrLn Stdout "\{p}: \{n}")

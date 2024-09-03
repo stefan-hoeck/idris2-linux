@@ -41,16 +41,13 @@ disp : Bool -> ByteString -> String
 disp False = toString
 disp True  = toHexString (Just ':')
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
-  readHere : Bool -> Bits32 -> Bits32 -> Prog es ()
+  readHere : Bool -> Fd -> Bits32 -> Prog es ()
   readHere b fd n =
-    injectIO (read fd n) >>= \case
-      EOF     => putStrLn "\{rd b n}: end of file"
-      RAgain  => putStrLn "\{rd b n}: no data read"
-      Bytes x => putStrLn "\{rd b n}: \{disp b x}"
+    injectIO (read fd n) >>= \x => putStrLn "\{rd b n}: \{disp b x}"
 
-  seek : List Cmd -> (fd : Bits32) -> Prog es ()
+  seek : List Cmd -> (fd : Fd) -> Prog es ()
   seek []        fd = pure ()
   seek (x :: xs) fd = cmd x >> seek xs fd
     where
@@ -63,9 +60,8 @@ parameters {auto hf : Has FileErr es}
       cmd (ReadHex m) = readHere True  fd m
 
       cmd (Write str) =
-        injectIO (writeStr fd str) >>= \case
-          WAgain    => putStrLn "s\{str}: no bytes written (EAGAIN)"
-          Written n => putStrLn "s\{str}: wrote \{show n} bytes"
+        injectIO (writeStr fd str) >>= \n =>
+          putStrLn "s\{str}: wrote \{show n} bytes"
 
   export
   seekProg : Has ArgErr es => List String -> Prog es ()

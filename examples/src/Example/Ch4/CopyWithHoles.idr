@@ -16,7 +16,7 @@ usage =
   Set `$LI_BUF_SIZE` to change the used buffer size (default: 65536).
   """
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
   covering
   writeBlocks : FileDesc a => a -> (n : Nat) -> ByteVect n -> Prog es ()
@@ -34,7 +34,7 @@ parameters {auto hf : Has FileErr es}
   copy buf i o = stream i buf (\(BS n bv) => writeBlocks o n bv)
 
   covering
-  cp : Bits32 -> FilePath -> FilePath -> Prog es ()
+  cp : Bits32 -> String -> String -> Prog es ()
   cp buf i o =
     withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copy buf fi fo
 

@@ -1,10 +1,9 @@
 module System.Linux.User.Passwd
 
 import Data.C.Integer
-import Data.FilePath
 import Derive.Prelude
 
-import System.Linux.File
+import System.Posix.File
 
 %default total
 %language ElabReflection
@@ -18,14 +17,10 @@ record PasswdEntry where
   uid       : UidT
   gid       : GidT
   comment   : String
-  homedir   : FilePath
-  shell     : Maybe FilePath
+  homedir   : String
+  shell     : String
 
 %runElab derive "PasswdEntry" [Show,Eq]
-
-toShell : String -> Maybe FilePath
-toShell "" = Nothing
-toShell s  = Just $ fromString s
 
 export
 readEntry : ByteString -> Maybe PasswdEntry
@@ -38,7 +33,7 @@ readEntry bs =
         , uid       = maybe 0 cast $ parseInteger u
         , gid       = maybe 0 cast $ parseInteger g
         , comment   = toString c
-        , homedir   = fromString (toString h)
-        , shell     = toShell (toString s)
+        , homedir   = toString h
+        , shell     = toString s
         }
     _               => Nothing

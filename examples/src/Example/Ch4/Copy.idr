@@ -23,7 +23,7 @@ usage =
         DEST to /dev/stdout.
   """
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
   covering
   copyRaw : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es ()
@@ -34,12 +34,12 @@ parameters {auto hf : Has FileErr es}
   copy buf i o = stream i buf (writeAll o)
 
   covering
-  cpRaw : Bits32 -> FilePath -> FilePath -> Prog es ()
+  cpRaw : Bits32 -> String -> String -> Prog es ()
   cpRaw buf i o =
     withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copyRaw buf fi fo
 
   covering
-  cp : Bits32 -> FilePath -> FilePath -> Prog es ()
+  cp : Bits32 -> String -> String -> Prog es ()
   cp buf i o =
     withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copy buf fi fo
 

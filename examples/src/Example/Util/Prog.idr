@@ -2,7 +2,7 @@ module Example.Util.Prog
 
 import public Control.Monad.Either
 import public Data.List.Quantifiers.Extra
-import System.Linux.File
+import System.Posix.File
 
 %default total
 

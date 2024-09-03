@@ -19,9 +19,9 @@ usage =
   See also program `atomic_append`.
   """
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
-  seekWriteBytes : Bits32 -> Prog es ()
+  seekWriteBytes : Fd -> Prog es ()
   seekWriteBytes fd = do
     ignore $ lseek fd 0 SEEK_SET
     ignore (injectIO $ writeBytes fd "hello world")

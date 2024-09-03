@@ -15,21 +15,21 @@ usage =
   currently open.
   """
 
-toEOF : FileErr -> ()
+toEOF : Errno -> ()
 toEOF = const ()
 
-parameters {auto hf : Has FileErr es}
+parameters {auto hf : Has Errno es}
 
-  srch : ByteString -> Body -> Body -> Prog es ()
+  srch : ByteString -> String -> String -> Prog es ()
   srch bs p f =
-    let pth := "/proc" /> p /> "fd" /> f
+    let pth := "/proc/\{p}/fd/\{f}"
      in dropErr toEOF $ do
           x <- injectIO (readlink pth)
           when (x == bs) (putStrLn "\{p}")
 
   covering
-  inProc : ByteString -> Body -> Prog es ()
-  inProc fd p = dropErr toEOF (withDir ("/proc" /> p /> "fd") (srch fd p))
+  inProc : ByteString -> String -> Prog es ()
+  inProc fd p = dropErr toEOF (withDir "/proc/\{p}/fd" (srch fd p))
 
   export covering
   hasOpen : Has ArgErr es => List String -> Prog es ()
