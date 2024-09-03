@@ -59,6 +59,9 @@ record Watch where
 
 %runElab derive "Watch" [Show,Eq,Ord]
 
+export %inline
+Interpolation Watch where interpolate = show . wd
+
 public export
 record InotifyRes where
   constructor IR

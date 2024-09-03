@@ -43,6 +43,11 @@ Semigroup InotifyMask where
 public export
 Monoid InotifyMask where neutral = IM 0
 
+||| Checks if an inotify event mask holds the given event.
+export
+has : InotifyMask -> InotifyMask -> Bool
+has (IM x) (IM y) = y == (x .&. y)
+
 
 public export
 IN_NONBLOCK : InotifyFlags
