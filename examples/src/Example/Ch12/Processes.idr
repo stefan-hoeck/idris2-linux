@@ -6,6 +6,7 @@ import Data.SortedMap
 import Example.Util.Dir
 import Example.Util.File
 import Example.Util.Opts
+import Example.Util.User
 
 %default total
 
@@ -54,5 +55,7 @@ parameters {auto hf : Has FileErr es}
   export covering
   processes : Has ArgErr es => List String -> Prog es ()
   processes ["--help"] = putStrLn "\{usage}"
-  processes [u]        = withDir "/proc" (inDir $ cast u)
+  processes [u]        = do
+    Just uid <- getuid u | Nothing => fail (Invalid OUser u)
+    withDir "/proc" (inDir uid)
   processes _          = fail (WrongArgs usage)

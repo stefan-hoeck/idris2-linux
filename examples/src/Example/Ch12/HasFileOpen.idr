@@ -1,0 +1,38 @@
+module Example.Ch12.HasFileOpen
+
+import Example.Util.Dir
+import Example.Util.File
+import Example.Util.Opts
+
+%default total
+
+usage : String
+usage =
+  """
+  Usage: linux-examples has_open PATH
+
+  Lists the process number of the process that has file `PATH`
+  currently open.
+  """
+
+toEOF : FileErr -> ()
+toEOF = const ()
+
+parameters {auto hf : Has FileErr es}
+
+  srch : ByteString -> Body -> Body -> Prog es ()
+  srch bs p f =
+    let pth := "/proc" /> p /> "fd" /> f
+     in dropErr toEOF $ do
+          x <- injectIO (readlink pth)
+          when (x == bs) (putStrLn "\{p}")
+
+  covering
+  inProc : ByteString -> Body -> Prog es ()
+  inProc fd p = dropErr toEOF (withDir ("/proc" /> p /> "fd") (srch fd p))
+
+  export covering
+  hasOpen : Has ArgErr es => List String -> Prog es ()
+  hasOpen ["--help"] = putStrLn "\{usage}"
+  hasOpen [p]        = withDir "/proc" (inProc $ fromString p)
+  hasOpen _          = fail (WrongArgs usage)

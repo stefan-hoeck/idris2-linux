@@ -57,15 +57,14 @@ The following will probably not be implemented:
 
 ### Chapter 8
 
-- [ ] implement `getpwnam` or its reentrant analogue
-- [ ] implement `getpwuid` or its reentrant analogue
-- [ ] implement `getgrnam` or its reentrant analogue
-- [ ] implement `getgruid` or its reentrant analogue
-- [ ] implement `getpwent`, `setpwent`, and `endpwent`
-- [ ] implement `getspnam` or its reentrant analogue
-- [ ] implement `getspent`, `setspent`, and `endspent`
-
 Note: Calls to `crypt` are available from [idris2-crypt](https://github.com/stefan-hoeck/idris2-crypt).
+
+The following will probably not be implemented:
+
+* `getpwnam`, `getpwuid`, `getgrnam`, `getgruid`, `getpwent`, `setpwent`
+  `endpwent`, `getspnam`, `getspent`, `setspent`, `endspent`: All of these
+  can be implemented by reading or streaming the corresponding files in `/etc`
+  into proper Idris records.
 
 ### Chapter 9
 
