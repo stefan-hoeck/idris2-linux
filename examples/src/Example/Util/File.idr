@@ -2,7 +2,6 @@ module Example.Util.File
 
 import Data.Maybe0
 import Data.Array.Index
-import Data.Buffer
 import Data.Buffer.Core
 import Data.C.Integer
 
@@ -27,6 +26,18 @@ parameters {auto has : Has FileErr es}
   withFile pth fs m run = do
     fd <- injectIO $ openFile pth fs m
     finally (tryClose fd) (run fd)
+
+  export
+  readFile : FilePath -> Bits32 -> Prog es ByteString
+  readFile pth buf =
+    withFile pth O_RDONLY 0 (\x => injectIO (read x buf)) >>= \case
+      EOF     => pure ""
+      RAgain  => fail (ReadErr EAGAIN)
+      Bytes x => pure x
+
+  export
+  readStr : FilePath -> Bits32 -> Prog es String
+  readStr pth buf = toString <$> readFile pth buf
 
   export covering
   writeAll : FileDesc a => a -> ByteString -> Prog es ()

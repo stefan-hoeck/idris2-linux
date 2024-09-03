@@ -14,7 +14,8 @@ usage =
   """
   Usage: linux-examples processes USER
 
-  Lists the name of all processes being currently run by `USER`
+  Lists the name and process ID of all processes being
+  currently run by `USER`
   """
 
 processInfo : ByteString -> SortedMap String String
@@ -37,21 +38,18 @@ hasUID n m =
       h::_ => cast h == n
       []   => False
 
+toEOF : FileErr -> ByteString
+toEOF = const ""
+
 parameters {auto hf : Has FileErr es}
 
-  inDir : UidT -> FilePath -> Prog es ()
+  inDir : UidT -> Body -> Prog es ()
   inDir u p = do
-    res <- logAndDropErr {e = FileErr} (($> EOF) . prettyErr) $
-      withFile (p /> "status") O_RDONLY 0 $ \fd => do
-        injectIO {es} (read fd 0x10000)
-    case res of
-      EOF     => pure ()
-      RAgain  => pure ()
-      Bytes x =>
-        let m := processInfo x
-         in case (lookup "Name" m, hasUID u m) of
-              (Just n,True) => liftIO (ignore $ writeStrLn Stdout "\{p}: \{n}")
-              _             => pure ()
+    r <- dropErr toEOF (readFile ("/proc" /> p /> "status") 0x10000)
+    let m := processInfo r
+    case (lookup "Name" m, hasUID u m) of
+      (Just n,True) => liftIO (ignore $ writeStrLn Stdout "\{p}: \{n}")
+      _             => pure ()
 
   export covering
   processes : Has ArgErr es => List String -> Prog es ()

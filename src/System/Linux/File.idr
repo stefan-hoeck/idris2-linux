@@ -1,9 +1,9 @@
 module System.Linux.File
 
 import Data.Bits
-import Data.Buffer
 import Data.C.Integer
 
+import public Data.Buffer
 import public Data.Buffer.Core
 import public Data.ByteString
 import public Data.ByteVect
