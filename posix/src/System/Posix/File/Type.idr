@@ -6,7 +6,7 @@
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.File.Type
+module System.Posix.File.Type
 
 import Data.Bits
 import Data.C.Integer

@@ -6,7 +6,7 @@
 -- without first compiling the library. They were generated on an x86_64
 -- GNU/Linux system with GCC. If you are on a similar system, your numbers
 -- might very well be identical.
-module System.Linux.File.Whence
+module System.Posix.File.Whence
 
 import Data.C.Integer
 import Derive.Finite

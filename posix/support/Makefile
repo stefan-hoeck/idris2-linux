@@ -1,4 +1,4 @@
-TARGET = linux-idris
+TARGET = posix-idris
 TARGET_VERSION ?= 0.0.1
 
 INSTALLDIR = ../lib
