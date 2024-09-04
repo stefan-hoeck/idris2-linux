@@ -20,9 +20,11 @@ modules = System.Posix.Dir
         , System.Posix.File.Type
         , System.Posix.File.Whence
 
+        , System.Posix.Signal
+        , System.Posix.Signal.Types
+
         , System.Posix.Limits
         , System.Posix.Process
-        , System.Posix.Signal
         , System.Posix.Time
 
 sourcedir = "src"

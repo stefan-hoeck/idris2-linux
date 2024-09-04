@@ -3,6 +3,7 @@ module System.Posix.Signal
 import Data.C.Array
 import public Data.C.Integer
 import public System.Posix.Errno
+import public System.Posix.Signal.Types
 import public System.Signal
 
 %default total
@@ -31,6 +32,15 @@ prim__sigdelset : AnyPtr -> CInt -> PrimIO ()
 
 %foreign "C:sigismember, posix-idris"
 prim__sigismember : AnyPtr -> CInt -> PrimIO CInt
+
+%foreign "C:li_sigprocmask1, posix-idris"
+prim__sigprocmask1 : Bits8 -> AnyPtr -> PrimIO ()
+
+%foreign "C:li_sigprocmask, posix-idris"
+prim__sigprocmask : Bits8 -> AnyPtr -> PrimIO AnyPtr
+
+%foreign "C:li_siggetprocmask, posix-idris"
+prim__siggetprocmask : PrimIO AnyPtr
 
 --------------------------------------------------------------------------------
 -- API
@@ -92,3 +102,36 @@ sigismember (S p) s =
      in case r of
           0 => MkIORes False w
           _ => MkIORes True w
+
+||| Adjust the process signal mask according to the given `How`
+||| and signal set.
+|||
+||| Note: This allocates a new `sigset_t` pointer and returns the
+|||       previously set signal mask. Client code is responsible to
+|||       free the memory for this once it is no longer used.
+|||       See also `sigprocmask'` for a version that does not return
+|||       the previous signal mask.
+export %inline
+sigprocmask : HasIO io => How -> SigsetT -> io SigsetT
+sigprocmask h (S p) =
+  primIO $ \w =>
+    let MkIORes p2 w := prim__sigprocmask (howCode h) p w
+     in MkIORes (S p2) w
+
+||| Like `sigprocmask` but does not allocate a pointer for the
+||| previous `sigset_t`.
+export %inline
+sigprocmask' : HasIO io => How -> SigsetT -> io ()
+sigprocmask' h (S p) = primIO $ prim__sigprocmask1 (howCode h) p
+
+||| Returns the current signal mask of the process.
+|||
+||| Note: This allocates a new `sigset_t` pointer and returns the
+|||       previously set signal mask. Client code is responsible to
+|||       free the memory for this once it is no longer used.
+export %inline
+siggetprocmask : HasIO io => io SigsetT
+siggetprocmask =
+  primIO $ \w =>
+    let MkIORes p w := prim__siggetprocmask w
+     in MkIORes (S p) w

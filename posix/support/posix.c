@@ -240,6 +240,20 @@ sigset_t * li_fullsigset() {
   return set;
 }
 
+void * li_sigprocmask1(int how, sigset_t *set) {
+  sigprocmask(how, set, NULL);
+}
+
+sigset_t * li_sigprocmask(int how, sigset_t *set) {
+  sigset_t *old = malloc(sizeof(sigset_t));
+  sigprocmask(how, set, old);
+  return old;
+}
+
+sigset_t * li_siggetprocmask() {
+  return li_sigprocmask(0, NULL);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Structs
 ////////////////////////////////////////////////////////////////////////////////
