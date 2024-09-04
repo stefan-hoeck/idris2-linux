@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
+#include <signal.h>
 
 #define CHECKRES                                                               \
   if (res == -1) {                                                             \
@@ -220,6 +221,23 @@ int li_chdir(const char *buf) {
 int li_chroot(const char *buf) {
   int res = chroot(buf);
   CHECKRES
+}
+
+int li_kill(pid_t p, int sig) {
+  int res = kill(p,sig);
+  CHECKRES
+}
+
+sigset_t * li_emptysigset() {
+  sigset_t *set = malloc(sizeof(sigset_t));
+  sigemptyset(set);
+  return set;
+}
+
+sigset_t * li_fullsigset() {
+  sigset_t *set = malloc(sizeof(sigset_t));
+  sigfillset(set);
+  return set;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

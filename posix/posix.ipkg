@@ -22,6 +22,7 @@ modules = System.Posix.Dir
 
         , System.Posix.Limits
         , System.Posix.Process
+        , System.Posix.Signal
         , System.Posix.Time
 
 sourcedir = "src"
