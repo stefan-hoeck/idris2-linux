@@ -16,6 +16,9 @@ import Example.Ch12.HasFileOpen
 
 import Example.Ch19.Inotify
 
+import Example.Ch20.SigSender
+import Example.Ch20.SigReceiver
+
 import Example.Util.File
 import Example.Util.Opts
 import System
@@ -63,6 +66,8 @@ prog = do
     "processes" :: t => processes t
     "has_open" :: t => hasOpen t
     "inotify" :: t => inotify t
+    "sig_send" :: t => sigSend t
+    "sig_receive" :: t => sigReceive t
     _           => do
       pid  <- getpid
       ppid <- getppid

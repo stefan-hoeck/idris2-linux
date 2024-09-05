@@ -168,3 +168,17 @@ The following will probably not be implemented:
 
 - [x] implement `inotify` utilities for monitoring files
 - [ ] do the exercise
+
+### Chapter 20
+
+- [x] implement `kill` and `raise`
+- [x] implement utilities for working with `sigset_t`
+- [x] implement different versions of `sigprocmask`
+- [x] implement `sigpending`
+
+Notes: As per the Chez Scheme documentation, it is not safe to call from
+C to Scheme from C interrupt handlers. We can therefore not make use
+of `signal` and `sigaction` when on one of the Scheme backends. Instead,
+a Scheme specific utility called `onsignal` is added for registering
+signal handlers. An alternative would be to use `epoll` with a signal
+file descriptor (under Linux). See chapter 22.

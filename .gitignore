@@ -6,6 +6,7 @@ posix/codegen/flags_gen
 posix/codegen/whence_gen
 posix/codegen/limits_gen
 posix/codegen/filetype_gen
+posix/codegen/signal_gen
 posix/support/posix.o
 posix/support/posix-idris
 linux/codegen/inotify_gen
