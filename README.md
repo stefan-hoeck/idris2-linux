@@ -157,7 +157,6 @@ for the time being.
 - [x] implement `chroot`
 - [ ] do the exercises
 
-
 The following will probably not be implemented:
 
 * `nfwt`: We should probably write our tree-walking routines in
@@ -182,3 +181,12 @@ of `signal` and `sigaction` when on one of the Scheme backends. Instead,
 a Scheme specific utility called `onsignal` is added for registering
 signal handlers. An alternative would be to use `epoll` with a signal
 file descriptor (under Linux). See chapter 22.
+
+### Chapter 21
+
+- [x] implement `abort`
+
+The following will probably not be implemented:
+
+* `sigsetjmp` `siglongjmp`, and `sigaltstack` as I can't see their use on
+  the default backends.
