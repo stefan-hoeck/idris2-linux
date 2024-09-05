@@ -4,6 +4,7 @@ import Data.ByteString
 import Derive.Prelude
 import System
 import System.GetOpts
+import System.Signal
 
 import public Data.C.Integer
 import public Example.Util.Prog
@@ -23,6 +24,8 @@ data OptTag : Type where
   ONat    : OptTag
   OOff    : OptTag
   OUser   : OptTag
+  OPid    : OptTag
+  OSig    : OptTag
 
 %runElab derive "OptTag" [Show,Eq,Ord]
 
@@ -34,6 +37,8 @@ Interpolation OptTag where
   interpolate ONat    = "nat"
   interpolate OOff    = "offset"
   interpolate OUser   = "user"
+  interpolate OPid    = "pid"
+  interpolate OSig    = "signal"
 
 
 public export
@@ -44,6 +49,8 @@ OptType OOff    = OffT
 OptType OBits32 = Bits32
 OptType ONat    = Nat
 OptType OUser   = String
+OptType OPid    = PidT
+OptType OSig    = Signal
 
 public export
 data ArgErr : Type where
@@ -78,6 +85,19 @@ parameters (t      : OptTag)
         res := parseInteger bs
      in maybe (Left $ Invalid t s) (Right . cast) res
 
+parseSignal : String -> Either ArgErr Signal
+parseSignal "SIGUSR1" = Right (SigPosix SigUser1)
+parseSignal "SIGUSR2" = Right (SigPosix SigUser2)
+parseSignal "SIGHUP"  = Right (SigPosix SigHUP)
+parseSignal "SIGTRAP" = Right (SigPosix SigTRAP)
+parseSignal "SIGQUIT" = Right (SigPosix SigQUIT)
+parseSignal "SIGINT"  = Right SigINT
+parseSignal "SIGILL"  = Right SigILL
+parseSignal "SIGFPE"  = Right SigFPE
+parseSignal "SIGABRT" = Right SigABRT
+parseSignal "SIGSEGV" = Right SigSEGV
+parseSignal s         = maybe (Left $ Invalid OSig s) Right (toSignal $ cast s)
+
 export
 readOpt : (t : OptTag) -> String -> Either ArgErr (OptType t)
 readOpt OPath   s = pure s
@@ -86,6 +106,8 @@ readOpt OBits32 s = parseNat OBits32 s
 readOpt OOff    s = parseInt OOff s
 readOpt ONat    s = parseNat ONat s
 readOpt OUser   s = pure s
+readOpt OPid    s = parseNat OPid s
+readOpt OSig    s = parseSignal s
 
 export
 readOptIO : Has ArgErr es => (t : OptTag) -> String -> Prog es (OptType t)

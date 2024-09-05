@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,6 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
-#include <signal.h>
 
 #define CHECKRES                                                               \
   if (res == -1) {                                                             \
@@ -223,36 +223,42 @@ int li_chroot(const char *buf) {
   CHECKRES
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Signals
+////////////////////////////////////////////////////////////////////////////////
+
 int li_kill(pid_t p, int sig) {
-  int res = kill(p,sig);
+  int res = kill(p, sig);
   CHECKRES
 }
 
-sigset_t * li_emptysigset() {
+sigset_t *li_emptysigset() {
   sigset_t *set = malloc(sizeof(sigset_t));
   sigemptyset(set);
   return set;
 }
 
-sigset_t * li_fullsigset() {
+sigset_t *li_fullsigset() {
   sigset_t *set = malloc(sizeof(sigset_t));
   sigfillset(set);
   return set;
 }
 
-void * li_sigprocmask1(int how, sigset_t *set) {
-  sigprocmask(how, set, NULL);
-}
+void *li_sigprocmask1(int how, sigset_t *set) { sigprocmask(how, set, NULL); }
 
-sigset_t * li_sigprocmask(int how, sigset_t *set) {
+sigset_t *li_sigprocmask(int how, sigset_t *set) {
   sigset_t *old = malloc(sizeof(sigset_t));
   sigprocmask(how, set, old);
   return old;
 }
 
-sigset_t * li_siggetprocmask() {
-  return li_sigprocmask(0, NULL);
+sigset_t *li_sigpending() {
+  sigset_t *set = malloc(sizeof(sigset_t));
+  sigpending(set);
+  return set;
 }
+
+sigset_t *li_siggetprocmask() { return li_sigprocmask(0, NULL); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Structs

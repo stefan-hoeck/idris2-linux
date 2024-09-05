@@ -181,6 +181,7 @@ cat >src/System/Posix/Signal/Types.idr <<EOT
 -- might very well be identical.
 module System.Posix.Signal.Types
 
+import Data.Bits
 import Data.C.Integer
 import Derive.Prelude
 
@@ -194,6 +195,20 @@ data How : Type where
   SIG_SETMASK : How
 
 %runElab derive "How" [Show,Eq,Ord]
+
+public export
+record SignalFlags where
+  constructor F
+  flags : Bits64
+
+%runElab derive "SignalFlags" [Show,Eq,Ord,FromInteger]
+
+public export %inline
+Semigroup SignalFlags where
+  F x <+> F y = F $ x .|. y
+
+public export %inline
+Monoid SignalFlags where neutral = F 0
 EOT
 
 codegen/signal_gen >>src/System/Posix/Signal/Types.idr

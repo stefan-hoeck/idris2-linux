@@ -1,5 +1,6 @@
 module System.Posix.Signal
 
+import System.Callback
 import Data.C.Array
 import public Data.C.Integer
 import public System.Posix.Errno
@@ -42,19 +43,15 @@ prim__sigprocmask : Bits8 -> AnyPtr -> PrimIO AnyPtr
 %foreign "C:li_siggetprocmask, posix-idris"
 prim__siggetprocmask : PrimIO AnyPtr
 
---------------------------------------------------------------------------------
--- API
---------------------------------------------------------------------------------
+%foreign "C:li_sigpending, posix-idris"
+prim__sigpending : PrimIO AnyPtr
 
-||| Sends a signal to a running process or a group of processes.
-export %inline
-kill : PidT -> Signal -> IO (Either Errno ())
-kill p s = toUnit $ prim__kill p (cast $ signalCode s)
+%foreign "scheme:(lambda (s f) (register-signal-handler s (lambda (x) ((f x) #f))))"
+prim__onsignal : CInt -> (CInt -> PrimIO ()) -> PrimIO ()
 
-||| Sends a signal to the calling thread.
-export %inline
-raise : Signal -> IO ()
-raise s = fromPrim $ prim__raise (cast $ signalCode s)
+--------------------------------------------------------------------------------
+-- Signal Sets
+--------------------------------------------------------------------------------
 
 ||| Wrapper around a pointer of a signal set (`sigset_t`).
 export
@@ -103,6 +100,21 @@ sigismember (S p) s =
           0 => MkIORes False w
           _ => MkIORes True w
 
+
+--------------------------------------------------------------------------------
+-- API
+--------------------------------------------------------------------------------
+
+||| Sends a signal to a running process or a group of processes.
+export %inline
+kill : PidT -> Signal -> IO (Either Errno ())
+kill p s = toUnit $ prim__kill p (cast $ signalCode s)
+
+||| Sends a signal to the calling thread.
+export %inline
+raise : Signal -> IO ()
+raise s = fromPrim $ prim__raise (cast $ signalCode s)
+
 ||| Adjust the process signal mask according to the given `How`
 ||| and signal set.
 |||
@@ -135,3 +147,20 @@ siggetprocmask =
   primIO $ \w =>
     let MkIORes p w := prim__siggetprocmask w
      in MkIORes (S p) w
+
+||| Returns the set of currently pending signals.
+|||
+||| Note: This allocates a new `sigset_t` pointer and returns the
+|||       previously set signal mask. Client code is responsible to
+|||       free the memory for this once it is no longer used.
+export %inline
+sigpending : HasIO io => io SigsetT
+sigpending =
+  primIO $ \w =>
+    let MkIORes p w := prim__sigpending w
+     in MkIORes (S p) w
+
+||| Runs the given callback when the given signal is encountered.
+export
+onsignal : HasIO io => Signal -> (CInt -> IO ()) -> io ()
+onsignal s act = primIO $ prim__onsignal (cast $ signalCode s) (\x => toPrim $ act x)

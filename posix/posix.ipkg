@@ -9,7 +9,9 @@ depends = base >= 0.7.0
         , elab-util
         , finite
 
-modules = System.Posix.Dir
+modules = System.Callback
+
+        , System.Posix.Dir
 
         , System.Posix.Errno
         , System.Posix.Errno.Type
