@@ -1,9 +1,8 @@
-||| This has been adjusted to use the synchronous signal handers
+||| This has been adjusted to use the synchronous signal handlers
 ||| from chapter 22 since all asynchronous versions were flaky on
 ||| the Chez backend.
 module Example.Ch20.SigReceiver
 
-import Data.Finite
 import Data.SortedMap
 import Data.String
 import Example.Util.Opts
@@ -38,17 +37,17 @@ parameters {auto hf : Has Errno es}
   covering
   app : Has ArgErr es => Nat -> Prog es ()
   app n =
-    withSigset True $ \fs => withSiginfo $ \info => do
-    pid       <- getpid
-    putStrLn "PID: \{show pid}"
-    sigprocmask' SIG_SETMASK fs
-    when (n > 0) $ do
-      putStrLn "sleeping for \{show n} seconds"
-      sleep (cast n)
-      ss <- pendingSignals
-      putStrLn "pending signals: \{unwords $ map interpolate ss}"
+    use [fullSigset, allocSiginfoT] $ \[fs,info] => do
+      pid       <- getpid
+      putStrLn "PID: \{show pid}"
+      sigprocmask' SIG_SETMASK fs
+      when (n > 0) $ do
+        putStrLn "sleeping for \{show n} seconds"
+        sleep (cast n)
+        ss <- pendingSignals
+        putStrLn "pending signals: \{unwords $ map interpolate ss}"
 
-    loop empty fs info
+      loop empty fs info
 
   export covering
   sigReceive : Has ArgErr es => List String -> Prog es ()

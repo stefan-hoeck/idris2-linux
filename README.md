@@ -197,4 +197,4 @@ The following will probably not be implemented:
 - [x] implement `sigsuspend`
 - [x] implement `sigwaitinfo` and `sigtimedwait`
 - [x] implement raising and handling of realtime signals
-- [ ] implement signal fetching via a file descriptor
+- [x] implement signal fetching via a file descriptor

@@ -2,7 +2,7 @@ module Example.Util.Signal
 
 import Derive.Finite
 import Derive.Prelude
-import public Example.Util.Prog
+import public Example.Util.File
 import public System.Posix.Signal
 
 %default total
@@ -25,17 +25,11 @@ filterM f (h::t) =
     True  => (h::) <$> filterM f t
     False => filterM f t
 
-export
-withSigset : (full : Bool) -> (SigsetT -> Prog es a) -> Prog es a
-withSigset b f = do
-  s <- if b then fullSigset else emptySigset
-  finally (freeSigset s) (f s)
+export %inline
+Resource SigsetT where cleanup = freeSigset
 
-export
-withSiginfo : (SiginfoT -> Prog es a) -> Prog es a
-withSiginfo f = do
-  s <- allocSiginfoT
-  finally (freeSiginfoT s) (f s)
+export %inline
+Resource SiginfoT where cleanup = freeSiginfoT
 
 export
 pendingSignals : Has Errno es => Prog es (List Signal)
@@ -44,4 +38,3 @@ pendingSignals = do
   ss <- filterM (sigismember s) values
   freeSigset s
   pure ss
-

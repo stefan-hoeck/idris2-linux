@@ -70,6 +70,10 @@ prim__ssi_addr_lsb : AnyPtr -> PrimIO Bits16
 --------------------------------------------------------------------------------
 
 ||| A file descriptor for signal handling.
+|||
+||| This can be used for synchronous signal handling using
+||| (blocking) `readSignalfd` directly, or for asynchronous signal handling
+||| using `epoll`.
 export
 record Signalfd where
   constructor SFD
@@ -86,7 +90,7 @@ Cast Signalfd Fd where cast = MkFd . fd
 ||| * Usually, the signals in `set` should first be blocked via `sigprocmask`.
 ||| * A `signalfd` should be closed using `close` just like other file
 |||   descriptors.
-||| * In general, used `readSignalfd` instead of the `read` functions
+||| * In general, use `readSignalfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `signalfd`.
 export %inline
 signalfd : (set : SigsetT) -> SignalfdFlags -> IO (Either Errno Signalfd)
@@ -94,91 +98,91 @@ signalfd set (F f) = toVal (SFD . cast) $ prim__signalfd (unsafeUnwrap set) f
 
 ||| Result type when reading from a `Signalfd`.
 export
-record SignalfdSiginfo where
+record SiginfoFd where
   constructor SI
   ptr : AnyPtr
 
 export %inline
-Deref SignalfdSiginfo where deref = pure . SI
+Deref SiginfoFd where deref = pure . SI
 
 public export %inline
-SizeOf SignalfdSiginfo where sizeof_ = signalfd_siginfo_size
+SizeOf SiginfoFd where sizeof_ = signalfd_siginfo_size
 
 ||| The signal that was raised
 export %inline
-signal : HasIO io => SignalfdSiginfo -> io Signal
+signal : HasIO io => SiginfoFd -> io Signal
 signal (SI p) =
   primIO $ \w => let MkIORes s w := prim__ssi_signo p w in MkIORes (S s) w
 
 export %inline
-errno : HasIO io => SignalfdSiginfo -> io Int32
+errno : HasIO io => SiginfoFd -> io Int32
 errno (SI p) = primIO $ prim__ssi_errno p
 
 export %inline
-code : HasIO io => SignalfdSiginfo -> io Int32
+code : HasIO io => SiginfoFd -> io Int32
 code (SI p) = primIO $ prim__ssi_code p
 
 ||| ID of the process that raised the signal.
 export %inline
-pid : HasIO io => SignalfdSiginfo -> io PidT
+pid : HasIO io => SiginfoFd -> io PidT
 pid (SI p) = primIO $ prim__ssi_pid p
 
 ||| Real user ID of the process that raised the signal.
 export %inline
-uid : HasIO io => SignalfdSiginfo -> io UidT
+uid : HasIO io => SiginfoFd -> io UidT
 uid (SI p) = primIO $ prim__ssi_uid p
 
 ||| File descriptor that caught the signal.
 export %inline
-fd : HasIO io => SignalfdSiginfo -> io Signalfd
+fd : HasIO io => SiginfoFd -> io Signalfd
 fd (SI p) =
   primIO $ \w => let MkIORes s w := prim__ssi_fd p w in MkIORes (SFD s) w
 
 ||| ID of the timer that raised the signal.
 export %inline
-tid : HasIO io => SignalfdSiginfo -> io Bits32
+tid : HasIO io => SiginfoFd -> io Bits32
 tid (SI p) = primIO $ prim__ssi_tid p
 
 export %inline
-band : HasIO io => SignalfdSiginfo -> io Bits32
+band : HasIO io => SiginfoFd -> io Bits32
 band (SI p) = primIO $ prim__ssi_band p
 
 export %inline
-overrun : HasIO io => SignalfdSiginfo -> io Bits32
+overrun : HasIO io => SiginfoFd -> io Bits32
 overrun (SI p) = primIO $ prim__ssi_overrun p
 
 export %inline
-trapno : HasIO io => SignalfdSiginfo -> io Bits32
+trapno : HasIO io => SiginfoFd -> io Bits32
 trapno (SI p) = primIO $ prim__ssi_trapno p
 
 export %inline
-status : HasIO io => SignalfdSiginfo -> io Int32
+status : HasIO io => SiginfoFd -> io Int32
 status (SI p) = primIO $ prim__ssi_status p
 
 ||| Integer value of a realtime signal.
 export %inline
-int : HasIO io => SignalfdSiginfo -> io Int32
+int : HasIO io => SiginfoFd -> io Int32
 int (SI p) = primIO $ prim__ssi_int p
 
 ||| Pointer value of a realtime signal
 export %inline
-ptr : HasIO io => SignalfdSiginfo -> io Bits64
+ptr : HasIO io => SiginfoFd -> io Bits64
 ptr (SI p) = primIO $ prim__ssi_ptr p
 
 export %inline
-utime : HasIO io => SignalfdSiginfo -> io Bits64
+utime : HasIO io => SiginfoFd -> io Bits64
 utime (SI p) = primIO $ prim__ssi_utime p
 
 export %inline
-stime : HasIO io => SignalfdSiginfo -> io Bits64
+stime : HasIO io => SiginfoFd -> io Bits64
 stime (SI p) = primIO $ prim__ssi_stime p
 
 export %inline
-addr : HasIO io => SignalfdSiginfo -> io Bits64
+addr : HasIO io => SiginfoFd -> io Bits64
 addr (SI p) = primIO $ prim__ssi_addr p
 
 export %inline
-addrlsb : HasIO io => SignalfdSiginfo -> io Bits16
+addrlsb : HasIO io => SiginfoFd -> io Bits16
 addrlsb (SI p) = primIO $ prim__ssi_addr_lsb p
 
 ||| Reads data from a `signalfd` into a pre-allocated array.
@@ -189,11 +193,11 @@ export
 readSignalfd :
      {n : _}
   -> Signalfd
-  -> (arr : CArrayIO n SignalfdSiginfo)
-  -> IO (Either Errno $ (n ** CArrayIO n SignalfdSiginfo))
+  -> (arr : CArrayIO n SiginfoFd)
+  -> IO (Either Errno $ (n ** CArrayIO n SiginfoFd))
 readSignalfd fd arr =
   let p  := unsafeUnwrap arr
-      sz := sizeof SignalfdSiginfo
+      sz := sizeof SiginfoFd
    in readPtr fd p (cast $ n * sz) >>= \case
         Left x   => pure (Left x)
         Right bs => pure (Right (cast (bs `div` cast sz) ** unsafeWrap p))

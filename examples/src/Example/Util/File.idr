@@ -10,22 +10,20 @@ import public System.Posix.File
 
 %default total
 
+export %inline
+FileDesc a => Resource a where
+  cleanup fd = handleError prettyErr (wrapIO $ close fd)
+
 tryLT : (m,n : Nat) -> Maybe0 (LT m n)
 tryLT m n with (m < n) proof eq
   _ | True  = Just0 (ltOpReflectsLT m n eq)
   _ | False = Nothing0
 
-export
-tryClose : FileDesc a => a -> Prog fs ()
-tryClose fd = handleError prettyErr (wrapIO $ close fd)
-
 parameters {auto has : Has Errno es}
 
-  export
+  export %inline
   withFile : String -> Flags -> Mode -> (Fd -> Prog es a) -> Prog es a
-  withFile pth fs m run = do
-    fd <- injectIO $ openFile pth fs m
-    finally (tryClose fd) (run fd)
+  withFile pth fs m = use1 (injectIO $ openFile pth fs m)
 
   export
   readFile : String -> Bits32 -> Prog es ByteString
