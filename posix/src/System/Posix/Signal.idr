@@ -5,7 +5,6 @@ import Data.C.Array
 import public Data.C.Integer
 import public System.Posix.Errno
 import public System.Posix.Signal.Types
-import public System.Signal
 
 %default total
 
@@ -14,10 +13,10 @@ import public System.Signal
 --------------------------------------------------------------------------------
 
 %foreign "C:li_kill, posix-idris"
-prim__kill : PidT -> CInt -> PrimIO CInt
+prim__kill : PidT -> Bits32 -> PrimIO CInt
 
 %foreign "C:raise, posix-idris"
-prim__raise : CInt -> PrimIO ()
+prim__raise : Bits32 -> PrimIO ()
 
 %foreign "C:li_emptysigset, posix-idris"
 prim__emptysigset : PrimIO AnyPtr
@@ -26,13 +25,13 @@ prim__emptysigset : PrimIO AnyPtr
 prim__fullsigset : PrimIO AnyPtr
 
 %foreign "C:sigaddset, posix-idris"
-prim__sigaddset : AnyPtr -> CInt -> PrimIO ()
+prim__sigaddset : AnyPtr -> Bits32 -> PrimIO ()
 
 %foreign "C:sigdelset, posix-idris"
-prim__sigdelset : AnyPtr -> CInt -> PrimIO ()
+prim__sigdelset : AnyPtr -> Bits32 -> PrimIO ()
 
 %foreign "C:sigismember, posix-idris"
-prim__sigismember : AnyPtr -> CInt -> PrimIO CInt
+prim__sigismember : AnyPtr -> Bits32 -> PrimIO CInt
 
 %foreign "C:li_sigprocmask1, posix-idris"
 prim__sigprocmask1 : Bits8 -> AnyPtr -> PrimIO ()
@@ -47,10 +46,19 @@ prim__siggetprocmask : PrimIO AnyPtr
 prim__sigpending : PrimIO AnyPtr
 
 %foreign "scheme:(lambda (s f) (register-signal-handler s (lambda (x) ((f x) #f))))"
-prim__onsignal : CInt -> (CInt -> PrimIO ()) -> PrimIO ()
+prim__onsignal : Bits32 -> (Bits32 -> PrimIO ()) -> PrimIO ()
 
 %foreign "C:abort, posix-idris"
 prim__abort : PrimIO ()
+
+%foreign "C:li_sigqueue, posix-idris"
+prim__sigqueue : PidT -> Bits32 -> CInt -> PrimIO CInt
+
+%foreign "C:li_pause, posix-idris"
+prim__pause : PrimIO CInt
+
+%foreign "C:li_sigsuspend, posix-idris"
+prim__sigsuspend : AnyPtr -> PrimIO CInt
 
 --------------------------------------------------------------------------------
 -- Signal Sets
@@ -86,19 +94,19 @@ freeSigset (S p) = primIO $ prim__free p
 ||| Adds a signal to a `sigset_t`
 export %inline
 sigaddset : HasIO io => SigsetT -> Signal -> io ()
-sigaddset (S p) s = primIO $ prim__sigaddset p (cast $ signalCode s)
+sigaddset (S p) s = primIO $ prim__sigaddset p s.sig
 
 ||| Removes a signal from a `sigset_t`
 export %inline
 sigdelset : HasIO io => SigsetT -> Signal -> io ()
-sigdelset (S p) s = primIO $ prim__sigdelset p (cast $ signalCode s)
+sigdelset (S p) s = primIO $ prim__sigdelset p s.sig
 
 ||| Tests if a signal is a member of a `sigset_t`.
 export %inline
 sigismember : HasIO io => SigsetT -> Signal -> io Bool
 sigismember (S p) s =
   primIO $ \w =>
-    let MkIORes r w := prim__sigismember p (cast $ signalCode s) w
+    let MkIORes r w := prim__sigismember p s.sig w
      in case r of
           0 => MkIORes False w
           _ => MkIORes True w
@@ -111,12 +119,19 @@ sigismember (S p) s =
 ||| Sends a signal to a running process or a group of processes.
 export %inline
 kill : PidT -> Signal -> IO (Either Errno ())
-kill p s = toUnit $ prim__kill p (cast $ signalCode s)
+kill p s = toUnit $ prim__kill p s.sig
 
 ||| Sends a signal to the calling thread.
 export %inline
 raise : Signal -> IO ()
-raise s = fromPrim $ prim__raise (cast $ signalCode s)
+raise s = fromPrim $ prim__raise s.sig
+
+||| Sends a realtime signal plus data word to a running process.
+|||
+||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
+export %inline
+sigqueue : PidT -> Signal -> (word : CInt) -> IO (Either Errno ())
+sigqueue p s word = toUnit $ prim__sigqueue p s.sig word
 
 ||| Adjust the process signal mask according to the given `How`
 ||| and signal set.
@@ -174,8 +189,8 @@ sigpending =
 |||       b) It is convenient to be able to define simple asynchronous
 |||       signal handlers.
 export
-onsignal : HasIO io => Signal -> (CInt -> IO ()) -> io ()
-onsignal s act = primIO $ prim__onsignal (cast $ signalCode s) (\x => toPrim $ act x)
+onsignal : HasIO io => Signal -> (Signal -> IO ()) -> io ()
+onsignal s act = primIO $ prim__onsignal s.sig (\x => toPrim $ act (S x))
 
 ||| Terminates the application by raising `SIGABRT` and dumps core.
 |||
@@ -184,3 +199,21 @@ onsignal s act = primIO $ prim__onsignal (cast $ signalCode s) (\x => toPrim $ a
 export %inline
 abort : HasIO io => io ()
 abort = primIO prim__abort
+
+||| Suspends the current thread until a non-blocked signal is encountered.
+export %inline
+pause : IO (Either Errno ())
+pause =
+  toUnit prim__pause >>= \case
+    Left EINTR => pure $ Right () -- this is the normal case
+    x          => pure x
+
+||| Atomically blocks all signals not in `set`, then
+||| pauses the thread (see `pause`) and restores the signal set
+||| afterwards.
+export %inline
+sigsuspend : (set : SigsetT) -> IO (Either Errno ())
+sigsuspend (S s) =
+  toUnit (prim__sigsuspend s) >>= \case
+    Left EINTR => pure $ Right () -- this is the normal case
+    x          => pure x

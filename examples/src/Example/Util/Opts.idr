@@ -4,7 +4,7 @@ import Data.ByteString
 import Derive.Prelude
 import System
 import System.GetOpts
-import System.Signal
+import System.Posix.Signal
 
 import public Data.C.Integer
 import public Example.Util.Prog
@@ -86,17 +86,20 @@ parameters (t      : OptTag)
      in maybe (Left $ Invalid t s) (Right . cast) res
 
 parseSignal : String -> Either ArgErr Signal
-parseSignal "SIGUSR1" = Right (SigPosix SigUser1)
-parseSignal "SIGUSR2" = Right (SigPosix SigUser2)
-parseSignal "SIGHUP"  = Right (SigPosix SigHUP)
-parseSignal "SIGTRAP" = Right (SigPosix SigTRAP)
-parseSignal "SIGQUIT" = Right (SigPosix SigQUIT)
-parseSignal "SIGINT"  = Right SigINT
-parseSignal "SIGILL"  = Right SigILL
-parseSignal "SIGFPE"  = Right SigFPE
-parseSignal "SIGABRT" = Right SigABRT
-parseSignal "SIGSEGV" = Right SigSEGV
-parseSignal s         = maybe (Left $ Invalid OSig s) Right (toSignal $ cast s)
+parseSignal "SIGUSR1" = Right SIGUSR1
+parseSignal "SIGUSR2" = Right SIGUSR2
+parseSignal "SIGHUP"  = Right SIGHUP
+parseSignal "SIGTRAP" = Right SIGTRAP
+parseSignal "SIGQUIT" = Right SIGQUIT
+parseSignal "SIGINT"  = Right SIGINT
+parseSignal "SIGILL"  = Right SIGILL
+parseSignal "SIGFPE"  = Right SIGFPE
+parseSignal "SIGABRT" = Right SIGABRT
+parseSignal "SIGSEGV" = Right SIGSEGV
+parseSignal s         =
+  case cast {to = Bits32} s of
+    0 => Left  (Invalid OSig s)
+    n => Right (S n)
 
 export
 readOpt : (t : OptTag) -> String -> Either ArgErr (OptType t)

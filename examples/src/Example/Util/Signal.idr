@@ -8,12 +8,14 @@ import public System.Posix.Signal
 %default total
 %language ElabReflection
 
-export %inline
-Ord Signal where
-  compare = compare `on` signalCode
+export
+Finite Signal where
+  values =
+    map Signal.Types.S $
+      [1..8] ++ [10..15] ++ [17..27] ++ [29,31] ++ [sig SIGRTMIN .. sig SIGRTMAX]
 
-%runElab derive "PosixSignal" [Show,Finite]
-%runElab derive "Signal" [Show,Finite]
+export
+Interpolation Signal where interpolate = show . sig
 
 export
 filterM : Monad f => (a -> f Bool) -> List a -> f (List a)
@@ -22,15 +24,6 @@ filterM f (h::t) =
   f h >>= \case
     True  => (h::) <$> filterM f t
     False => filterM f t
-
-export
-Interpolation PosixSignal where
-  interpolate = toUpper . show
-
-export
-Interpolation Signal where
-  interpolate (SigPosix x) = interpolate x
-  interpolate v            = toUpper $ show v
 
 export
 withSigset : (full : Bool) -> (SigsetT -> Prog es a) -> Prog es a

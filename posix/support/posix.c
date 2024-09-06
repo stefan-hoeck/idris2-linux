@@ -232,6 +232,12 @@ int li_kill(pid_t p, int sig) {
   CHECKRES
 }
 
+int li_sigqueue(pid_t p, int sig, int word) {
+  union sigval u = {.sival_int = word};
+  int res = sigqueue(p, sig, u);
+  CHECKRES
+}
+
 sigset_t *li_emptysigset() {
   sigset_t *set = malloc(sizeof(sigset_t));
   sigemptyset(set);
@@ -259,6 +265,16 @@ sigset_t *li_sigpending() {
 }
 
 sigset_t *li_siggetprocmask() { return li_sigprocmask(0, NULL); }
+
+int li_pause() {
+  int res = pause();
+  CHECKRES
+}
+
+int li_sigsuspend(sigset_t *set) {
+  int res = sigsuspend(set);
+  CHECKRES
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Structs

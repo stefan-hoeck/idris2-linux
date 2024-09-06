@@ -195,6 +195,14 @@ data How : Type where
   SIG_SETMASK : How
 
 %runElab derive "How" [Show,Eq,Ord]
+
+public export
+record Signal where
+  constructor S
+  sig : Bits32
+
+%runElab derive "Signal" [Show,Eq,Ord,FromInteger]
+
 EOT
 
 codegen/signal_gen >>src/System/Posix/Signal/Types.idr

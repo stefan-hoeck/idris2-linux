@@ -20,12 +20,11 @@ usage =
   seconds (default: 0) before starting to catch signals.
   """
 
-handler : IORef Bool -> IORef (SortedMap Signal Nat) -> CInt -> IO ()
-handler gotSigInt counts n = do
-  case toSignal (cast n) of
-    Nothing => pure ()
-    Just SigINT  => writeIORef gotSigInt True
-    Just s       => modifyIORef counts (insertWith (+) s 1)
+handler : IORef Bool -> IORef (SortedMap Signal Nat) -> Signal -> IO ()
+handler gotSigInt counts s =
+  if s == SIGINT
+     then writeIORef gotSigInt True
+     else modifyIORef counts (insertWith (+) s 1)
 
 covering
 loop : IORef Bool -> IORef (SortedMap Signal Nat) -> IO ()

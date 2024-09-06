@@ -190,3 +190,10 @@ The following will probably not be implemented:
 
 * `sigsetjmp` `siglongjmp`, and `sigaltstack` as I can't see their use on
   the default backends.
+
+### Chapter 22
+
+- [ ] implement `sigsuspend`
+- [ ] implement `sigwaitinfo` and `sigtimedwait`
+- [ ] implement raising and handling of realtime signals
+- [ ] implement signal fetching via a file descriptor
