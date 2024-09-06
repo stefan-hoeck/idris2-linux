@@ -92,6 +92,13 @@ record SigsetT where
   constructor S
   ptr : AnyPtr
 
+||| Extracts the pointer wrapped in a `SigsetT`.
+|||
+||| Useful for writing FFI bindings.
+export %inline
+unsafeUnwrap : SigsetT -> AnyPtr
+unsafeUnwrap = ptr
+
 ||| Allocates a `sigset_t` with all signals cleared.
 |||
 ||| This must be freed with `freeSigset`.
