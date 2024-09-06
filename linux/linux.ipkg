@@ -9,6 +9,9 @@ depends = base >= 0.7.0
 modules = System.Linux.Inotify
         , System.Linux.Inotify.Flags
 
+        , System.Linux.Signalfd
+        , System.Linux.Signalfd.Flags
+
         , System.Linux.User.Passwd
 
 sourcedir = "src"

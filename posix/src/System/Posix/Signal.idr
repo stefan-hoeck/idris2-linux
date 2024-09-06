@@ -1,11 +1,10 @@
 module System.Posix.Signal
 
-import System.Callback
-import Data.C.Array
+import Data.C.Ptr
+
 import public Data.C.Integer
 import public System.Posix.Errno
 import public System.Posix.Signal.Types
-import public System.Signal
 
 %default total
 
@@ -14,10 +13,10 @@ import public System.Signal
 --------------------------------------------------------------------------------
 
 %foreign "C:li_kill, posix-idris"
-prim__kill : PidT -> CInt -> PrimIO CInt
+prim__kill : PidT -> Bits32 -> PrimIO CInt
 
 %foreign "C:raise, posix-idris"
-prim__raise : CInt -> PrimIO ()
+prim__raise : Bits32 -> PrimIO ()
 
 %foreign "C:li_emptysigset, posix-idris"
 prim__emptysigset : PrimIO AnyPtr
@@ -26,13 +25,13 @@ prim__emptysigset : PrimIO AnyPtr
 prim__fullsigset : PrimIO AnyPtr
 
 %foreign "C:sigaddset, posix-idris"
-prim__sigaddset : AnyPtr -> CInt -> PrimIO ()
+prim__sigaddset : AnyPtr -> Bits32 -> PrimIO ()
 
 %foreign "C:sigdelset, posix-idris"
-prim__sigdelset : AnyPtr -> CInt -> PrimIO ()
+prim__sigdelset : AnyPtr -> Bits32 -> PrimIO ()
 
 %foreign "C:sigismember, posix-idris"
-prim__sigismember : AnyPtr -> CInt -> PrimIO CInt
+prim__sigismember : AnyPtr -> Bits32 -> PrimIO CInt
 
 %foreign "C:li_sigprocmask1, posix-idris"
 prim__sigprocmask1 : Bits8 -> AnyPtr -> PrimIO ()
@@ -46,11 +45,42 @@ prim__siggetprocmask : PrimIO AnyPtr
 %foreign "C:li_sigpending, posix-idris"
 prim__sigpending : PrimIO AnyPtr
 
-%foreign "scheme:(lambda (s f) (register-signal-handler s (lambda (x) ((f x) #f))))"
-prim__onsignal : CInt -> (CInt -> PrimIO ()) -> PrimIO ()
-
 %foreign "C:abort, posix-idris"
 prim__abort : PrimIO ()
+
+%foreign "C:li_sigqueue, posix-idris"
+prim__sigqueue : PidT -> Bits32 -> CInt -> PrimIO CInt
+
+%foreign "C:li_pause, posix-idris"
+prim__pause : PrimIO CInt
+
+%foreign "C:li_sigsuspend, posix-idris"
+prim__sigsuspend : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_si_signo, posix-idris"
+prim__signo : AnyPtr -> PrimIO Bits32
+
+%foreign "C:li_si_signo, posix-idris"
+prim__code : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_si_pid, posix-idris"
+prim__pid : AnyPtr -> PrimIO PidT
+
+%foreign "C:li_si_uid, posix-idris"
+prim__uid : AnyPtr -> PrimIO UidT
+
+%foreign "C:li_si_status, posix-idris"
+prim__status : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_si_value, posix-idris"
+prim__value : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_sigwaitinfo, posix-idris"
+prim__sigwaitinfo : AnyPtr -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_sigtimedwait, posix-idris"
+prim__sigtimedwait : AnyPtr -> AnyPtr -> TimeT -> NsecT -> PrimIO CInt
+
 
 --------------------------------------------------------------------------------
 -- Signal Sets
@@ -61,6 +91,13 @@ export
 record SigsetT where
   constructor S
   ptr : AnyPtr
+
+||| Extracts the pointer wrapped in a `SigsetT`.
+|||
+||| Useful for writing FFI bindings.
+export %inline
+unsafeUnwrap : SigsetT -> AnyPtr
+unsafeUnwrap = ptr
 
 ||| Allocates a `sigset_t` with all signals cleared.
 |||
@@ -86,23 +123,22 @@ freeSigset (S p) = primIO $ prim__free p
 ||| Adds a signal to a `sigset_t`
 export %inline
 sigaddset : HasIO io => SigsetT -> Signal -> io ()
-sigaddset (S p) s = primIO $ prim__sigaddset p (cast $ signalCode s)
+sigaddset (S p) s = primIO $ prim__sigaddset p s.sig
 
 ||| Removes a signal from a `sigset_t`
 export %inline
 sigdelset : HasIO io => SigsetT -> Signal -> io ()
-sigdelset (S p) s = primIO $ prim__sigdelset p (cast $ signalCode s)
+sigdelset (S p) s = primIO $ prim__sigdelset p s.sig
 
 ||| Tests if a signal is a member of a `sigset_t`.
 export %inline
 sigismember : HasIO io => SigsetT -> Signal -> io Bool
 sigismember (S p) s =
   primIO $ \w =>
-    let MkIORes r w := prim__sigismember p (cast $ signalCode s) w
+    let MkIORes r w := prim__sigismember p s.sig w
      in case r of
           0 => MkIORes False w
           _ => MkIORes True w
-
 
 --------------------------------------------------------------------------------
 -- API
@@ -111,12 +147,19 @@ sigismember (S p) s =
 ||| Sends a signal to a running process or a group of processes.
 export %inline
 kill : PidT -> Signal -> IO (Either Errno ())
-kill p s = toUnit $ prim__kill p (cast $ signalCode s)
+kill p s = toUnit $ prim__kill p s.sig
 
 ||| Sends a signal to the calling thread.
 export %inline
 raise : Signal -> IO ()
-raise s = fromPrim $ prim__raise (cast $ signalCode s)
+raise s = fromPrim $ prim__raise s.sig
+
+||| Sends a realtime signal plus data word to a running process.
+|||
+||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
+export %inline
+sigqueue : PidT -> Signal -> (word : CInt) -> IO (Either Errno ())
+sigqueue p s word = toUnit $ prim__sigqueue p s.sig word
 
 ||| Adjust the process signal mask according to the given `How`
 ||| and signal set.
@@ -163,20 +206,6 @@ sigpending =
     let MkIORes p w := prim__sigpending w
      in MkIORes (S p) w
 
-||| Runs the given callback when the given signal is encountered.
-|||
-||| Note: This is not strictly a POSIX compatible function and is
-|||       currently only available on the Scheme backends. It is here
-|||       for two reasons: a) We can't safely use Scheme function callbacks
-|||       in system interrupts (see the documentation of the Chez FFI)
-|||       and therefore can't use C functions `signal` and `sigaction`
-|||       with a callback functions calling Scheme code.
-|||       b) It is convenient to be able to define simple asynchronous
-|||       signal handlers.
-export
-onsignal : HasIO io => Signal -> (CInt -> IO ()) -> io ()
-onsignal s act = primIO $ prim__onsignal (cast $ signalCode s) (\x => toPrim $ act x)
-
 ||| Terminates the application by raising `SIGABRT` and dumps core.
 |||
 ||| While `SIGABRT` can be handled with a signal handler, `abort` is
@@ -184,3 +213,91 @@ onsignal s act = primIO $ prim__onsignal (cast $ signalCode s) (\x => toPrim $ a
 export %inline
 abort : HasIO io => io ()
 abort = primIO prim__abort
+
+||| Suspends the current thread until a non-blocked signal is encountered.
+export %inline
+pause : IO (Either Errno ())
+pause =
+  toUnit prim__pause >>= \case
+    Left EINTR => pure $ Right () -- this is the normal case
+    x          => pure x
+
+--------------------------------------------------------------------------------
+-- Synchronous Signal Handling
+--------------------------------------------------------------------------------
+
+export
+record SiginfoT where
+  constructor ST
+  ptr : AnyPtr
+
+||| Allocates a `SiginfoT` pointer.
+|||
+||| The allocated memory must be freed via `freeSiginfoT`.
+export %inline
+allocSiginfoT : HasIO io => io SiginfoT
+allocSiginfoT = primIO $ MkIORes (ST $ prim__malloc siginfo_t_size)
+
+||| Frees the memory allocated for a `SiginfoT` pointer.
+export %inline
+freeSiginfoT : HasIO io => SiginfoT -> io ()
+freeSiginfoT (ST p) = primIO $ prim__free p
+
+||| The signal that let to the current event.
+export %inline
+signal : HasIO io => SiginfoT -> io Signal
+signal (ST p) =
+  primIO $ \w => let MkIORes v w := prim__signo p w in MkIORes (S v) w
+
+export %inline
+code : HasIO io => SiginfoT -> io CInt
+code (ST p) = primIO $ prim__code p
+
+||| ID of the process that sent the signal.
+export %inline
+pid : HasIO io => SiginfoT -> io PidT
+pid (ST p) = primIO $ prim__pid p
+
+||| Real user ID of the process that sent the signal.
+export %inline
+uid : HasIO io => SiginfoT -> io UidT
+uid (ST p) = primIO $ prim__uid p
+
+||| Effective user ID of the process that sent the signal.
+export %inline
+status : HasIO io => SiginfoT -> io CInt
+status (ST p) = primIO $ prim__status p
+
+||| Value associated with a realtime signal.
+export %inline
+value : HasIO io => SiginfoT -> io CInt
+value (ST p) = primIO $ prim__value p
+
+||| Atomically blocks all signals not in `set`, then
+||| pauses the thread (see `pause`) and restores the signal set
+||| afterwards.
+export %inline
+sigsuspend : (set : SigsetT) -> IO (Either Errno ())
+sigsuspend (S s) =
+  toUnit (prim__sigsuspend s) >>= \case
+    Left EINTR => pure $ Right () -- this is the normal case
+    x          => pure x
+
+||| Synchronously awaits one of the signals in `set`.
+|||
+||| Note: Usually, the signals in `set` should first be blocked via
+|||       `sigprocmask`.
+export %inline
+sigwaitinfo : (set : SigsetT) -> (info : SiginfoT) -> IO (Either Errno ())
+sigwaitinfo (S s) (ST i) = toUnit $ prim__sigwaitinfo s i
+
+||| Like `sigwaitinfo` but times out with `EAGAIN` after `sec` seconds and
+||| `nsec` nanoseconds.
+export %inline
+sigtimedwait :
+     (set  : SigsetT)
+  -> (info : SiginfoT)
+  -> (sec  : TimeT)
+  -> (nsec : NsecT)
+  -> IO (Either Errno ())
+sigtimedwait (S s) (ST i) sec nsec = toUnit $ prim__sigtimedwait s i sec nsec

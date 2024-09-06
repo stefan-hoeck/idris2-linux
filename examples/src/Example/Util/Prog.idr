@@ -3,6 +3,7 @@ module Example.Util.Prog
 import public Control.Monad.Either
 import public Data.List.Quantifiers.Extra
 import System.Posix.File
+import Data.C.Ptr
 
 %default total
 
@@ -120,3 +121,26 @@ prettyOut = putStrLn . interpolate
 export %inline
 prettyErr : Interpolation a => a -> Prog [] ()
 prettyErr = ignore . liftIO . writeStrLn Stderr . interpolate
+
+--------------------------------------------------------------------------------
+-- Resource handling
+--------------------------------------------------------------------------------
+
+public export
+interface Resource a where
+  cleanup : a -> Prog [] ()
+
+||| Allocate a resource, use it in a program, and make sure to release it
+||| afterwards.
+export %inline
+use1 : Resource a => Prog es a -> (a -> Prog es b) -> Prog es b
+use1 alloc run = alloc >>= \r => finally (cleanup r) (run r)
+
+||| Like `use1` but for a heterogeneous list of resources.
+export %inline
+use : All Resource ts => All (Prog es) ts -> (HList ts -> Prog es b) -> Prog es b
+use @{[]}   []     run = run []
+use @{_::_} (h::t) run = use1 h (\r => use t (run . (r::)))
+
+export %inline
+Resource (CArrayIO n a) where cleanup = liftIO . free

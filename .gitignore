@@ -10,5 +10,6 @@ posix/codegen/signal_gen
 posix/support/posix.o
 posix/support/posix-idris
 linux/codegen/inotify_gen
+linux/codegen/signalfd_gen
 linux/support/linux.o
 linux/support/linux-idris

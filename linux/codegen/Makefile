@@ -11,7 +11,10 @@ else
 endif
 
 .PHONY: all
-all: inotify_gen
+all: inotify_gen signalfd_gen
 
 inotify_gen: inotify.c
 	$(CC) $(LDFLAGS) -o inotify_gen inotify.c
+
+signalfd_gen: signalfd.c
+	$(CC) $(LDFLAGS) -o signalfd_gen signalfd.c

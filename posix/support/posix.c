@@ -232,6 +232,12 @@ int li_kill(pid_t p, int sig) {
   CHECKRES
 }
 
+int li_sigqueue(pid_t p, int sig, int word) {
+  union sigval u = {.sival_int = word};
+  int res = sigqueue(p, sig, u);
+  CHECKRES
+}
+
 sigset_t *li_emptysigset() {
   sigset_t *set = malloc(sizeof(sigset_t));
   sigemptyset(set);
@@ -259,6 +265,42 @@ sigset_t *li_sigpending() {
 }
 
 sigset_t *li_siggetprocmask() { return li_sigprocmask(0, NULL); }
+
+int li_pause() {
+  int res = pause();
+  CHECKRES
+}
+
+int li_sigsuspend(sigset_t *set) {
+  int res = sigsuspend(set);
+  CHECKRES
+}
+
+int li_sigwaitinfo(sigset_t *set, siginfo_t *info) {
+  int res = sigwaitinfo(set, info);
+  CHECKRES
+}
+
+int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, uint64_t nsec) {
+  struct timespec ts;
+  ts.tv_sec = sec;
+  ts.tv_nsec = nsec;
+
+  int res = sigtimedwait(set, info, &ts);
+  CHECKRES
+}
+
+int li_si_signo(siginfo_t * i) { return i->si_signo; }
+
+int li_si_code(siginfo_t * i) { return i->si_code; }
+
+pid_t li_si_pid(siginfo_t * i) { return i->si_pid; }
+
+uid_t li_si_uid(siginfo_t * i) { return i->si_uid; }
+
+int li_si_status(siginfo_t * i) { return i->si_status; }
+
+int li_si_value(siginfo_t * i) { return (i->si_value).sival_int; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Structs
