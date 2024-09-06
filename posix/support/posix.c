@@ -281,7 +281,7 @@ int li_sigwaitinfo(sigset_t *set, siginfo_t *info) {
   CHECKRES
 }
 
-int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, long nsec) {
+int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, uint64_t nsec) {
   struct timespec ts;
   ts.tv_sec = sec;
   ts.tv_nsec = nsec;
