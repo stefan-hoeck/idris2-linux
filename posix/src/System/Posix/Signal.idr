@@ -45,9 +45,6 @@ prim__siggetprocmask : PrimIO AnyPtr
 %foreign "C:li_sigpending, posix-idris"
 prim__sigpending : PrimIO AnyPtr
 
-%foreign "scheme:(lambda (s f) (register-signal-handler s (lambda (x) ((f x) #f))))"
-prim__onsignal : Bits32 -> (Bits32 -> PrimIO ()) -> PrimIO ()
-
 %foreign "C:abort, posix-idris"
 prim__abort : PrimIO ()
 
@@ -201,20 +198,6 @@ sigpending =
   primIO $ \w =>
     let MkIORes p w := prim__sigpending w
      in MkIORes (S p) w
-
-||| Runs the given callback when the given signal is encountered.
-|||
-||| Note: This is not strictly a POSIX compatible function and is
-|||       currently only available on the Scheme backends. It is here
-|||       for two reasons: a) We can't safely use Scheme function callbacks
-|||       in system interrupts (see the documentation of the Chez FFI)
-|||       and therefore can't use C functions `signal` and `sigaction`
-|||       with a callback functions calling Scheme code.
-|||       b) It is convenient to be able to define simple asynchronous
-|||       signal handlers.
-export
-onsignal : HasIO io => Signal -> (Signal -> IO ()) -> io ()
-onsignal s act = primIO $ prim__onsignal s.sig (\x => toPrim $ act (S x))
 
 ||| Terminates the application by raising `SIGABRT` and dumps core.
 |||
