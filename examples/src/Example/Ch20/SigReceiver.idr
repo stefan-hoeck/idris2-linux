@@ -1,7 +1,9 @@
+||| This has been adjusted to use the synchronous signal handers
+||| from chapter 22 since all asynchronous versions were flaky on
+||| the Chez backend.
 module Example.Ch20.SigReceiver
 
 import Data.Finite
-import Data.IORef
 import Data.SortedMap
 import Data.String
 import Example.Util.Opts
@@ -20,40 +22,33 @@ usage =
   seconds (default: 0) before starting to catch signals.
   """
 
-handler : IORef Bool -> IORef (SortedMap Signal Nat) -> Signal -> IO ()
-handler gotSigInt counts s =
-  if s == SIGINT
-     then writeIORef gotSigInt True
-     else modifyIORef counts (insertWith (+) s 1)
-
-covering
-loop : IORef Bool -> IORef (SortedMap Signal Nat) -> IO ()
-loop gotSigInt counts = do
-  True <- readIORef gotSigInt | False => loop gotSigInt counts
-  putStrLn "\nGot SIGINT. Signal counts:"
-  cs   <- readIORef counts
-  for_ (SortedMap.toList cs) $ \(s,n) => putStrLn "\{s}: \{show n}"
-
 parameters {auto hf : Has Errno es}
+
+  covering
+  loop : SortedMap Signal Nat -> SigsetT -> SiginfoT -> Prog es ()
+  loop cs set info = do
+    injectIO (sigwaitinfo set info)
+    sig <- signal info
+    case sig == SIGINT of
+      False => loop (insertWith (+) sig 1 cs) set info
+      True  => do
+        putStrLn "\nGot SIGINT. Signal counts:"
+        for_ (SortedMap.toList cs) $ \(s,n) => putStrLn "\{s}: \{show n}"
 
   covering
   app : Has ArgErr es => Nat -> Prog es ()
   app n =
-    withSigset True $ \fs => withSigset False $ \es => do
+    withSigset True $ \fs => withSiginfo $ \info => do
     pid       <- getpid
     putStrLn "PID: \{show pid}"
-    gotSigInt <- newIORef False
-    counts    <- newIORef {a = SortedMap Signal Nat} empty
-    for_ values $ \s => onsignal s (handler gotSigInt counts)
+    sigprocmask' SIG_SETMASK fs
     when (n > 0) $ do
-      sigprocmask' SIG_SETMASK fs
       putStrLn "sleeping for \{show n} seconds"
       sleep (cast n)
       ss <- pendingSignals
       putStrLn "pending signals: \{unwords $ map interpolate ss}"
-      sigprocmask' SIG_SETMASK es
 
-    liftIO (loop gotSigInt counts)
+    loop empty fs info
 
   export covering
   sigReceive : Has ArgErr es => List String -> Prog es ()

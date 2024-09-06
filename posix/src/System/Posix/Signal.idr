@@ -1,7 +1,7 @@
 module System.Posix.Signal
 
-import System.Callback
-import Data.C.Array
+import Data.C.Ptr
+
 import public Data.C.Integer
 import public System.Posix.Errno
 import public System.Posix.Signal.Types
@@ -60,6 +60,31 @@ prim__pause : PrimIO CInt
 %foreign "C:li_sigsuspend, posix-idris"
 prim__sigsuspend : AnyPtr -> PrimIO CInt
 
+%foreign "C:li_si_signo, posix-idris"
+prim__signo : AnyPtr -> PrimIO Bits32
+
+%foreign "C:li_si_signo, posix-idris"
+prim__code : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_si_pid, posix-idris"
+prim__pid : AnyPtr -> PrimIO PidT
+
+%foreign "C:li_si_uid, posix-idris"
+prim__uid : AnyPtr -> PrimIO UidT
+
+%foreign "C:li_si_status, posix-idris"
+prim__status : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_si_value, posix-idris"
+prim__value : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_sigwaitinfo, posix-idris"
+prim__sigwaitinfo : AnyPtr -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_sigtimedwait, posix-idris"
+prim__sigtimedwait : AnyPtr -> AnyPtr -> TimeT -> NsecT -> PrimIO CInt
+
+
 --------------------------------------------------------------------------------
 -- Signal Sets
 --------------------------------------------------------------------------------
@@ -110,7 +135,6 @@ sigismember (S p) s =
      in case r of
           0 => MkIORes False w
           _ => MkIORes True w
-
 
 --------------------------------------------------------------------------------
 -- API
@@ -208,6 +232,57 @@ pause =
     Left EINTR => pure $ Right () -- this is the normal case
     x          => pure x
 
+--------------------------------------------------------------------------------
+-- Synchronous Signal Handling
+--------------------------------------------------------------------------------
+
+export
+record SiginfoT where
+  constructor ST
+  ptr : AnyPtr
+
+||| Allocates a `SiginfoT` pointer.
+|||
+||| The allocated memory must be freed via `freeSiginfoT`.
+export %inline
+allocSiginfoT : HasIO io => io SiginfoT
+allocSiginfoT = primIO $ MkIORes (ST $ prim__malloc siginfo_t_size)
+
+||| Frees the memory allocated for a `SiginfoT` pointer.
+export %inline
+freeSiginfoT : HasIO io => SiginfoT -> io ()
+freeSiginfoT (ST p) = primIO $ prim__free p
+
+||| The signal that let to the current event.
+export %inline
+signal : HasIO io => SiginfoT -> io Signal
+signal (ST p) =
+  primIO $ \w => let MkIORes v w := prim__signo p w in MkIORes (S v) w
+
+export %inline
+code : HasIO io => SiginfoT -> io CInt
+code (ST p) = primIO $ prim__code p
+
+||| ID of the process that sent the signal.
+export %inline
+pid : HasIO io => SiginfoT -> io PidT
+pid (ST p) = primIO $ prim__pid p
+
+||| Real user ID of the process that sent the signal.
+export %inline
+uid : HasIO io => SiginfoT -> io UidT
+uid (ST p) = primIO $ prim__uid p
+
+||| Effective user ID of the process that sent the signal.
+export %inline
+status : HasIO io => SiginfoT -> io CInt
+status (ST p) = primIO $ prim__status p
+
+||| Value associated with a realtime signal.
+export %inline
+value : HasIO io => SiginfoT -> io CInt
+value (ST p) = primIO $ prim__value p
+
 ||| Atomically blocks all signals not in `set`, then
 ||| pauses the thread (see `pause`) and restores the signal set
 ||| afterwards.
@@ -217,3 +292,22 @@ sigsuspend (S s) =
   toUnit (prim__sigsuspend s) >>= \case
     Left EINTR => pure $ Right () -- this is the normal case
     x          => pure x
+
+||| Synchronously awaits one of the signals in `set`.
+|||
+||| Note: Usually, the signals in `set` should first be blocked via
+|||       `sigprocmask`.
+export %inline
+sigwaitinfo : (set : SigsetT) -> (info : SiginfoT) -> IO (Either Errno ())
+sigwaitinfo (S s) (ST i) = toUnit $ prim__sigwaitinfo s i
+
+||| Like `sigwaitinfo` but times out with `EAGAIN` after `sec` seconds and
+||| `nsec` nanoseconds.
+export %inline
+sigtimedwait :
+     (set  : SigsetT)
+  -> (info : SiginfoT)
+  -> (sec  : TimeT)
+  -> (nsec : NsecT)
+  -> IO (Either Errno ())
+sigtimedwait (S s) (ST i) sec nsec = toUnit $ prim__sigtimedwait s i sec nsec

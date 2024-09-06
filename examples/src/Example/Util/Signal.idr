@@ -32,6 +32,12 @@ withSigset b f = do
   finally (freeSigset s) (f s)
 
 export
+withSiginfo : (SiginfoT -> Prog es a) -> Prog es a
+withSiginfo f = do
+  s <- allocSiginfoT
+  finally (freeSiginfoT s) (f s)
+
+export
 pendingSignals : Has Errno es => Prog es (List Signal)
 pendingSignals = do
   s  <- sigpending

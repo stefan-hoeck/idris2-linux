@@ -60,5 +60,9 @@ void *main() {
   print_signal("SIGPOLL", SIGPOLL);
   print_signal("SIGSYS", SIGSYS);
 
+  printf("\npublic export %%inline\n");
+  printf("siginfo_t_size : SizeT\n");
+  printf("siginfo_t_size = %zd\n", sizeof(siginfo_t));
+
   exit(0);
 }

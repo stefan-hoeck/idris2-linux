@@ -276,6 +276,32 @@ int li_sigsuspend(sigset_t *set) {
   CHECKRES
 }
 
+int li_sigwaitinfo(sigset_t *set, siginfo_t *info) {
+  int res = sigwaitinfo(set, info);
+  CHECKRES
+}
+
+int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, long nsec) {
+  struct timespec ts;
+  ts.tv_sec = sec;
+  ts.tv_nsec = nsec;
+
+  int res = sigtimedwait(set, info, &ts);
+  CHECKRES
+}
+
+int li_si_signo(siginfo_t * i) { return i->si_signo; }
+
+int li_si_code(siginfo_t * i) { return i->si_code; }
+
+pid_t li_si_pid(siginfo_t * i) { return i->si_pid; }
+
+uid_t li_si_uid(siginfo_t * i) { return i->si_uid; }
+
+int li_si_status(siginfo_t * i) { return i->si_status; }
+
+int li_si_value(siginfo_t * i) { return (i->si_value).sival_int; }
+
 ////////////////////////////////////////////////////////////////////////////////
 // Structs
 ////////////////////////////////////////////////////////////////////////////////

@@ -156,3 +156,7 @@ SIGPOLL = 29
 public export
 SIGSYS : Signal
 SIGSYS = 31
+
+public export %inline
+siginfo_t_size : SizeT
+siginfo_t_size = 128

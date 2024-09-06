@@ -177,10 +177,11 @@ The following will probably not be implemented:
 
 Notes: As per the Chez Scheme documentation, it is not safe to call from
 C to Scheme from C interrupt handlers. We can therefore not make use
-of `signal` and `sigaction` when on one of the Scheme backends. Instead,
-a Scheme specific utility called `onsignal` is added for registering
-signal handlers. An alternative would be to use `epoll` with a signal
-file descriptor (under Linux). See chapter 22.
+of `signal` and `sigaction` when on one of the Scheme backends.
+~~Instead, a Scheme specific utility called `onsignal` is added for registering
+signal handlers~~ (this is no longer available, as it caused spurious
+core dumps). An alternative would be to use `epoll` with a signal
+file descriptor (under Linux) or synchronous signal handling. See chapter 22.
 
 ### Chapter 21
 
@@ -193,7 +194,7 @@ The following will probably not be implemented:
 
 ### Chapter 22
 
-- [ ] implement `sigsuspend`
-- [ ] implement `sigwaitinfo` and `sigtimedwait`
-- [ ] implement raising and handling of realtime signals
+- [x] implement `sigsuspend`
+- [x] implement `sigwaitinfo` and `sigtimedwait`
+- [x] implement raising and handling of realtime signals
 - [ ] implement signal fetching via a file descriptor
