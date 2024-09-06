@@ -26,6 +26,8 @@ data OptTag : Type where
   OUser   : OptTag
   OPid    : OptTag
   OSig    : OptTag
+  OTime   : OptTag
+  OUTime  : OptTag
 
 %runElab derive "OptTag" [Show,Eq,Ord]
 
@@ -39,6 +41,8 @@ Interpolation OptTag where
   interpolate OUser   = "user"
   interpolate OPid    = "pid"
   interpolate OSig    = "signal"
+  interpolate OTime   = "time_t"
+  interpolate OUTime  = "susecond_t"
 
 
 public export
@@ -51,6 +55,8 @@ OptType ONat    = Nat
 OptType OUser   = String
 OptType OPid    = PidT
 OptType OSig    = Signal
+OptType OTime   = TimeT
+OptType OUTime  = SusecondsT
 
 public export
 data ArgErr : Type where
@@ -111,6 +117,8 @@ readOpt ONat    s = parseNat ONat s
 readOpt OUser   s = pure s
 readOpt OPid    s = parseNat OPid s
 readOpt OSig    s = parseSignal s
+readOpt OTime   s = parseInt OTime s
+readOpt OUTime  s = parseInt OUTime s
 
 export
 readOptIO : Has ArgErr es => (t : OptTag) -> String -> Prog es (OptType t)

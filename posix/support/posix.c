@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #define CHECKRES                                                               \
@@ -290,17 +291,61 @@ int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, uint64_t nsec) {
   CHECKRES
 }
 
-int li_si_signo(siginfo_t * i) { return i->si_signo; }
+int li_si_signo(siginfo_t *i) { return i->si_signo; }
 
-int li_si_code(siginfo_t * i) { return i->si_code; }
+int li_si_code(siginfo_t *i) { return i->si_code; }
 
-pid_t li_si_pid(siginfo_t * i) { return i->si_pid; }
+pid_t li_si_pid(siginfo_t *i) { return i->si_pid; }
 
-uid_t li_si_uid(siginfo_t * i) { return i->si_uid; }
+uid_t li_si_uid(siginfo_t *i) { return i->si_uid; }
 
-int li_si_status(siginfo_t * i) { return i->si_status; }
+int li_si_status(siginfo_t *i) { return i->si_status; }
 
-int li_si_value(siginfo_t * i) { return (i->si_value).sival_int; }
+int li_si_value(siginfo_t *i) { return (i->si_value).sival_int; }
+
+////////////////////////////////////////////////////////////////////////////////
+// Timers
+////////////////////////////////////////////////////////////////////////////////
+
+struct timeval *li_timeval(time_t sec, suseconds_t usec) {
+  struct timeval *res = malloc(sizeof(struct timeval));
+  res->tv_sec = sec;
+  res->tv_usec = usec;
+  return res;
+}
+
+struct itimerval *li_itimerval(time_t int_sec, suseconds_t int_usec, time_t sec,
+                               suseconds_t usec) {
+  struct itimerval *res = malloc(sizeof(struct itimerval));
+  res->it_value.tv_sec = sec;
+  res->it_value.tv_usec = usec;
+  res->it_interval.tv_sec = int_sec;
+  res->it_interval.tv_usec = int_usec;
+  return res;
+}
+
+time_t li_tv_sec(struct timeval *v) { return v->tv_sec; }
+
+suseconds_t li_tv_usec(struct timeval *v) { return v->tv_usec; }
+
+struct timeval *li_it_interval(struct itimerval *v) { return &v->it_interval; }
+
+struct timeval *li_it_value(struct itimerval *v) { return &v->it_value; }
+
+int li_setitimer(int which, const struct itimerval *new,
+                 struct itimerval *old) {
+  int res = setitimer(which, new, old);
+  CHECKRES
+}
+
+int li_setitimer1(int which, const struct itimerval *new) {
+  return li_setitimer(which, new, NULL);
+}
+
+int li_getitimer(int which, struct itimerval *old) {
+  int res = getitimer(which, old);
+  CHECKRES
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Structs
