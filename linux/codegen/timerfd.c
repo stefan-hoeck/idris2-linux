@@ -7,6 +7,5 @@
 #include <sys/timerfd.h>
 
 void *main() {
-
   exit(0);
 }
