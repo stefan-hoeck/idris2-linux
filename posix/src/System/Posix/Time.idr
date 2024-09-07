@@ -42,6 +42,10 @@ public export %inline
 SizeOf Timespec where
   sizeof_ = cast timespec_size
 
+export %inline
+unsafeUnwrap : Timespec -> AnyPtr
+unsafeUnwrap (TS p) = p
+
 ||| Allocates a `Timespec` pointer.
 |||
 ||| The allocated memory must be freed via `freeTimespec`.

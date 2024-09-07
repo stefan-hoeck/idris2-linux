@@ -5,6 +5,7 @@ import Data.C.Ptr
 import public Data.C.Integer
 import public System.Posix.Errno
 import public System.Posix.Timer.Types
+import public System.Posix.Time
 
 %default total
 
@@ -44,6 +45,12 @@ prim__setitimer1 : Bits8 -> AnyPtr -> PrimIO CInt
 
 %foreign "C:li_getitimer, posix-idris"
 prim__getitimer : Bits8 -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_clock_gettime, posix-idris"
+prim__clock_gettime : Bits8 -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_clock_getres, posix-idris"
+prim__clock_getres : Bits8 -> AnyPtr -> PrimIO CInt
 
 --------------------------------------------------------------------------------
 -- API
@@ -176,3 +183,17 @@ getitimer w (ITV o) = toUnit $ prim__getitimer (whichCode w) o
 export %inline
 alarm : HasIO io => UInt -> io UInt
 alarm s = primIO $ prim__alarm s
+
+||| Writes the current time for the given clock into the
+||| `Timespec` pointer.
+export %inline
+clockGetTime : ClockId -> Timespec -> IO (Either Errno ())
+clockGetTime c t =
+  toUnit $ prim__clock_gettime (clockCode c) (unsafeUnwrap t)
+
+||| Writes the resolution for the given clock into the
+||| `Timespec` pointer.
+export %inline
+clockGetRes : ClockId -> Timespec -> IO (Either Errno ())
+clockGetRes c t =
+  toUnit $ prim__clock_getres (clockCode c) (unsafeUnwrap t)
