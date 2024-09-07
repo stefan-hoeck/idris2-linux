@@ -15,6 +15,9 @@ import public System.Posix.Timer.Types
 %foreign "C:clock, posix-idris"
 prim__clock : PrimIO ClockT
 
+%foreign "C:alarm, posix-idris"
+prim__alarm : UInt -> PrimIO UInt
+
 %foreign "C:li_timeval, posix-idris"
 prim__timeval : TimeT -> SusecondsT -> PrimIO AnyPtr
 
@@ -163,3 +166,13 @@ setitimer' w (ITV n) = toUnit $ prim__setitimer1 (whichCode w) n
 export %inline
 getitimer : Which -> (old : Itimerval) -> IO (Either Errno ())
 getitimer w (ITV o) = toUnit $ prim__getitimer (whichCode w) o
+
+||| A very basic version of `setitimer` that raises `SIGALRM`
+||| after the given number of seconds.
+|||
+||| The returned value is the remaining number of seconds on any
+||| previously set timer. The timer can be disabled by setting
+||| this to zero.
+export %inline
+alarm : HasIO io => UInt -> io UInt
+alarm s = primIO $ prim__alarm s

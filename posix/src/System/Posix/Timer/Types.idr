@@ -21,12 +21,28 @@ data Which = ITIMER_REAL | ITIMER_VIRTUAL | ITIMER_PROF
 
 %runElab derive "Which" [Show,Eq,Ord,Finite]
 
+public export
+data ClockId : Type where
+  CLOCK_REALTIME           : ClockId
+  CLOCK_MONOTONIC          : ClockId
+  CLOCK_PROCESS_CPUTIME_ID : ClockId
+  CLOCK_THREAD_CPUTIME_ID  : ClockId
+
+%runElab derive "ClockId" [Show,Eq,Ord,Finite]
+
 
 public export
 whichCode : Which -> Bits8
 whichCode ITIMER_REAL = 0
 whichCode ITIMER_VIRTUAL = 1
 whichCode ITIMER_PROF = 2
+
+public export
+clockCode : ClockId -> Bits8
+clockCode CLOCK_REALTIME = 0
+clockCode CLOCK_MONOTONIC = 1
+clockCode CLOCK_PROCESS_CPUTIME_ID = 2
+clockCode CLOCK_THREAD_CPUTIME_ID = 3
 
 public export %inline
 timeval_size : SizeT

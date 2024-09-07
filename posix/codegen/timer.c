@@ -11,12 +11,23 @@ void *print_which(const char *name, int value) {
   printf("whichCode %s = %d\n", name, value);
 }
 
+void *print_clock(const char *name, int value) {
+  printf("clockCode %s = %d\n", name, value);
+}
+
 void *main() {
   printf("\npublic export\n");
   printf("whichCode : Which -> Bits8\n");
   print_which("ITIMER_REAL", ITIMER_REAL);
   print_which("ITIMER_VIRTUAL", ITIMER_VIRTUAL);
   print_which("ITIMER_PROF", ITIMER_PROF);
+
+  printf("\npublic export\n");
+  printf("clockCode : ClockId -> Bits8\n");
+  print_clock("CLOCK_REALTIME", CLOCK_REALTIME);
+  print_clock("CLOCK_MONOTONIC", CLOCK_MONOTONIC);
+  print_clock("CLOCK_PROCESS_CPUTIME_ID", CLOCK_PROCESS_CPUTIME_ID);
+  print_clock("CLOCK_THREAD_CPUTIME_ID", CLOCK_THREAD_CPUTIME_ID);
 
   printf("\npublic export %%inline\n");
   printf("timeval_size : SizeT\n");

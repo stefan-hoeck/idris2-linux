@@ -12,6 +12,7 @@
 #include <sys/statvfs.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <time.h>
 
 #define CHECKRES                                                               \
   if (res == -1) {                                                             \
@@ -347,19 +348,36 @@ int li_getitimer(int which, struct itimerval *old) {
   CHECKRES
 }
 
+int li_nanosleep(const struct timespec *req, struct timespec *rem) {
+  int res = nanosleep(req,rem);
+  CHECKRES
+}
+
+int li_nanosleep1(const struct timespec *req) { return li_nanosleep(req,NULL); }
+
+int li_clock_gettime(clockid_t id, struct timespec *ref) {
+  int res = clock_gettime(id,ref);
+  CHECKRES
+}
+
+int li_clock_getres(clockid_t id, struct timespec *ref) {
+  int res = clock_getres(id,ref);
+  CHECKRES
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Structs
 ////////////////////////////////////////////////////////////////////////////////
 
 // timespec
 
-time_t get_timespec_tv_sec(struct timespec *v) { return v->tv_sec; }
+time_t get_tv_sec(struct timespec *v) { return v->tv_sec; }
 
-int64_t get_timespec_tv_nsec(struct timespec *v) { return v->tv_nsec; }
+int64_t get_tv_nsec(struct timespec *v) { return v->tv_nsec; }
 
-void set_timespec_tv_sec(struct timespec *v, time_t val) { v->tv_sec = val; }
+void set_tv_sec(struct timespec *v, time_t val) { v->tv_sec = val; }
 
-void set_timespec_tv_nsec(struct timespec *v, int64_t val) { v->tv_nsec = val; }
+void set_tv_nsec(struct timespec *v, int64_t val) { v->tv_nsec = val; }
 
 // statvs
 
