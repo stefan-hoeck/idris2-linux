@@ -10,26 +10,11 @@ else
 	LDFLAGS += -fuse-ld=gold
 endif
 
+gens := error_gen flags_gen whence_gen limits_gen filetype_gen signal_gen \
+	time_gen timer_gen
+
 .PHONY: all
-all: error_gen flags_gen whence_gen limits_gen filetype_gen signal_gen timer_gen
+all: $(gens)
 
-error_gen: error.c
-	$(CC) $(LDFLAGS) -o error_gen error.c
-
-flags_gen: flags.c
-	$(CC) $(LDFLAGS) -o flags_gen flags.c
-
-whence_gen: whence.c
-	$(CC) $(LDFLAGS) -o whence_gen whence.c
-
-limits_gen: limits.c
-	$(CC) $(LDFLAGS) -o limits_gen limits.c
-
-filetype_gen: filetype.c
-	$(CC) $(LDFLAGS) -o filetype_gen filetype.c
-
-signal_gen: signal.c
-	$(CC) $(LDFLAGS) -o signal_gen signal.c
-
-timer_gen: timer.c
-	$(CC) $(LDFLAGS) -o timer_gen timer.c
+%_gen: %.c
+	$(CC) $(LDFLAGS) -o $@ $^
