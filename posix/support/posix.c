@@ -10,7 +10,13 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
+
+////////////////////////////////////////////////////////////////////////////////
+// Error handling
+////////////////////////////////////////////////////////////////////////////////
 
 #define CHECKRES                                                               \
   if (res == -1) {                                                             \
@@ -20,6 +26,10 @@
   }
 
 uint32_t li_errno() { return errno; }
+
+////////////////////////////////////////////////////////////////////////////////
+// Files
+////////////////////////////////////////////////////////////////////////////////
 
 int li_open(const char *name, int flags, mode_t mode) {
   int res = open(name, flags, mode);
@@ -96,26 +106,6 @@ int li_mkstemp(char *path) {
   CHECKRES
 }
 
-int li_setuid(uid_t uid) {
-  int res = setuid(uid);
-  CHECKRES
-}
-
-int li_setgid(gid_t gid) {
-  int res = setgid(gid);
-  CHECKRES
-}
-
-int li_seteuid(uid_t uid) {
-  int res = seteuid(uid);
-  CHECKRES
-}
-
-int li_setegid(gid_t gid) {
-  int res = setegid(gid);
-  CHECKRES
-}
-
 int li_stat(const char *pth, struct stat *m) {
   int res = stat(pth, m);
   CHECKRES
@@ -141,13 +131,17 @@ int li_unlink(const char *pth) {
   CHECKRES
 }
 
-int li_mkdir(const char *pth, mode_t mode) {
-  int res = mkdir(pth, mode);
+int li_remove(const char *pth) {
+  int res = remove(pth);
   CHECKRES
 }
 
-int li_remove(const char *pth) {
-  int res = remove(pth);
+////////////////////////////////////////////////////////////////////////////////
+// Directories
+////////////////////////////////////////////////////////////////////////////////
+
+int li_mkdir(const char *pth, mode_t mode) {
+  int res = mkdir(pth, mode);
   CHECKRES
 }
 
@@ -224,6 +218,30 @@ int li_chroot(const char *buf) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Processes
+////////////////////////////////////////////////////////////////////////////////
+
+int li_setuid(uid_t uid) {
+  int res = setuid(uid);
+  CHECKRES
+}
+
+int li_setgid(gid_t gid) {
+  int res = setgid(gid);
+  CHECKRES
+}
+
+int li_seteuid(uid_t uid) {
+  int res = seteuid(uid);
+  CHECKRES
+}
+
+int li_setegid(gid_t gid) {
+  int res = setegid(gid);
+  CHECKRES
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Signals
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -290,17 +308,72 @@ int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, uint64_t nsec) {
   CHECKRES
 }
 
-int li_si_signo(siginfo_t * i) { return i->si_signo; }
+int get_siginfo_t_si_signo(siginfo_t *i) { return i->si_signo; }
 
-int li_si_code(siginfo_t * i) { return i->si_code; }
+int get_siginfo_t_si_code(siginfo_t *i) { return i->si_code; }
 
-pid_t li_si_pid(siginfo_t * i) { return i->si_pid; }
+pid_t get_siginfo_t_si_pid(siginfo_t *i) { return i->si_pid; }
 
-uid_t li_si_uid(siginfo_t * i) { return i->si_uid; }
+uid_t get_siginfo_t_si_uid(siginfo_t *i) { return i->si_uid; }
 
-int li_si_status(siginfo_t * i) { return i->si_status; }
+int get_siginfo_t_si_status(siginfo_t *i) { return i->si_status; }
 
-int li_si_value(siginfo_t * i) { return (i->si_value).sival_int; }
+int get_siginfo_t_si_value(siginfo_t *i) { return (i->si_value).sival_int; }
+
+////////////////////////////////////////////////////////////////////////////////
+// Timers
+////////////////////////////////////////////////////////////////////////////////
+
+struct timeval *li_timeval(time_t sec, suseconds_t usec) {
+  struct timeval *res = malloc(sizeof(struct timeval));
+  res->tv_sec = sec;
+  res->tv_usec = usec;
+  return res;
+}
+
+struct itimerval *li_itimerval(time_t int_sec, suseconds_t int_usec, time_t sec,
+                               suseconds_t usec) {
+  struct itimerval *res = malloc(sizeof(struct itimerval));
+  res->it_value.tv_sec = sec;
+  res->it_value.tv_usec = usec;
+  res->it_interval.tv_sec = int_sec;
+  res->it_interval.tv_usec = int_usec;
+  return res;
+}
+
+int li_setitimer(int which, const struct itimerval *new,
+                 struct itimerval *old) {
+  int res = setitimer(which, new, old);
+  CHECKRES
+}
+
+int li_setitimer1(int which, const struct itimerval *new) {
+  return li_setitimer(which, new, NULL);
+}
+
+int li_getitimer(int which, struct itimerval *old) {
+  int res = getitimer(which, old);
+  CHECKRES
+}
+
+int li_nanosleep(const struct timespec *req, struct timespec *rem) {
+  int res = nanosleep(req, rem);
+  CHECKRES
+}
+
+int li_nanosleep1(const struct timespec *req) {
+  return li_nanosleep(req, NULL);
+}
+
+int li_clock_gettime(clockid_t id, struct timespec *ref) {
+  int res = clock_gettime(id, ref);
+  CHECKRES
+}
+
+int li_clock_getres(clockid_t id, struct timespec *ref) {
+  int res = clock_getres(id, ref);
+  CHECKRES
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Structs
@@ -308,19 +381,15 @@ int li_si_value(siginfo_t * i) { return (i->si_value).sival_int; }
 
 // timespec
 
-time_t get_timespec_tv_sec(struct timespec *v) { return v->tv_sec; }
+time_t get_tv_sec(struct timespec *v) { return v->tv_sec; }
 
-int64_t get_timespec_tv_nsec(struct timespec *v) { return v->tv_nsec; }
+int64_t get_tv_nsec(struct timespec *v) { return v->tv_nsec; }
 
-void set_timespec_tv_sec(struct timespec *v, time_t val) { v->tv_sec = val; }
+void set_tv_sec(struct timespec *v, time_t val) { v->tv_sec = val; }
 
-void set_timespec_tv_nsec(struct timespec *v, int64_t val) { v->tv_nsec = val; }
+void set_tv_nsec(struct timespec *v, int64_t val) { v->tv_nsec = val; }
 
 // statvs
-
-struct statvfs *calloc_statvfs() {
-  return (struct statvfs *)calloc(1, sizeof(struct statvfs));
-}
 
 uint64_t get_statvfs_f_bsize(struct statvfs *v) { return v->f_bsize; }
 
@@ -345,10 +414,6 @@ uint64_t get_statvfs_f_flag(struct statvfs *v) { return v->f_flag; }
 uint64_t get_statvfs_f_namemax(struct statvfs *v) { return v->f_namemax; }
 
 // stat
-
-struct stat *calloc_stat() {
-  return (struct stat *)calloc(1, sizeof(struct stat));
-}
 
 dev_t get_stat_st_dev(struct stat *v) { return v->st_dev; }
 
@@ -375,3 +440,33 @@ struct timespec *get_stat_st_atim(struct stat *v) { return &(v->st_atim); }
 struct timespec *get_stat_st_mtim(struct stat *v) { return &(v->st_mtim); }
 
 struct timespec *get_stat_st_ctim(struct stat *v) { return &(v->st_ctim); }
+
+// timeval
+
+time_t get_timeval_tv_sec(struct timeval *v) { return v->tv_sec; }
+
+suseconds_t get_timeval_tv_usec(struct timeval *v) { return v->tv_usec; }
+
+void set_timeval_tv_sec(struct timeval *v, time_t val) { v->tv_sec = val; }
+
+void set_timeval_tv_usec(struct timeval *v, suseconds_t val) {
+  v->tv_usec = val;
+}
+
+// itimerval
+
+struct timeval *get_itimerval_it_interval(struct itimerval *v) {
+  return &v->it_interval;
+}
+
+struct timeval *get_itimerval_it_value(struct itimerval *v) {
+  return &v->it_value;
+}
+
+void set_itimerval_it_interval(struct itimerval *v, struct timeval *val) {
+  v->it_interval = *val;
+}
+
+void set_itimerval_it_value(struct itimerval *v, struct timeval *val) {
+  v->it_value = *val;
+}

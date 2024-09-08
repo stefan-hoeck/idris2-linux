@@ -1,7 +1,6 @@
 module System.Posix.File.Stats
 
-import Data.C.Integer
-import Data.C.Struct
+import Data.C.Ptr
 import Derive.Prelude
 import System.Posix.Errno
 import System.Posix.File
@@ -9,183 +8,212 @@ import System.Posix.File.Type
 import System.Posix.Time
 
 %default total
-%language ElabReflection
 
 --------------------------------------------------------------------------------
--- Statvfs
+-- StatvFS
 --------------------------------------------------------------------------------
 
-export %foreign "C:calloc_statvfs, posix-idris"
-calloc_statvfs: PrimIO AnyPtr
-
-export %foreign "C:get_statvfs_f_bsize, posix-idris"
+%foreign "C:get_statvfs_f_bsize, linux-idris"
 get_statvfs_f_bsize: AnyPtr -> PrimIO ULong
 
-export %foreign "C:get_statvfs_f_frsize, posix-idris"
+%foreign "C:get_statvfs_f_frsize, linux-idris"
 get_statvfs_f_frsize: AnyPtr -> PrimIO ULong
 
-export %foreign "C:get_statvfs_f_blocks, posix-idris"
+%foreign "C:get_statvfs_f_blocks, linux-idris"
 get_statvfs_f_blocks: AnyPtr -> PrimIO FsBlkCntT
 
-export %foreign "C:get_statvfs_f_bfree, posix-idris"
+%foreign "C:get_statvfs_f_bfree, linux-idris"
 get_statvfs_f_bfree: AnyPtr -> PrimIO FsBlkCntT
 
-export %foreign "C:get_statvfs_f_bavail, posix-idris"
+%foreign "C:get_statvfs_f_bavail, linux-idris"
 get_statvfs_f_bavail: AnyPtr -> PrimIO FsBlkCntT
 
-export %foreign "C:get_statvfs_f_files, posix-idris"
+%foreign "C:get_statvfs_f_files, linux-idris"
 get_statvfs_f_files: AnyPtr -> PrimIO FsFilCntT
 
-export %foreign "C:get_statvfs_f_ffree, posix-idris"
+%foreign "C:get_statvfs_f_ffree, linux-idris"
 get_statvfs_f_ffree: AnyPtr -> PrimIO FsFilCntT
 
-export %foreign "C:get_statvfs_f_favail, posix-idris"
+%foreign "C:get_statvfs_f_favail, linux-idris"
 get_statvfs_f_favail: AnyPtr -> PrimIO FsFilCntT
 
-export %foreign "C:get_statvfs_f_fsid, posix-idris"
+%foreign "C:get_statvfs_f_fsid, linux-idris"
 get_statvfs_f_fsid: AnyPtr -> PrimIO ULong
 
-export %foreign "C:get_statvfs_f_flag, posix-idris"
+%foreign "C:get_statvfs_f_flag, linux-idris"
 get_statvfs_f_flag: AnyPtr -> PrimIO ULong
 
-export %foreign "C:get_statvfs_f_namemax, posix-idris"
+%foreign "C:get_statvfs_f_namemax, linux-idris"
 get_statvfs_f_namemax: AnyPtr -> PrimIO ULong
 
-export %foreign "C:set_statvfs_f_bsize, posix-idris"
-set_statvfs_f_bsize: AnyPtr -> ULong -> PrimIO ()
-
-public export
+export
 record Statvfs where
   constructor SF
-  blockSize            : ULong
-  fundamentalBlockSize : ULong
-  blocks               : FsBlkCntT
-  freeBlocks           : FsBlkCntT
-  availableBlocks      : FsBlkCntT
-  files                : FsFilCntT
-  freeFiles            : FsFilCntT
-  availableFiles       : FsFilCntT
-  fsID                 : ULong
-  flags                : ULong
-  namemax              : ULong
+  ptr : AnyPtr
 
-%runElab derive "Statvfs" [Show,Eq]
+export %inline
+Struct Statvfs where
+  wrap   = SF
+  unwrap = ptr
 
-export
-toStatvfs : AnyPtr -> IO Statvfs
-toStatvfs p = do
-  x0  <- fromPrim $ get_statvfs_f_bsize p
-  x1  <- fromPrim $ get_statvfs_f_frsize p
-  x2  <- fromPrim $ get_statvfs_f_blocks p
-  x3  <- fromPrim $ get_statvfs_f_bfree p
-  x4  <- fromPrim $ get_statvfs_f_bavail p
-  x5  <- fromPrim $ get_statvfs_f_files p
-  x6  <- fromPrim $ get_statvfs_f_ffree p
-  x7  <- fromPrim $ get_statvfs_f_favail p
-  x8  <- fromPrim $ get_statvfs_f_fsid p
-  x9  <- fromPrim $ get_statvfs_f_flag p
-  x10 <- fromPrim $ get_statvfs_f_namemax p
-  pure (SF x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10)
+export %inline
+SizeOf Statvfs where
+  sizeof_ = statvfs_size
 
-%inline
-withStatvfs : (AnyPtr -> IO a) -> IO a
-withStatvfs f = do
-  v <- fromPrim $ calloc_statvfs
-  res <- f v
-  free v
-  pure res
+namespace Statvfs
+  export %inline
+  blockSize : HasIO io => Statvfs -> io ULong
+  blockSize s = primIO $ get_statvfs_f_bsize s.ptr
+
+  export %inline
+  fundamentalBlockSize : HasIO io => Statvfs -> io ULong
+  fundamentalBlockSize s = primIO $ get_statvfs_f_frsize s.ptr
+
+  export %inline
+  blocks : HasIO io => Statvfs -> io FsBlkCntT
+  blocks s = primIO $ get_statvfs_f_blocks s.ptr
+
+  export %inline
+  freeBlocks : HasIO io => Statvfs -> io FsBlkCntT
+  freeBlocks s = primIO $ get_statvfs_f_bfree s.ptr
+
+  export %inline
+  availableBlocks : HasIO io => Statvfs -> io FsBlkCntT
+  availableBlocks s = primIO $ get_statvfs_f_bavail s.ptr
+
+  export %inline
+  files : HasIO io => Statvfs -> io FsFilCntT
+  files s = primIO $ get_statvfs_f_files s.ptr
+
+  export %inline
+  freeFiles : HasIO io => Statvfs -> io FsFilCntT
+  freeFiles s = primIO $ get_statvfs_f_ffree s.ptr
+
+  export %inline
+  availableFiles : HasIO io => Statvfs -> io FsFilCntT
+  availableFiles s = primIO $ get_statvfs_f_favail s.ptr
+
+  export %inline
+  fsID : HasIO io => Statvfs -> io ULong
+  fsID s = primIO $ get_statvfs_f_fsid s.ptr
+
+  export %inline
+  flags : HasIO io => Statvfs -> io ULong
+  flags s = primIO $ get_statvfs_f_flag s.ptr
+
+  export %inline
+  namemax : HasIO io => Statvfs -> io ULong
+  namemax s = primIO $ get_statvfs_f_namemax s.ptr
 
 --------------------------------------------------------------------------------
--- Stat
+-- FileStats
 --------------------------------------------------------------------------------
 
-export %foreign "C:calloc_stat, posix-idris"
-calloc_stat: PrimIO AnyPtr
-
-export %foreign "C:get_stat_st_dev, posix-idris"
+%foreign "C:get_stat_st_dev, linux-idris"
 get_stat_st_dev: AnyPtr -> PrimIO DevT
 
-export %foreign "C:get_stat_st_ino, posix-idris"
+%foreign "C:get_stat_st_ino, linux-idris"
 get_stat_st_ino: AnyPtr -> PrimIO InoT
 
-export %foreign "C:get_stat_st_mode, posix-idris"
+%foreign "C:get_stat_st_mode, linux-idris"
 get_stat_st_mode: AnyPtr -> PrimIO ModeT
 
-export %foreign "C:get_stat_st_nlink, posix-idris"
+%foreign "C:get_stat_st_nlink, linux-idris"
 get_stat_st_nlink: AnyPtr -> PrimIO NlinkT
 
-export %foreign "C:get_stat_st_uid, posix-idris"
+%foreign "C:get_stat_st_uid, linux-idris"
 get_stat_st_uid: AnyPtr -> PrimIO UidT
 
-export %foreign "C:get_stat_st_gid, posix-idris"
+%foreign "C:get_stat_st_gid, linux-idris"
 get_stat_st_gid: AnyPtr -> PrimIO GidT
 
-export %foreign "C:get_stat_st_rdev, posix-idris"
+%foreign "C:get_stat_st_rdev, linux-idris"
 get_stat_st_rdev: AnyPtr -> PrimIO DevT
 
-export %foreign "C:get_stat_st_size, posix-idris"
+%foreign "C:get_stat_st_size, linux-idris"
 get_stat_st_size: AnyPtr -> PrimIO SizeT
 
-export %foreign "C:get_stat_st_blksize, posix-idris"
+%foreign "C:get_stat_st_blksize, linux-idris"
 get_stat_st_blksize: AnyPtr -> PrimIO BlkSizeT
 
-export %foreign "C:get_stat_st_blocks, posix-idris"
+%foreign "C:get_stat_st_blocks, linux-idris"
 get_stat_st_blocks: AnyPtr -> PrimIO BlkCntT
 
-export %foreign "C:get_stat_st_atim, posix-idris"
+%foreign "C:get_stat_st_atim, linux-idris"
 get_stat_st_atim: AnyPtr -> PrimIO AnyPtr
 
-export %foreign "C:get_stat_st_mtim, posix-idris"
+%foreign "C:get_stat_st_mtim, linux-idris"
 get_stat_st_mtim: AnyPtr -> PrimIO AnyPtr
 
-export %foreign "C:get_stat_st_ctim, posix-idris"
+%foreign "C:get_stat_st_ctim, linux-idris"
 get_stat_st_ctim: AnyPtr -> PrimIO AnyPtr
 
-%inline
-withStat : (AnyPtr -> IO a) -> IO a
-withStat f = do
-  v <- fromPrim $ calloc_stat
-  res <- f v
-  free v
-  pure res
-
-public export
+export
 record FileStats where
   constructor FS
-  dev     : DevT
-  ino     : InoT
-  type    : FileType
-  mode    : ModeT
-  nlink   : NlinkT
-  uid     : UidT
-  gid     : GidT
-  rdev    : DevT
-  size    : SizeT
-  blksize : BlkSizeT
-  blocks  : BlkCntT
-  atime   : Clock UTC
-  mtime   : Clock UTC
-  ctime   : Clock UTC
+  ptr : AnyPtr
 
-%runElab derive "FileStats" [Show,Eq]
+export %inline
+Struct FileStats where
+  wrap   = FS
+  unwrap = ptr
 
-export
-toFileStats : AnyPtr -> IO FileStats
-toFileStats p = do
-  x0  <- fromPrim $ get_stat_st_dev p
-  x1  <- fromPrim $ get_stat_st_ino p
-  x2  <- fromPrim $ get_stat_st_mode p
-  x3  <- fromPrim $ get_stat_st_nlink p
-  x4  <- fromPrim $ get_stat_st_uid p
-  x5  <- fromPrim $ get_stat_st_gid p
-  x6  <- fromPrim $ get_stat_st_rdev p
-  x7  <- fromPrim $ get_stat_st_size p
-  x8  <- fromPrim $ get_stat_st_blksize p
-  x9  <- fromPrim $ get_stat_st_blocks p
-  x10 <- fromPrim (get_stat_st_atim p) >>= toClock
-  x11 <- fromPrim (get_stat_st_mtim p) >>= toClock
-  x12 <- fromPrim (get_stat_st_ctim p) >>= toClock
-  pure (FS x0 x1 (fromMode x2) x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12)
+export %inline
+SizeOf FileStats where
+  sizeof_ = stat_size
+
+namespace FileStats
+  export %inline
+  dev : HasIO io => FileStats -> io DevT
+  dev s = primIO $ get_stat_st_dev s.ptr
+
+  export %inline
+  ino : HasIO io => FileStats -> io InoT
+  ino s = primIO $ get_stat_st_ino s.ptr
+
+  export %inline
+  mode : HasIO io => FileStats -> io ModeT
+  mode s = primIO $ get_stat_st_mode s.ptr
+
+  export %inline
+  nlink : HasIO io => FileStats -> io NlinkT
+  nlink s = primIO $ get_stat_st_nlink s.ptr
+
+  export %inline
+  uid : HasIO io => FileStats -> io UidT
+  uid s = primIO $ get_stat_st_uid s.ptr
+
+  export %inline
+  gid : HasIO io => FileStats -> io GidT
+  gid s = primIO $ get_stat_st_gid s.ptr
+
+  export %inline
+  rdev : HasIO io => FileStats -> io DevT
+  rdev s = primIO $ get_stat_st_rdev s.ptr
+
+  export %inline
+  size : HasIO io => FileStats -> io SizeT
+  size s = primIO $ get_stat_st_size s.ptr
+
+  export %inline
+  blksize : HasIO io => FileStats -> io BlkSizeT
+  blksize s = primIO $ get_stat_st_blksize s.ptr
+
+  export %inline
+  blocks : HasIO io => FileStats -> io BlkCntT
+  blocks s = primIO $ get_stat_st_blocks s.ptr
+
+  export %inline
+  atime : HasIO io => FileStats -> io AnyPtr
+  atime s = primIO $ get_stat_st_atim s.ptr
+
+  export %inline
+  mtime : HasIO io => FileStats -> io AnyPtr
+  mtime s = primIO $ get_stat_st_mtim s.ptr
+
+  export %inline
+  ctime : HasIO io => FileStats -> io AnyPtr
+  ctime s = primIO $ get_stat_st_ctim s.ptr
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -211,23 +239,21 @@ prim__fstat : Bits32 -> AnyPtr -> PrimIO CInt
 --------------------------------------------------------------------------------
 
 export %inline
-statvfs : String -> IO (Either Errno Statvfs)
-statvfs s = withStatvfs $ \p => toRes (toStatvfs p) (prim__statvfs s p)
+statvfs : String -> Statvfs -> IO (Either Errno ())
+statvfs s p = toUnit $ prim__statvfs s p.ptr
 
 export %inline
-fstatvfs : FileDesc a => a -> IO (Either Errno Statvfs)
-fstatvfs fd =
-  withStatvfs $ \p => toRes (toStatvfs p) (prim__fstatvfs (fileDesc fd) p)
+fstatvfs : FileDesc a => a -> Statvfs -> IO (Either Errno ())
+fstatvfs fd p = toUnit $ prim__fstatvfs (fileDesc fd) p.ptr
 
 export %inline
-stat : String -> IO (Either Errno FileStats)
-stat s = withStat $ \p => toRes (toFileStats p) (prim__stat s p)
+stat : String -> FileStats -> IO (Either Errno ())
+stat s p = toUnit $ prim__stat s p.ptr
 
 export %inline
-lstat : String -> IO (Either Errno FileStats)
-lstat s = withStat $ \p => toRes (toFileStats p) (prim__lstat s p)
+lstat : String -> FileStats -> IO (Either Errno ())
+lstat s p = toUnit $ prim__lstat s p.ptr
 
 export
-fstat : FileDesc a => a -> IO (Either Errno FileStats)
-fstat fd =
-  withStat $ \p => toRes (toFileStats p) (prim__fstat (fileDesc fd) p)
+fstat : FileDesc a => a -> FileStats -> IO (Either Errno ())
+fstat fd p = toUnit $ prim__fstat (fileDesc fd) p.ptr

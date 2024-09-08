@@ -198,3 +198,9 @@ The following will probably not be implemented:
 - [x] implement `sigwaitinfo` and `sigtimedwait`
 - [x] implement raising and handling of realtime signals
 - [x] implement signal fetching via a file descriptor
+
+### Chapter 23
+
+- [x] implement `setitimerval` and `getitimerval`
+- [ ] implement POSIX clocks timers
+- [ ] implement timer handling via file descriptors

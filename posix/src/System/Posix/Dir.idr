@@ -63,29 +63,6 @@ export %inline
 mkdir : (pth : String) -> Mode -> IO (Either Errno ())
 mkdir f (M m) = toUnit $ prim__mkdir f m
 
--- TODO: This should go to a wrapper library
--- ||| Creates a new directory including all its parent directories
--- |||
--- ||| Note: This does not fail with an error if the directory in question
--- |||       already exists.
--- export
--- mkpdir : (pth : String) -> Mode -> IO (Either Errno ())
--- mkpdir (FP p) (M m) =
---   go (p :: parentDirs p) >>= \case
---     Right ()    => pure (Right ())
---     Left EEXIST => pure (Right ())
---     Left x      => pure (Left $ FilErr x)
---
---   where
---     go : List (Path t) -> IO (Either Error ())
---     go []     = pure $ Right ()
---     go (h::t) =
---       go t >>= \case
---         Right ()    => toUnit id $ prim__mkdir "\{FP h}" m
---         Left EEXIST => toUnit id $ prim__mkdir "\{FP h}" m
---         Left EACCES => toUnit id $ prim__mkdir "\{FP h}" m
---         Left x      => pure (Left x)
-
 ||| Opens a directory.
 export
 opendir : String -> IO (Either Errno Dir)

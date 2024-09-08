@@ -67,3 +67,7 @@ toVal wrap act =
      in case r < 0 of
           True  => MkIORes (negErr r) w
           False => MkIORes (Right $ wrap r) w
+
+export %inline
+primMap : (a -> b) -> PrimIO a -> PrimIO b
+primMap f act w = let MkIORes v w := act w in MkIORes (f v) w

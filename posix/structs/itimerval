@@ -1,0 +1,6 @@
+itimerval
+Itimerval
+ITV
+posix-idris
+struct timeval,it_interval,interval,Timeval
+struct timeval,it_value,value,Timeval

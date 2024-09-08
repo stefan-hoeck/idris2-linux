@@ -21,6 +21,8 @@ import Example.Ch20.SigReceiver
 
 import Example.Ch22.SigReceiverFd
 
+import Example.Ch23.TimerExample
+
 import Example.Util.File
 import Example.Util.Opts
 import System
@@ -71,6 +73,7 @@ prog = do
     "sig_send" :: t => sigSend t
     "sig_receive" :: t => sigReceive t
     "sig_receive_fd" :: t => sigReceiveFd t
+    "timer_example" :: t => timerExample t
     _           => do
       pid  <- getpid
       ppid <- getppid
@@ -81,10 +84,6 @@ prog = do
       putStrLn "opened temporary file: \{str}"
       writeAll fd "a temporary hello world\n"
       anyErr $ cleanup fd
-      injectIO (statvfs linuxIpkg) >>= printLn
-      injectIO (lstat linuxIpkg) >>= printLn
-      injectIO (lstat "src") >>= printLn
-      injectIO (lstat "/home/gundi/playground/linux.ipkg") >>= printLn
       injectIO (readlink "/home/gundi/playground/linux.ipkg") >>= ignore . injectIO . writeBytes Stdout
       putStrLn ""
       readTill end 0 Stdin

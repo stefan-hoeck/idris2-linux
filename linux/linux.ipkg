@@ -12,6 +12,9 @@ modules = System.Linux.Inotify
         , System.Linux.Signalfd
         , System.Linux.Signalfd.Flags
 
+        , System.Linux.Timerfd
+        , System.Linux.Timerfd.Flags
+
         , System.Linux.User.Passwd
 
 sourcedir = "src"

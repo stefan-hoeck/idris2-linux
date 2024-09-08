@@ -25,9 +25,14 @@ modules = System.Callback
         , System.Posix.Signal
         , System.Posix.Signal.Types
 
+        , System.Posix.Time
+        , System.Posix.Time.Types
+
+        , System.Posix.Timer
+        , System.Posix.Timer.Types
+
         , System.Posix.Limits
         , System.Posix.Process
-        , System.Posix.Time
 
 sourcedir = "src"
 

@@ -41,3 +41,11 @@ fromMode m =
     49152 => Socket
     40960 => Link
     _ => Other
+
+public export
+statvfs_size : Nat
+statvfs_size = 112
+
+public export
+stat_size : Nat
+stat_size = 144
