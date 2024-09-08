@@ -11,8 +11,8 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Error handling
@@ -357,19 +357,21 @@ int li_getitimer(int which, struct itimerval *old) {
 }
 
 int li_nanosleep(const struct timespec *req, struct timespec *rem) {
-  int res = nanosleep(req,rem);
+  int res = nanosleep(req, rem);
   CHECKRES
 }
 
-int li_nanosleep1(const struct timespec *req) { return li_nanosleep(req,NULL); }
+int li_nanosleep1(const struct timespec *req) {
+  return li_nanosleep(req, NULL);
+}
 
 int li_clock_gettime(clockid_t id, struct timespec *ref) {
-  int res = clock_gettime(id,ref);
+  int res = clock_gettime(id, ref);
   CHECKRES
 }
 
 int li_clock_getres(clockid_t id, struct timespec *ref) {
-  int res = clock_getres(id,ref);
+  int res = clock_getres(id, ref);
   CHECKRES
 }
 
@@ -441,20 +443,30 @@ struct timespec *get_stat_st_ctim(struct stat *v) { return &(v->st_ctim); }
 
 // timeval
 
-time_t get_timeval_tv_sec(struct timeval * v) { return v->tv_sec; }
+time_t get_timeval_tv_sec(struct timeval *v) { return v->tv_sec; }
 
-suseconds_t get_timeval_tv_usec(struct timeval * v) { return v->tv_usec; }
+suseconds_t get_timeval_tv_usec(struct timeval *v) { return v->tv_usec; }
 
-void set_timeval_tv_sec(struct timeval * v, time_t val) { v->tv_sec = val; }
+void set_timeval_tv_sec(struct timeval *v, time_t val) { v->tv_sec = val; }
 
-void set_timeval_tv_usec(struct timeval * v, suseconds_t val) { v->tv_usec = val; }
+void set_timeval_tv_usec(struct timeval *v, suseconds_t val) {
+  v->tv_usec = val;
+}
 
 // itimerval
 
-struct timeval *get_itimerval_it_interval(struct itimerval * v) { return &v->it_interval; }
+struct timeval *get_itimerval_it_interval(struct itimerval *v) {
+  return &v->it_interval;
+}
 
-struct timeval *get_itimerval_it_value(struct itimerval * v) { return &v->it_value; }
+struct timeval *get_itimerval_it_value(struct itimerval *v) {
+  return &v->it_value;
+}
 
-void set_itimerval_it_interval(struct itimerval * v, struct timeval *val) { v->it_interval = *val; }
+void set_itimerval_it_interval(struct itimerval *v, struct timeval *val) {
+  v->it_interval = *val;
+}
 
-void set_itimerval_it_value(struct itimerval * v, struct timeval *val) { v->it_value = *val; }
+void set_itimerval_it_value(struct itimerval *v, struct timeval *val) {
+  v->it_value = *val;
+}
