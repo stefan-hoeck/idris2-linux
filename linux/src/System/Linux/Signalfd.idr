@@ -94,7 +94,7 @@ Cast Signalfd Fd where cast = MkFd . fd
 |||   from `System.Posix.File` to read from a `signalfd`.
 export %inline
 signalfd : (set : SigsetT) -> SignalfdFlags -> IO (Either Errno Signalfd)
-signalfd set (F f) = toVal (SFD . cast) $ prim__signalfd (unsafeUnwrap set) f
+signalfd set (F f) = toVal (SFD . cast) $ prim__signalfd (unwrap set) f
 
 ||| Result type when reading from a `Signalfd`.
 export

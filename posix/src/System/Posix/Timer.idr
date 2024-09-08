@@ -10,6 +10,122 @@ import public System.Posix.Time
 %default total
 
 --------------------------------------------------------------------------------
+-- Timeval
+--------------------------------------------------------------------------------
+
+%foreign "C:get_timeval_tv_sec, posix-idris"
+get_timeval_tv_sec: AnyPtr -> PrimIO TimeT
+
+%foreign "C:get_timeval_tv_usec, posix-idris"
+get_timeval_tv_usec: AnyPtr -> PrimIO SusecondsT
+
+%foreign "C:set_timeval_tv_sec, posix-idris"
+set_timeval_tv_sec: AnyPtr -> TimeT -> PrimIO ()
+
+%foreign "C:set_timeval_tv_usec, posix-idris"
+set_timeval_tv_usec: AnyPtr -> SusecondsT -> PrimIO ()
+
+%foreign "C:li_timeval, posix-idris"
+prim__timeval : TimeT -> SusecondsT -> PrimIO AnyPtr
+
+export
+record Timeval where
+  constructor TV
+  ptr : AnyPtr
+
+export %inline
+Struct Timeval where
+  wrap   = TV
+  unwrap = ptr
+
+export %inline
+SizeOf Timeval where
+  sizeof_ = timeval_size
+
+export %inline
+sec : HasIO io => Timeval -> io TimeT
+sec s = primIO $ get_timeval_tv_sec s.ptr
+
+export %inline
+usec : HasIO io => Timeval -> io SusecondsT
+usec s = primIO $ get_timeval_tv_usec s.ptr
+
+export %inline
+setsec : HasIO io => Timeval -> TimeT -> io ()
+setsec s v = primIO $ set_timeval_tv_sec s.ptr v
+
+export %inline
+setusec : HasIO io => Timeval -> SusecondsT -> io ()
+setusec s v = primIO $ set_timeval_tv_usec s.ptr v
+
+export %inline
+timeval : HasIO io => TimeT -> SusecondsT -> io Timeval
+timeval s u = primIO $ primMap TV $ prim__timeval s u
+
+--------------------------------------------------------------------------------
+-- Itimerval
+--------------------------------------------------------------------------------
+
+%foreign "C:get_itimerval_it_interval, posix-idris"
+get_itimerval_it_interval: AnyPtr -> PrimIO AnyPtr
+
+%foreign "C:get_itimerval_it_value, posix-idris"
+get_itimerval_it_value: AnyPtr -> PrimIO AnyPtr
+
+%foreign "C:set_itimerval_it_interval, posix-idris"
+set_itimerval_it_interval: AnyPtr -> AnyPtr -> PrimIO ()
+
+%foreign "C:set_itimerval_it_value, posix-idris"
+set_itimerval_it_value: AnyPtr -> AnyPtr -> PrimIO ()
+
+%foreign "C:li_itimerval, posix-idris"
+prim__itimerval : TimeT -> SusecondsT -> TimeT -> SusecondsT -> PrimIO AnyPtr
+
+export
+record Itimerval where
+  constructor ITV
+  ptr : AnyPtr
+
+export %inline
+Struct Itimerval where
+  wrap   = ITV
+  unwrap = ptr
+
+export %inline
+SizeOf Itimerval where
+  sizeof_ = itimerval_size
+
+export %inline
+interval : HasIO io => Itimerval -> io Timeval
+interval s = primIO $ primMap TV $ get_itimerval_it_interval s.ptr
+
+export %inline
+value : HasIO io => Itimerval -> io Timeval
+value s = primIO $ primMap TV $ get_itimerval_it_value s.ptr
+
+export %inline
+setinterval : HasIO io => Itimerval -> Timeval -> io ()
+setinterval s v = primIO $ set_itimerval_it_interval s.ptr v.ptr
+
+export %inline
+setvalue : HasIO io => Itimerval -> Timeval -> io ()
+setvalue s v = primIO $ set_itimerval_it_value s.ptr v.ptr
+
+||| Creates and sets the fields of a `Itimerval` pointer.
+|||
+||| The allocated memory must be freed via `freeItimerval`.
+export %inline
+itimerval :
+     {auto has     : HasIO io}
+  -> (secInterval  : TimeT)
+  -> (usecInterval : SusecondsT)
+  -> (secValue     : TimeT)
+  -> (usecValue    : SusecondsT)
+  -> io Itimerval
+itimerval si ui sv uv = do
+  primIO $ primMap ITV $ prim__itimerval si ui sv uv
+
+--------------------------------------------------------------------------------
 -- FFI
 --------------------------------------------------------------------------------
 
@@ -18,24 +134,6 @@ prim__clock : PrimIO ClockT
 
 %foreign "C:alarm, posix-idris"
 prim__alarm : UInt -> PrimIO UInt
-
-%foreign "C:li_timeval, posix-idris"
-prim__timeval : TimeT -> SusecondsT -> PrimIO AnyPtr
-
-%foreign "C:li_itimerval, posix-idris"
-prim__itimerval : TimeT -> SusecondsT -> TimeT -> SusecondsT -> PrimIO AnyPtr
-
-%foreign "C:li_tv_sec, posix-idris"
-prim__tv_sec : AnyPtr -> PrimIO TimeT
-
-%foreign "C:li_tv_usec, posix-idris"
-prim__tv_usec : AnyPtr -> PrimIO SusecondsT
-
-%foreign "C:li_it_interval, posix-idris"
-prim__it_interval : AnyPtr -> PrimIO AnyPtr
-
-%foreign "C:li_it_value, posix-idris"
-prim__it_value : AnyPtr -> PrimIO AnyPtr
 
 %foreign "C:li_setitimer, posix-idris"
 prim__setitimer : Bits8 -> AnyPtr -> AnyPtr -> PrimIO CInt
@@ -63,90 +161,6 @@ prim__clock_getres : Bits8 -> AnyPtr -> PrimIO CInt
 export %inline
 clock : HasIO io => io ClockT
 clock = primIO prim__clock
-
-||| A wrapper around a `struct timeval` pointer.
-export
-record Timeval where
-  constructor TV
-  ptr : AnyPtr
-
-||| Allocates a `Timeval` pointer.
-|||
-||| The allocated memory must be freed via `freeTimeval`.
-export %inline
-allocTimeval : HasIO io => io Timeval
-allocTimeval = primIO $ MkIORes (TV $ prim__malloc timeval_size)
-
-||| Frees the memory allocated for a `Timeval` pointer.
-export %inline
-freeTimeval : HasIO io => Timeval -> io ()
-freeTimeval (TV p) = primIO $ prim__free p
-
-||| Creates and sets the fields of a `Timeval` pointer.
-|||
-||| The allocated memory must be freed via `freeTimeval`.
-export %inline
-timeval : HasIO io => TimeT -> SusecondsT -> io Timeval
-timeval s u =
-  primIO $ \w =>
-    let MkIORes p w := prim__timeval s u w
-     in MkIORes (TV p) w
-
-||| Returns the `tv_sec` field of a `timeval` pointer.
-export %inline
-sec : HasIO io => Timeval -> io TimeT
-sec (TV p) = primIO $ prim__tv_sec p
-
-||| Returns the `tv_usec` field of a `timeval` pointer.
-export %inline
-usec : HasIO io => Timeval -> io SusecondsT
-usec (TV p) = primIO $ prim__tv_usec p
-
-||| A wrapper around a `struct itimerval` pointer.
-export
-record Itimerval where
-  constructor ITV
-  ptr : AnyPtr
-
-||| Allocates an `Itimerval` pointer.
-|||
-||| The allocated memory must be freed via `freeItimerval`.
-export %inline
-allocItimerval : HasIO io => io Itimerval
-allocItimerval = primIO $ MkIORes (ITV $ prim__malloc itimerval_size)
-
-||| Frees the memory allocated for a `Itimerval` pointer.
-export %inline
-freeItimerval : HasIO io => Itimerval -> io ()
-freeItimerval (ITV p) = primIO $ prim__free p
-
-||| Creates and sets the fields of a `Itimerval` pointer.
-|||
-||| The allocated memory must be freed via `freeItimerval`.
-export %inline
-itimerval :
-     {auto has     : HasIO io}
-  -> (secInterval  : TimeT)
-  -> (usecInterval : SusecondsT)
-  -> (secValue     : TimeT)
-  -> (usecValue    : SusecondsT)
-  -> io Itimerval
-itimerval si ui sv uv =
-  primIO $ \w =>
-    let MkIORes p w := prim__itimerval si ui sv uv w
-     in MkIORes (ITV p) w
-
-||| Returns a pointer to the `it_interval` field of a `itimerval` pointer.
-export %inline
-interval : HasIO io => Itimerval -> io Timeval
-interval (ITV p) =
-  primIO $ \w => let MkIORes p2 w := prim__it_interval p w in MkIORes (TV p2) w
-
-||| Returns a pointer to the `it_interval` field of a `itimerval` pointer.
-export %inline
-value : HasIO io => Itimerval -> io Timeval
-value (ITV p) =
-  primIO $ \w => let MkIORes p2 w := prim__it_value p w in MkIORes (TV p2) w
 
 ||| This sets `new` as the new timer and places the current timer for
 ||| `Which` in `old`.
@@ -188,12 +202,10 @@ alarm s = primIO $ prim__alarm s
 ||| `Timespec` pointer.
 export %inline
 clockGetTime : ClockId -> Timespec -> IO (Either Errno ())
-clockGetTime c t =
-  toUnit $ prim__clock_gettime (clockCode c) (unsafeUnwrap t)
+clockGetTime c t = toUnit $ prim__clock_gettime (clockCode c) (unwrap t)
 
 ||| Writes the resolution for the given clock into the
 ||| `Timespec` pointer.
 export %inline
 clockGetRes : ClockId -> Timespec -> IO (Either Errno ())
-clockGetRes c t =
-  toUnit $ prim__clock_getres (clockCode c) (unsafeUnwrap t)
+clockGetRes c t = toUnit $ prim__clock_getres (clockCode c) (unwrap t)

@@ -1,0 +1,10 @@
+siginfo_t
+SiginfoT
+ST
+posix-idris
+int,si_signo,signal,Signal
+int,si_code,code,CInt
+pid_t,si_pid,pid,PidT
+uid_t,si_uid,uid,UidT
+int,si_status,status,CInt
+int,si_value,value,CInt

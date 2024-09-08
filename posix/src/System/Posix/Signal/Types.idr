@@ -158,5 +158,5 @@ SIGSYS : Signal
 SIGSYS = 31
 
 public export %inline
-siginfo_t_size : SizeT
+siginfo_t_size : Nat
 siginfo_t_size = 128

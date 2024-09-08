@@ -3,6 +3,7 @@ module System.Posix.Signal
 import Data.C.Ptr
 
 import public Data.C.Integer
+import public Data.C.Struct
 import public System.Posix.Errno
 import public System.Posix.Signal.Types
 
@@ -57,30 +58,29 @@ prim__pause : PrimIO CInt
 %foreign "C:li_sigsuspend, posix-idris"
 prim__sigsuspend : AnyPtr -> PrimIO CInt
 
-%foreign "C:li_si_signo, posix-idris"
-prim__signo : AnyPtr -> PrimIO Bits32
-
-%foreign "C:li_si_signo, posix-idris"
-prim__code : AnyPtr -> PrimIO CInt
-
-%foreign "C:li_si_pid, posix-idris"
-prim__pid : AnyPtr -> PrimIO PidT
-
-%foreign "C:li_si_uid, posix-idris"
-prim__uid : AnyPtr -> PrimIO UidT
-
-%foreign "C:li_si_status, posix-idris"
-prim__status : AnyPtr -> PrimIO CInt
-
-%foreign "C:li_si_value, posix-idris"
-prim__value : AnyPtr -> PrimIO CInt
-
 %foreign "C:li_sigwaitinfo, posix-idris"
 prim__sigwaitinfo : AnyPtr -> AnyPtr -> PrimIO CInt
 
 %foreign "C:li_sigtimedwait, posix-idris"
 prim__sigtimedwait : AnyPtr -> AnyPtr -> TimeT -> NsecT -> PrimIO CInt
 
+export %foreign "C:get_siginfo_t_si_signo, posix-idris"
+get_siginfo_t_si_signo: AnyPtr -> PrimIO Bits32
+
+export %foreign "C:get_siginfo_t_si_code, posix-idris"
+get_siginfo_t_si_code: AnyPtr -> PrimIO CInt
+
+export %foreign "C:get_siginfo_t_si_pid, posix-idris"
+get_siginfo_t_si_pid: AnyPtr -> PrimIO PidT
+
+export %foreign "C:get_siginfo_t_si_uid, posix-idris"
+get_siginfo_t_si_uid: AnyPtr -> PrimIO UidT
+
+export %foreign "C:get_siginfo_t_si_status, posix-idris"
+get_siginfo_t_si_status: AnyPtr -> PrimIO CInt
+
+export %foreign "C:get_siginfo_t_si_value, posix-idris"
+get_siginfo_t_si_value: AnyPtr -> PrimIO CInt
 
 --------------------------------------------------------------------------------
 -- Signal Sets
@@ -92,12 +92,10 @@ record SigsetT where
   constructor S
   ptr : AnyPtr
 
-||| Extracts the pointer wrapped in a `SigsetT`.
-|||
-||| Useful for writing FFI bindings.
 export %inline
-unsafeUnwrap : SigsetT -> AnyPtr
-unsafeUnwrap = ptr
+Struct SigsetT where
+  wrap   = S
+  unwrap = ptr
 
 ||| Allocates a `sigset_t` with all signals cleared.
 |||
@@ -114,11 +112,6 @@ export %inline
 fullSigset : HasIO io => io SigsetT
 fullSigset =
   primIO $ \w => let MkIORes p w := prim__fullsigset w in MkIORes (S p) w
-
-||| Frees the allocated pointer of a `sigset_t`.
-export %inline
-freeSigset : HasIO io => SigsetT -> io ()
-freeSigset (S p) = primIO $ prim__free p
 
 ||| Adds a signal to a `sigset_t`
 export %inline
@@ -231,47 +224,38 @@ record SiginfoT where
   constructor ST
   ptr : AnyPtr
 
-||| Allocates a `SiginfoT` pointer.
-|||
-||| The allocated memory must be freed via `freeSiginfoT`.
 export %inline
-allocSiginfoT : HasIO io => io SiginfoT
-allocSiginfoT = primIO $ MkIORes (ST $ prim__malloc siginfo_t_size)
+Struct SiginfoT where
+  wrap   = ST
+  unwrap = ptr
 
-||| Frees the memory allocated for a `SiginfoT` pointer.
 export %inline
-freeSiginfoT : HasIO io => SiginfoT -> io ()
-freeSiginfoT (ST p) = primIO $ prim__free p
+SizeOf SiginfoT where
+  sizeof_ = siginfo_t_size
 
-||| The signal that let to the current event.
 export %inline
 signal : HasIO io => SiginfoT -> io Signal
-signal (ST p) =
-  primIO $ \w => let MkIORes v w := prim__signo p w in MkIORes (S v) w
+signal s = primIO $ primMap S $ get_siginfo_t_si_signo s.ptr
 
 export %inline
 code : HasIO io => SiginfoT -> io CInt
-code (ST p) = primIO $ prim__code p
+code s = primIO $ get_siginfo_t_si_code s.ptr
 
-||| ID of the process that sent the signal.
 export %inline
 pid : HasIO io => SiginfoT -> io PidT
-pid (ST p) = primIO $ prim__pid p
+pid s = primIO $ get_siginfo_t_si_pid s.ptr
 
-||| Real user ID of the process that sent the signal.
 export %inline
 uid : HasIO io => SiginfoT -> io UidT
-uid (ST p) = primIO $ prim__uid p
+uid s = primIO $ get_siginfo_t_si_uid s.ptr
 
-||| Effective user ID of the process that sent the signal.
 export %inline
 status : HasIO io => SiginfoT -> io CInt
-status (ST p) = primIO $ prim__status p
+status s = primIO $ get_siginfo_t_si_status s.ptr
 
-||| Value associated with a realtime signal.
 export %inline
 value : HasIO io => SiginfoT -> io CInt
-value (ST p) = primIO $ prim__value p
+value s = primIO $ get_siginfo_t_si_value s.ptr
 
 ||| Atomically blocks all signals not in `set`, then
 ||| pauses the thread (see `pause`) and restores the signal set

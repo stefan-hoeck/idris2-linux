@@ -25,16 +25,10 @@ filterM f (h::t) =
     True  => (h::) <$> filterM f t
     False => filterM f t
 
-export %inline
-Resource SigsetT where cleanup = freeSigset
-
-export %inline
-Resource SiginfoT where cleanup = freeSiginfoT
-
 export
 pendingSignals : Has Errno es => Prog es (List Signal)
 pendingSignals = do
   s  <- sigpending
   ss <- filterM (sigismember s) values
-  freeSigset s
+  freeStruct s
   pure ss

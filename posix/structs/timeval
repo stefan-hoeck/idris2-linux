@@ -1,0 +1,6 @@
+timeval
+Timeval
+TV
+posix-idris
+time_t,tv_sec,sec,TimeT
+suseconds_t,tv_usec,usec,SusecondsT

@@ -45,11 +45,11 @@ clockCode CLOCK_PROCESS_CPUTIME_ID = 2
 clockCode CLOCK_THREAD_CPUTIME_ID = 3
 
 public export %inline
-timeval_size : SizeT
+timeval_size : Nat
 timeval_size = 16
 
 public export %inline
-itimerval_size : SizeT
+itimerval_size : Nat
 itimerval_size = 32
 
 public export %inline

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 
 void *print_case(const char *name, int value) {
   printf("    %d => %s\n", value, name);
@@ -20,6 +21,14 @@ void *main() {
   print_case("Socket", S_IFSOCK);
   print_case("Link", S_IFLNK);
   printf("    _ => Other\n");
+
+  printf("\npublic export\n");
+  printf("statvfs_size : Nat\n");
+  printf("statvfs_size = %zd\n", sizeof(struct statvfs));
+
+  printf("\npublic export\n");
+  printf("stat_size : Nat\n");
+  printf("stat_size = %zd\n", sizeof(struct stat));
 
   exit(0);
 }

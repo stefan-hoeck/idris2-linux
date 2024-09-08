@@ -30,11 +30,11 @@ void *main() {
   print_clock("CLOCK_THREAD_CPUTIME_ID", CLOCK_THREAD_CPUTIME_ID);
 
   printf("\npublic export %%inline\n");
-  printf("timeval_size : SizeT\n");
+  printf("timeval_size : Nat\n");
   printf("timeval_size = %zd\n", sizeof(struct timeval));
 
   printf("\npublic export %%inline\n");
-  printf("itimerval_size : SizeT\n");
+  printf("itimerval_size : Nat\n");
   printf("itimerval_size = %zd\n", sizeof(struct itimerval));
 
   printf("\npublic export %%inline\n");

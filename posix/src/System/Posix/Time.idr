@@ -9,7 +9,7 @@ import public System.Clock
 %default total
 
 --------------------------------------------------------------------------------
--- FFI
+-- Timespec
 --------------------------------------------------------------------------------
 
 %foreign "C:get_tv_sec, posix-idris"
@@ -24,10 +24,6 @@ prim__set_tv_sec: AnyPtr -> TimeT -> PrimIO ()
 %foreign "C:set_tv_nsec, posix-idris"
 prim__set_tv_nsec: AnyPtr -> NsecT -> PrimIO ()
 
---------------------------------------------------------------------------------
--- API
---------------------------------------------------------------------------------
-
 ||| A wrapper around a `struct timespec` pointer.
 export
 record Timespec where
@@ -35,28 +31,13 @@ record Timespec where
   ptr : AnyPtr
 
 export %inline
-Deref Timespec where
-  deref = pure . TS
+Struct Timespec where
+  wrap   = TS
+  unwrap = ptr
 
 public export %inline
 SizeOf Timespec where
-  sizeof_ = cast timespec_size
-
-export %inline
-unsafeUnwrap : Timespec -> AnyPtr
-unsafeUnwrap (TS p) = p
-
-||| Allocates a `Timespec` pointer.
-|||
-||| The allocated memory must be freed via `freeTimespec`.
-export %inline
-allocTimespec : HasIO io => io Timespec
-allocTimespec = primIO $ MkIORes (TS $ prim__malloc timespec_size)
-
-||| Frees the memory allocated for a `Timespec` pointer.
-export %inline
-freeTimespec : HasIO io => Timespec -> io ()
-freeTimespec (TS p) = primIO $ prim__free p
+  sizeof_ = timespec_size
 
 ||| Reads the `tv_sec` field of a `timespec` pointer.
 export %inline

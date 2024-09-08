@@ -84,10 +84,6 @@ prog = do
       putStrLn "opened temporary file: \{str}"
       writeAll fd "a temporary hello world\n"
       anyErr $ cleanup fd
-      injectIO (statvfs linuxIpkg) >>= printLn
-      injectIO (lstat linuxIpkg) >>= printLn
-      injectIO (lstat "src") >>= printLn
-      injectIO (lstat "/home/gundi/playground/linux.ipkg") >>= printLn
       injectIO (readlink "/home/gundi/playground/linux.ipkg") >>= ignore . injectIO . writeBytes Stdout
       putStrLn ""
       readTill end 0 Stdin

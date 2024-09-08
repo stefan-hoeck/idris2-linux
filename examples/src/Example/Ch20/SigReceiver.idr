@@ -3,6 +3,7 @@
 ||| the Chez backend.
 module Example.Ch20.SigReceiver
 
+import Data.C.Ptr
 import Data.SortedMap
 import Data.String
 import Example.Util.Opts
@@ -37,7 +38,7 @@ parameters {auto hf : Has Errno es}
   covering
   app : Has ArgErr es => Nat -> Prog es ()
   app n =
-    use [fullSigset, allocSiginfoT] $ \[fs,info] => do
+    use [fullSigset, allocStruct SiginfoT] $ \[fs,info] => do
       pid       <- getpid
       putStrLn "PID: \{show pid}"
       sigprocmask' SIG_SETMASK fs

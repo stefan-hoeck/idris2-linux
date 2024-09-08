@@ -1,5 +1,6 @@
 module Example.Ch23.TimerExample
 
+import Data.C.Ptr
 import Data.IORef
 import Data.String
 
@@ -92,7 +93,7 @@ app s u is iu = do
   u  <- readOptIO OUTime u
   is <- readOptIO OTime  is
   iu <- readOptIO OUTime iu
-  use [emptySigset, itimerval is iu s u, allocSiginfoT] $ \[ss,it,si] => do
+  use [emptySigset, itimerval is iu s u, allocStruct SiginfoT] $ \[ss,it,si] => do
     sigaddset ss SIGALRM
     sigprocmask' SIG_BLOCK ss
     injectIO (setitimer' ITIMER_REAL it)

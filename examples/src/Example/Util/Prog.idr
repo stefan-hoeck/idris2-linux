@@ -144,3 +144,6 @@ use @{_::_} (h::t) run = use1 h (\r => use t (run . (r::)))
 
 export %inline
 Resource (CArrayIO n a) where cleanup = liftIO . free
+
+export %inline
+Struct a => Resource a where cleanup = freeStruct
