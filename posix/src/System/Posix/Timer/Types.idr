@@ -53,5 +53,9 @@ itimerval_size : Nat
 itimerval_size = 32
 
 public export %inline
+itimerspec_size : Nat
+itimerspec_size = 32
+
+public export %inline
 CLOCKS_PER_SEC : ClockT
 CLOCKS_PER_SEC = 1000000

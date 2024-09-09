@@ -11,6 +11,7 @@
 #include <sys/signalfd.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <sys/timerfd.h>
 #include <unistd.h>
 
 #define CHECKRES                                                               \
@@ -98,3 +99,37 @@ uint64_t li_ssi_stime(struct signalfd_siginfo *i) { return i->ssi_stime; }
 uint64_t li_ssi_addr(struct signalfd_siginfo *i) { return i->ssi_addr; }
 
 uint16_t li_ssi_addr_lsb(struct signalfd_siginfo *i) { return i->ssi_addr_lsb; }
+
+////////////////////////////////////////////////////////////////////////////////
+// timerfd
+////////////////////////////////////////////////////////////////////////////////
+
+int li_timerfd_create(int clockid, int flags) {
+  int res = timerfd_create(clockid, flags);
+  CHECKRES
+}
+
+int li_timerfd_settime(int fd, int flags, struct itimerspec *new,
+                       struct itimerspec *old) {
+  int res = timerfd_settime(fd, flags, new, old);
+  CHECKRES
+}
+
+int li_timerfd_settime1(int fd, int flags, struct itimerspec *new) {
+  return li_timerfd_settime(fd, flags, new, NULL);
+}
+
+int li_timerfd_gettime(int fd, struct itimerspec *old) {
+  int res = timerfd_gettime(fd, old);
+  CHECKRES
+}
+
+int64_t li_timerfd_read(int fd) {
+  uint64_t val;
+  int res = read(fd, &val, 8);
+  if (res == -1) {
+    return -errno;
+  } else {
+    return val;
+  }
+}

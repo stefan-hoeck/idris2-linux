@@ -341,6 +341,16 @@ struct itimerval *li_itimerval(time_t int_sec, suseconds_t int_usec, time_t sec,
   return res;
 }
 
+struct itimerspec *li_itimerspec(time_t int_sec, int64_t int_nsec, time_t sec,
+                                 int64_t nsec) {
+  struct itimerspec *res = malloc(sizeof(struct itimerspec));
+  res->it_value.tv_sec = sec;
+  res->it_value.tv_nsec = nsec;
+  res->it_interval.tv_sec = int_sec;
+  res->it_interval.tv_nsec = int_nsec;
+  return res;
+}
+
 int li_setitimer(int which, const struct itimerval *new,
                  struct itimerval *old) {
   int res = setitimer(which, new, old);
@@ -373,6 +383,15 @@ int li_clock_gettime(clockid_t id, struct timespec *ref) {
 int li_clock_getres(clockid_t id, struct timespec *ref) {
   int res = clock_getres(id, ref);
   CHECKRES
+}
+
+int li_clock_nanosleep(clockid_t id, struct timespec *ref,
+                       struct timespec *rem) {
+  return clock_nanosleep(id, 0, ref, rem);
+}
+
+int li_clock_nanosleep_abs(clockid_t id, struct timespec *ref) {
+  return clock_nanosleep(id, TIMER_ABSTIME, ref, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -468,5 +487,23 @@ void set_itimerval_it_interval(struct itimerval *v, struct timeval *val) {
 }
 
 void set_itimerval_it_value(struct itimerval *v, struct timeval *val) {
+  v->it_value = *val;
+}
+
+// itimerspec
+
+struct timespec *get_itimerspec_it_interval(struct itimerspec *v) {
+  return &v->it_interval;
+}
+
+struct timespec *get_itimerspec_it_value(struct itimerspec *v) {
+  return &v->it_value;
+}
+
+void set_itimerspec_it_interval(struct itimerspec *v, struct timespec *val) {
+  v->it_interval = *val;
+}
+
+void set_itimerspec_it_value(struct itimerspec *v, struct timespec *val) {
   v->it_value = *val;
 }

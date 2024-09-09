@@ -22,6 +22,7 @@ import Example.Ch20.SigReceiver
 import Example.Ch22.SigReceiverFd
 
 import Example.Ch23.TimerExample
+import Example.Ch23.TimerfdExample
 
 import Example.Util.File
 import Example.Util.Opts
@@ -74,6 +75,7 @@ prog = do
     "sig_receive" :: t => sigReceive t
     "sig_receive_fd" :: t => sigReceiveFd t
     "timer_example" :: t => timerExample t
+    "timerfd_example" :: t => timerfdExample t
     _           => do
       pid  <- getpid
       ppid <- getppid
