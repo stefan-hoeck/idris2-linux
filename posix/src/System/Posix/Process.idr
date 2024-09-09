@@ -1,8 +1,10 @@
 module System.Posix.Process
 
-import Data.C.Integer
-import System.Posix.Errno
+import public Data.C.Ptr
+import public System.Posix.Errno
 import System.Posix.File
+import public System.Posix.Process.Flags
+import System.Posix.Signal
 
 %default total
 
@@ -42,6 +44,36 @@ prim__setegid : GidT -> PrimIO CInt
 
 %foreign "C:li_fork, posix-idris"
 prim__fork : PrimIO PidT
+
+%foreign "C:li_wait, posix-idris"
+prim__wait : AnyPtr -> PrimIO PidT
+
+%foreign "C:li_waitpid, posix-idris"
+prim__waitpid : PidT -> AnyPtr -> CInt -> PrimIO PidT
+
+%foreign "C:li_wifexited, posix-idris"
+prim__exited : AnyPtr -> PrimIO Bits8
+
+%foreign "C:li_wexitstatus, posix-idris"
+prim__exitstatus : AnyPtr -> PrimIO Bits8
+
+%foreign "C:li_wifsignaled, posix-idris"
+prim__signaled : AnyPtr -> PrimIO Bits8
+
+%foreign "C:li_wtermsig, posix-idris"
+prim__termsig : AnyPtr -> PrimIO Bits32
+
+%foreign "C:li_wcoredump, posix-idris"
+prim__coredump : AnyPtr -> PrimIO Bits8
+
+%foreign "C:li_wifstopped, posix-idris"
+prim__stopped : AnyPtr -> PrimIO Bits8
+
+%foreign "C:li_wstopsig, posix-idris"
+prim__stopsig : AnyPtr -> PrimIO Bits32
+
+%foreign "C:li_wifcontinued, posix-idris"
+prim__continued : AnyPtr -> PrimIO Bits8
 
 --------------------------------------------------------------------------------
 -- API
@@ -97,6 +129,21 @@ export %inline
 setegid : GidT -> IO (Either Errno ())
 setegid gid = toUnit $ prim__setegid gid
 
+||| Process status returned by a call to `wait` or `waitpid`.
+export
+record ProcStatus where
+  constructor PS
+  ptr : AnyPtr
+
+export %inline
+Struct ProcStatus where
+  wrap   = PS
+  unwrap = ptr
+
+public export %inline
+SizeOf ProcStatus where
+  sizeof_ = sizeof CInt
+
 ||| Creates a new child process.
 |||
 ||| This creates a new process by copying the stack, head, and
@@ -105,9 +152,68 @@ setegid gid = toUnit $ prim__setegid gid
 ||| the child's process ID for the parent.
 export %inline
 fork : IO (Either Errno PidT)
-fork =
-  fromPrim $ \w =>
-    let MkIORes r w := Process.prim__fork w
-     in case r < 0 of
-          True  => MkIORes (negErr r) w
-          False => MkIORes (Right $ cast r) w
+fork = toPidT Process.prim__fork
+
+||| Waits for one of the child processes of this process to
+||| terminate.
+|||
+||| On success, this results the process ID of the child process
+||| that terminated. In addition, the termination status of the child
+||| is written into the given pointer.
+export %inline
+wait : ProcStatus -> IO (Either Errno PidT)
+wait s = toPidT $ prim__wait s.ptr
+
+||| Waits for the given child processes of to terminate.
+|||
+||| Unlike `wait`, this allows us to wait on a specific child process.
+||| In addition, it is possible to be notified about child processes that have
+||| been terminated by a signal.
+export %inline
+waitpid : PidT -> ProcStatus -> WaitFlags -> IO (Either Errno PidT)
+waitpid chld s (F f) = toPidT $ prim__waitpid chld s.ptr f
+
+%inline
+toBool : Bits8 -> Bool
+toBool 0 = False
+toBool _ = True
+
+||| `True` if the process exited normally.
+export %inline
+exited : HasIO io => ProcStatus -> io Bool
+exited s = primIO $ primMap toBool $ prim__exited s.ptr
+
+||| Returns the exit status with which the process exited.
+export %inline
+exitstatus : HasIO io => ProcStatus -> io Bits8
+exitstatus s = primIO $ prim__exitstatus s.ptr
+
+||| `True` if the process has been killed by a signal.
+export %inline
+signaled : HasIO io => ProcStatus -> io Bool
+signaled s = primIO $ primMap toBool $ prim__signaled s.ptr
+
+||| Returns the signal the process was killed with.
+export %inline
+termsig : HasIO io => ProcStatus -> io Signal
+termsig s = primIO $ primMap S $ prim__termsig s.ptr
+
+||| `True` if the process has dumped core.
+export %inline
+coredump : HasIO io => ProcStatus -> io Bool
+coredump s = primIO $ primMap toBool $ prim__coredump s.ptr
+
+||| `True` if the process has been stopped by a signal.
+export %inline
+stopped : HasIO io => ProcStatus -> io Bool
+stopped s = primIO $ primMap toBool $ prim__stopped s.ptr
+
+||| Returns the signal the process was stopped with.
+export %inline
+stopsig : HasIO io => ProcStatus -> io Signal
+stopsig s = primIO $ primMap S $ prim__stopsig s.ptr
+
+||| `True` if the process has been awakend with `SIGCONT`.
+export %inline
+continued : HasIO io => ProcStatus -> io Bool
+continued s = primIO $ primMap toBool $ prim__continued s.ptr
