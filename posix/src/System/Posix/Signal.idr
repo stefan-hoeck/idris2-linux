@@ -257,7 +257,7 @@ export %inline
 value : HasIO io => SiginfoT -> io CInt
 value s = primIO $ get_siginfo_t_si_value s.ptr
 
-||| Atomically blocks all signals not in `set`, then
+||| Atomically blocks the signals in `set`, then
 ||| pauses the thread (see `pause`) and restores the signal set
 ||| afterwards.
 export %inline
