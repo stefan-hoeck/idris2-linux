@@ -341,8 +341,8 @@ struct itimerval *li_itimerval(time_t int_sec, suseconds_t int_usec, time_t sec,
   return res;
 }
 
-struct itimerspec *li_itimerspec(time_t int_sec, long int_nsec, time_t sec,
-                                 long nsec) {
+struct itimerspec *li_itimerspec(time_t int_sec, int64_t int_nsec, time_t sec,
+                                 int64_t nsec) {
   struct itimerspec *res = malloc(sizeof(struct itimerspec));
   res->it_value.tv_sec = sec;
   res->it_value.tv_nsec = nsec;
