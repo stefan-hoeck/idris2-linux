@@ -27,3 +27,15 @@ Semigroup TimerfdFlags where
 
 public export
 Monoid TimerfdFlags where neutral = F 0
+
+public export
+TFD_CLOEXEC : TimerfdFlags
+TFD_CLOEXEC = 524288
+
+public export
+TFD_NONBLOCK : TimerfdFlags
+TFD_NONBLOCK = 2048
+
+public export
+TFD_TIMER_ABSTIME : Bits32
+TFD_TIMER_ABSTIME = 1

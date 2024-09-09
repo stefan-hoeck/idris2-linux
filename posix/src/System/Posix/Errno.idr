@@ -53,6 +53,15 @@ toUnit act =
           False => MkIORes (Right ()) w
 
 export %inline
+posToUnit : PrimIO CInt -> IO (Either Errno ())
+posToUnit act =
+  fromPrim $ \w =>
+    let MkIORes r w := act w
+     in case r > 0 of
+          True  => MkIORes (Left . fromCode $ cast r) w
+          False => MkIORes (Right ()) w
+
+export %inline
 toRes : IO a -> PrimIO CInt -> IO (Either Errno a)
 toRes wrap act =
   toUnit act >>= \case

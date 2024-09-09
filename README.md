@@ -202,5 +202,8 @@ The following will probably not be implemented:
 ### Chapter 23
 
 - [x] implement `setitimerval` and `getitimerval`
+- [x] implement `nanosleep` and `clock_nanosleep`.
+- [x] implement `clock_gettime` and `clock_settime`
+- [ ] add support for process and thread clock IDs
 - [ ] implement POSIX clocks timers
-- [ ] implement timer handling via file descriptors
+- [x] implement timer handling via file descriptors

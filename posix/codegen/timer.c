@@ -38,6 +38,10 @@ void *main() {
   printf("itimerval_size = %zd\n", sizeof(struct itimerval));
 
   printf("\npublic export %%inline\n");
+  printf("itimerspec_size : Nat\n");
+  printf("itimerspec_size = %zd\n", sizeof(struct itimerspec));
+
+  printf("\npublic export %%inline\n");
   printf("CLOCKS_PER_SEC : ClockT\n");
   printf("CLOCKS_PER_SEC = %lld\n", CLOCKS_PER_SEC);
 

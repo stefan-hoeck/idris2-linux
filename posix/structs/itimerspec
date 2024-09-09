@@ -1,0 +1,6 @@
+itimerspec
+Itimerspec
+ITS
+posix-idris
+struct timespec,it_interval,interval,Timespec
+struct timespec,it_value,value,Timespec

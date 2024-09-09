@@ -113,7 +113,7 @@ setvalue s v = primIO $ set_itimerval_it_value s.ptr v.ptr
 
 ||| Creates and sets the fields of a `Itimerval` pointer.
 |||
-||| The allocated memory must be freed via `freeItimerval`.
+||| The allocated memory must be freed via `freeStruct`.
 export %inline
 itimerval :
      {auto has     : HasIO io}
@@ -124,6 +124,71 @@ itimerval :
   -> io Itimerval
 itimerval si ui sv uv = do
   primIO $ primMap ITV $ prim__itimerval si ui sv uv
+
+--------------------------------------------------------------------------------
+-- Itimerspec
+--------------------------------------------------------------------------------
+
+export %foreign "C:get_itimerspec_it_interval, posix-idris"
+get_itimerspec_it_interval: AnyPtr -> PrimIO AnyPtr
+
+export %foreign "C:get_itimerspec_it_value, posix-idris"
+get_itimerspec_it_value: AnyPtr -> PrimIO AnyPtr
+
+export %foreign "C:set_itimerspec_it_interval, posix-idris"
+set_itimerspec_it_interval: AnyPtr -> AnyPtr -> PrimIO ()
+
+export %foreign "C:set_itimerspec_it_value, posix-idris"
+set_itimerspec_it_value: AnyPtr -> AnyPtr -> PrimIO ()
+
+%foreign "C:li_itimerspec, posix-idris"
+prim__itimerspec : TimeT -> NsecT -> TimeT -> NsecT -> PrimIO AnyPtr
+
+export
+record Itimerspec where
+  constructor ITS
+  ptr : AnyPtr
+
+export %inline
+Struct Itimerspec where
+  wrap   = ITS
+  unwrap = ptr
+
+export %inline
+SizeOf Itimerspec where
+  sizeof_ = itimerspec_size
+
+namespace Itimerspec
+  export %inline
+  interval : HasIO io => Itimerspec -> io Timespec
+  interval s = primIO $ primMap wrap $ get_itimerspec_it_interval s.ptr
+
+  export %inline
+  value : HasIO io => Itimerspec -> io Timespec
+  value s = primIO $ primMap wrap $ get_itimerspec_it_value s.ptr
+
+
+  export %inline
+  setinterval : HasIO io => Itimerspec -> Timespec -> io ()
+  setinterval s v = primIO $ set_itimerspec_it_interval s.ptr (unwrap v)
+
+  export %inline
+  setvalue : HasIO io => Itimerspec -> Timespec -> io ()
+  setvalue s v = primIO $ set_itimerspec_it_value s.ptr (unwrap v)
+
+||| Creates and sets the fields of a `Itimerspec` pointer.
+|||
+||| The allocated memory must be freed via `freeStruct`.
+export %inline
+itimerspec :
+     {auto has     : HasIO io}
+  -> (secInterval  : TimeT)
+  -> (usecInterval : NsecT)
+  -> (secValue     : TimeT)
+  -> (usecValue    : NsecT)
+  -> io Itimerspec
+itimerspec si ni sv nv = do
+  primIO $ primMap ITS $ prim__itimerspec si ni sv nv
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -149,6 +214,18 @@ prim__clock_gettime : Bits8 -> AnyPtr -> PrimIO CInt
 
 %foreign "C:li_clock_getres, posix-idris"
 prim__clock_getres : Bits8 -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_nanosleep, posix-idris"
+prim__nanosleep : AnyPtr -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_nanosleep1, posix-idris"
+prim__nanosleep1 : AnyPtr -> PrimIO CInt
+
+%foreign "C:li_clock_nanosleep, posix-idris"
+prim__clock_nanosleep : Bits8 -> AnyPtr -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_clock_nanosleep_abs, posix-idris"
+prim__clock_nanosleep_abs : Bits8 -> AnyPtr -> PrimIO CInt
 
 --------------------------------------------------------------------------------
 -- API
@@ -209,3 +286,33 @@ clockGetTime c t = toUnit $ prim__clock_gettime (clockCode c) (unwrap t)
 export %inline
 clockGetRes : ClockId -> Timespec -> IO (Either Errno ())
 clockGetRes c t = toUnit $ prim__clock_getres (clockCode c) (unwrap t)
+
+||| High resolution sleeping for the duration given in `dur`.
+|||
+||| In case this is interrupted by a signal, it returns `Left EINTR`
+||| and writes the remaining duration into `rem`.
+export %inline
+nanosleep : (dur,rem : Timespec) -> IO (Either Errno ())
+nanosleep d r = toUnit $ prim__nanosleep (unwrap d) (unwrap r)
+
+||| Like `nanosleep` but without the capability of keeping track of the
+||| remaining duration in case of a signal interrupt.
+export %inline
+nanosleep' : (dur : Timespec) -> IO (Either Errno ())
+nanosleep' d = toUnit $ prim__nanosleep1 (unwrap d)
+
+||| Like `nanosleep` but allows us to specify the system clock to use.
+export %inline
+clockNanosleep : ClockId -> (dur,rem : Timespec) -> IO (Either Errno ())
+clockNanosleep c d r =
+  posToUnit $ prim__clock_nanosleep (clockCode c) (unwrap d) (unwrap r)
+
+||| Like `clockNanosleep` but uses an absolute time value instead of a duration.
+|||
+||| This is useful to get exact wakeup times even in case of lots of signal
+||| interrupts.
+export %inline
+clockNanosleepAbs : ClockId -> (time : Timespec) -> IO (Either Errno ())
+clockNanosleepAbs c d =
+  posToUnit $ prim__clock_nanosleep_abs (clockCode c) (unwrap d)
+
