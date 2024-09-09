@@ -53,6 +53,15 @@ toUnit act =
           False => MkIORes (Right ()) w
 
 export %inline
+toPidT : PrimIO PidT -> IO (Either Errno PidT)
+toPidT act =
+  fromPrim $ \w =>
+    let MkIORes r w := act w
+     in case r < 0 of
+          True  => MkIORes (negErr r) w
+          False => MkIORes (Right r) w
+
+export %inline
 posToUnit : PrimIO CInt -> IO (Either Errno ())
 posToUnit act =
   fromPrim $ \w =>

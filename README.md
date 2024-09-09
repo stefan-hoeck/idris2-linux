@@ -212,3 +212,15 @@ The following will probably not be implemented:
 
 - [x] implement `fork`
 - [x] add example applications with some IPC via signals
+
+### Chapter 26
+
+- [x] implement `wait`
+- [x] implement `waitpid`
+- [ ] implement `waitid`
+- [ ] do the exercises
+
+The following will probably not be implemented:
+
+* `wait3` and `wait4` as they are (according to the book) not often used
+  and lack standardization.

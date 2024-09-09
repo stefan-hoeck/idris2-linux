@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -245,6 +246,32 @@ pid_t li_fork() {
   pid_t res = fork();
   CHECKRES
 }
+
+pid_t li_wait(int *status) {
+  pid_t res = wait(status);
+  CHECKRES
+}
+
+pid_t li_waitpid(pid_t chld, int *status, int flags) {
+  pid_t res = waitpid(chld, status, flags);
+  CHECKRES
+}
+
+uint8_t li_wifexited(int *status) { return WIFEXITED(*status); }
+
+uint8_t li_wexitstatus(int *status) { return WEXITSTATUS(*status); }
+
+uint8_t li_wifsignaled(int *status) { return WIFSIGNALED(*status); }
+
+uint32_t li_wtermsig(int *status) { return WTERMSIG(*status); }
+
+uint8_t li_wcoredump(int *status) { return WCOREDUMP(*status); }
+
+uint8_t li_wifstopped(int *status) { return WIFSTOPPED(*status); }
+
+uint32_t li_wstopsig(int *status) { return WSTOPSIG(*status); }
+
+uint8_t li_wifcontinued(int *status) { return WIFCONTINUED(*status); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signals
