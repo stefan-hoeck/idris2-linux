@@ -207,3 +207,8 @@ The following will probably not be implemented:
 - [ ] add support for process and thread clock IDs
 - [ ] implement POSIX clocks timers
 - [x] implement timer handling via file descriptors
+
+### Chapter 24
+
+- [x] implement `fork`
+- [x] add example applications with some IPC via signals

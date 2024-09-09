@@ -40,6 +40,9 @@ prim__setgid : GidT -> PrimIO CInt
 %foreign "C:li_setegid, posix-idris"
 prim__setegid : GidT -> PrimIO CInt
 
+%foreign "C:li_fork, posix-idris"
+prim__fork : PrimIO PidT
+
 --------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------
@@ -93,3 +96,18 @@ setgid gid = toUnit $ prim__setgid gid
 export %inline
 setegid : GidT -> IO (Either Errno ())
 setegid gid = toUnit $ prim__setegid gid
+
+||| Creates a new child process.
+|||
+||| This creates a new process by copying the stack, head, and
+||| data memory segment of the parent process. If successful,
+||| the functions returns `0` for the child process and
+||| the child's process ID for the parent.
+export %inline
+fork : IO (Either Errno PidT)
+fork =
+  fromPrim $ \w =>
+    let MkIORes r w := Process.prim__fork w
+     in case r < 0 of
+          True  => MkIORes (negErr r) w
+          False => MkIORes (Right $ cast r) w
