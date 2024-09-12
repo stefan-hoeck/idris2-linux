@@ -252,8 +252,13 @@ pid_t li_wait(int *status) {
   CHECKRES
 }
 
-pid_t li_waitpid(pid_t chld, int *status, int flags) {
+pid_t li_waitpid(pid_t chld, int *status, uint32_t flags) {
   pid_t res = waitpid(chld, status, flags);
+  CHECKRES
+}
+
+int li_waitid(idtype_t tpe, id_t id, siginfo_t *info, uint32_t options) {
+  int res = waitid(tpe, id, info, options);
   CHECKRES
 }
 

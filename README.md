@@ -213,11 +213,20 @@ The following will probably not be implemented:
 - [x] implement `fork`
 - [x] add example applications with some IPC via signals
 
+### Chapter 25
+
+`exit` is already available in base.
+
+The following will probably not be implemented:
+
+* Installing exit handlers via `atexit` and `onexit`, as these might suffer
+  the same limitations as other callbacks when used from Schemes.
+
 ### Chapter 26
 
 - [x] implement `wait`
 - [x] implement `waitpid`
-- [ ] implement `waitid`
+- [x] implement `waitid`
 - [ ] do the exercises
 
 The following will probably not be implemented:
