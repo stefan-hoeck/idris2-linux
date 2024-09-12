@@ -284,7 +284,7 @@ import Derive.Prelude
 public export
 record WaitFlags where
   constructor F
-  flags : CInt
+  flags : Bits32
 
 %runElab derive "WaitFlags" [Show,Eq,Ord,FromInteger]
 
@@ -294,6 +294,11 @@ Semigroup WaitFlags where
 
 public export
 Monoid WaitFlags where neutral = F 0
+
+public export
+data IdType = P_ALL | P_PID | P_PGID | P_PIDFD
+
+%runElab derive "IdType" [Show,Eq,Ord]
 
 EOT
 

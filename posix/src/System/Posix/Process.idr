@@ -49,7 +49,10 @@ prim__fork : PrimIO PidT
 prim__wait : AnyPtr -> PrimIO PidT
 
 %foreign "C:li_waitpid, posix-idris"
-prim__waitpid : PidT -> AnyPtr -> CInt -> PrimIO PidT
+prim__waitpid : PidT -> AnyPtr -> Bits32 -> PrimIO PidT
+
+%foreign "C:li_waitid, posix-idris"
+prim__waitid : Bits8 -> PidT -> AnyPtr -> Bits32 -> PrimIO PidT
 
 %foreign "C:li_wifexited, posix-idris"
 prim__exited : AnyPtr -> PrimIO Bits8
@@ -172,6 +175,14 @@ wait s = toPidT $ prim__wait s.ptr
 export %inline
 waitpid : PidT -> ProcStatus -> WaitFlags -> IO (Either Errno PidT)
 waitpid chld s (F f) = toPidT $ prim__waitpid chld s.ptr f
+
+||| More powerful version of `waitpid` supporting additional flags and
+||| waiting on groups of children. Wait results are stored in the
+||| provided `SiginfoT` pointer.
+export %inline
+waitid : IdType -> PidT -> SiginfoT -> WaitFlags -> IO (Either Errno ())
+waitid t chld s (F f) =
+  toUnit $ prim__waitid (idtypeCode t) chld (unwrap s) f
 
 %inline
 toBool : Bits8 -> Bool
