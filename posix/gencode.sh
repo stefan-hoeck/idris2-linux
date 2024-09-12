@@ -296,7 +296,7 @@ public export
 Monoid WaitFlags where neutral = F 0
 
 public export
-data IdType = P_ALL | P_PID | P_PGID | P_PIDFD
+data IdType = P_ALL | P_PID | P_PGID
 
 %runElab derive "IdType" [Show,Eq,Ord]
 

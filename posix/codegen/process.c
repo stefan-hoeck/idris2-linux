@@ -29,7 +29,6 @@ void *main() {
   print_idtype("P_ALL", P_ALL);
   print_idtype("P_PID", P_PID);
   print_idtype("P_PGID", P_PGID);
-  print_idtype("P_PIDFD", P_PIDFD);
 
   exit(0);
 }
