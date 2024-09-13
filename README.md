@@ -239,3 +239,8 @@ The following will probably not be implemented:
 - [x] implement `execve` and related functions
 - [x] implement `system`
 - [ ] do the exercises
+
+The following will probably not be implemented:
+
+* `clone` as it takes a callback function and is probably not very
+  useful in this generality when using Idris.
