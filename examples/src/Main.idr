@@ -28,6 +28,7 @@ import Example.Ch24.ForkExample
 
 import Example.Ch27.ExecveExample
 import Example.Ch27.ExecveHello
+import Example.Ch27.SystemExample
 
 import Example.Util.File
 import Example.Util.Opts
@@ -84,6 +85,7 @@ prog = do
     "fork_example" :: t => forkExample t
     "execve_example" :: t => execveExample t
     "execve_hello" :: t => execveHello t
+    "system_example" :: t => systemExample t
     _           => do
       pid  <- getpid
       ppid <- getppid

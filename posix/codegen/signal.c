@@ -11,9 +11,13 @@ void *print_how(const char *name, int value) {
 }
 
 void *print_signal(const char *name, int value) {
-  printf("\npublic export\n");
+  printf("\npublic export %%inline\n");
   printf("%s : Signal\n", name);
   printf("%s = %d\n", name, value);
+}
+
+void *print_pair(const char *name) {
+  printf("    , (%s, \"%s\")\n", name, name);
 }
 
 void *main() {
@@ -59,6 +63,40 @@ void *main() {
   print_signal("SIGPROF", SIGPROF);
   print_signal("SIGPOLL", SIGPOLL);
   print_signal("SIGSYS", SIGSYS);
+
+  printf("\nexport\n");
+  printf("sigName : SortedMap Signal String\n");
+  printf("sigName =\n");
+  printf("  SortedMap.fromList\n");
+  printf("    [ (SIGHUP, \"SIGHUP\")\n");
+  print_pair("SIGINT");
+  print_pair("SIGQUIT");
+  print_pair("SIGILL");
+  print_pair("SIGTRAP");
+  print_pair("SIGABRT");
+  print_pair("SIGBUS");
+  print_pair("SIGFPE");
+  print_pair("SIGKILL");
+  print_pair("SIGUSR1");
+  print_pair("SIGSEGV");
+  print_pair("SIGUSR2");
+  print_pair("SIGPIPE");
+  print_pair("SIGALRM");
+  print_pair("SIGTERM");
+  print_pair("SIGCHLD");
+  print_pair("SIGCONT");
+  print_pair("SIGSTOP");
+  print_pair("SIGTSTP");
+  print_pair("SIGTTIN");
+  print_pair("SIGTTOU");
+  print_pair("SIGURG");
+  print_pair("SIGXCPU");
+  print_pair("SIGXFSZ");
+  print_pair("SIGVTALRM");
+  print_pair("SIGPROF");
+  print_pair("SIGPOLL");
+  print_pair("SIGSYS");
+  printf("    ]\n");
 
   printf("\npublic export %%inline\n");
   printf("siginfo_t_size : Nat\n");

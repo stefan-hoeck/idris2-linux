@@ -183,6 +183,7 @@ module System.Posix.Signal.Types
 
 import Data.Bits
 import Data.C.Integer
+import Data.SortedMap
 import Derive.Prelude
 
 %default total

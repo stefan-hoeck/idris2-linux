@@ -277,29 +277,26 @@ int li_execv(const char *pth, char *const args[]) {
   CHECKRES
 }
 
-int li_system(const char *cmd, int *status) {
+int li_system(const char *cmd) {
   int res = system(cmd);
-  if (res >= 0) {
-    *status = res;
-  }
   CHECKRES
 }
 
-uint8_t li_wifexited(int *status) { return WIFEXITED(*status); }
+uint8_t li_wifexited(int status) { return WIFEXITED(status); }
 
-uint8_t li_wexitstatus(int *status) { return WEXITSTATUS(*status); }
+uint8_t li_wexitstatus(int status) { return WEXITSTATUS(status); }
 
-uint8_t li_wifsignaled(int *status) { return WIFSIGNALED(*status); }
+uint8_t li_wifsignaled(int status) { return WIFSIGNALED(status); }
 
-uint32_t li_wtermsig(int *status) { return WTERMSIG(*status); }
+uint32_t li_wtermsig(int status) { return WTERMSIG(status); }
 
-uint8_t li_wcoredump(int *status) { return WCOREDUMP(*status); }
+uint8_t li_wcoredump(int status) { return WCOREDUMP(status); }
 
-uint8_t li_wifstopped(int *status) { return WIFSTOPPED(*status); }
+uint8_t li_wifstopped(int status) { return WIFSTOPPED(status); }
 
-uint32_t li_wstopsig(int *status) { return WSTOPSIG(*status); }
+uint32_t li_wstopsig(int status) { return WSTOPSIG(status); }
 
-uint8_t li_wifcontinued(int *status) { return WIFCONTINUED(*status); }
+uint8_t li_wifcontinued(int status) { return WIFCONTINUED(status); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signals

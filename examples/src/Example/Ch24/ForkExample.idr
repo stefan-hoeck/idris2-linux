@@ -23,7 +23,7 @@ parameters {auto has : Has Errno es}
            {auto haa : Has ArgErr es}
            (ss       : SigsetT)
            (si       : SiginfoT)
-           (status   : ProcStatus)
+           (status   : Box ProcStatus)
 
   child : PidT -> IORef Nat -> Prog es ()
   child prnt x = do
@@ -54,8 +54,8 @@ parameters {auto has : Has Errno es}
     injectIO (kill p SIGUSR1)
     putStrLn "[ parent ] waiting for child to finish"
     chld <- injectIO (wait status)
-    sts  <- exitstatus status
-    putStrLn "[ parent ] child \{show chld} exited with status \{show sts}"
+    st   <- unboxIO status
+    putStrLn "[ parent ] child \{show chld} exited with status \{show $ exitstatus st}"
 
   forkTest : Prog es ()
   forkTest = do
@@ -71,5 +71,5 @@ export
 forkExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
 forkExample ["--help"]  = putStrLn "\{usage}"
 forkExample []          =
-  use [emptySigset, allocStruct _, allocStruct _] $ \[x,y,z] => forkTest x y z
+  use [emptySigset, allocStruct _, malloc _ _] $ \[x,y,z] => forkTest x y z
 forkExample args        = fail (WrongArgs usage)

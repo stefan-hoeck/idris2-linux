@@ -3,6 +3,10 @@ module Example.Util.Pretty
 import Data.Bits
 import Data.ByteString
 import Data.List
+import Data.SortedMap
+import Data.String
+import System.Posix.Process
+import System.Posix.Signal
 
 %default total
 
@@ -39,3 +43,48 @@ toHexString sep = pack . dropSep . foldr acc []
     acc : Bits8 -> List Char -> List Char
     acc v cs = toList sep ++ toHex v ++ cs
 
+export
+hex : Nat -> Bits64 -> String
+hex n = go []
+  where
+    go : List Char -> Bits64 -> String
+    go cs 0 = "0x\{padLeft n '0' $ pack cs}"
+    go cs x =
+      go (hexChar (cast $ x .&. 0xf) :: cs) (assert_smaller x $ shiftR x 4)
+
+public export
+data Status : Type where
+  Exited    : Bits8 -> Status
+  Signaled  : Signal -> (coreDumped : Bool) -> Status
+  Stopped   : Signal -> Status
+  Continued : Status
+  Other     : Status
+
+export
+toStatus : ProcStatus -> Status
+toStatus s =
+  if      exited    s then Exited (exitstatus s)
+  else if signaled  s then Signaled (termsig s) (coredump s)
+  else if stopped   s then Stopped (stopsig s)
+  else if continued s then Continued
+  else                     Other
+
+cdStr : Bool -> String
+cdStr True  = " (core dumped)"
+cdStr False = ""
+
+sigStr : Signal -> String
+sigStr s =
+  case lookup s sigName of
+    Just n  => "\{show s.sig} (\{n})"
+    Nothing => "\{show s.sig}"
+
+export
+prettyStatus : (pre : String) -> ProcStatus -> String
+prettyStatus pre s =
+  pre ++ case toStatus s of
+    Exited m      => "child exited, status = \{show m}"
+    Signaled s cd => "child killed by signal \{sigStr s}\{cdStr cd}"
+    Stopped s     => "child stopped by signal \{sigStr s}"
+    Continued     => "child continued"
+    Other         => "what happened here!? (status = \{show s.status})"
