@@ -262,6 +262,29 @@ int li_waitid(idtype_t tpe, id_t id, siginfo_t *info, uint32_t options) {
   CHECKRES
 }
 
+int li_execve(const char *pth, char *const args[], char *const env[]) {
+  int res = execve(pth, args, env);
+  CHECKRES
+}
+
+int li_execvp(const char *pth, char *const args[]) {
+  int res = execvp(pth, args);
+  CHECKRES
+}
+
+int li_execv(const char *pth, char *const args[]) {
+  int res = execv(pth, args);
+  CHECKRES
+}
+
+int li_system(const char *cmd, int *status) {
+  int res = system(cmd);
+  if (res >= 0) {
+    *status = res;
+  }
+  CHECKRES
+}
+
 uint8_t li_wifexited(int *status) { return WIFEXITED(*status); }
 
 uint8_t li_wexitstatus(int *status) { return WEXITSTATUS(*status); }

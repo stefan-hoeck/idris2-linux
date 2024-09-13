@@ -54,6 +54,18 @@ prim__waitpid : PidT -> AnyPtr -> Bits32 -> PrimIO PidT
 %foreign "C:li_waitid, posix-idris"
 prim__waitid : Bits8 -> PidT -> AnyPtr -> Bits32 -> PrimIO PidT
 
+%foreign "C:li_execve, posix-idris"
+prim__execve : String -> AnyPtr -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_execvp, posix-idris"
+prim__execvp : String -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_execv, posix-idris"
+prim__execv : String -> AnyPtr -> PrimIO CInt
+
+%foreign "C:li_system, posix-idris"
+prim__system : String -> AnyPtr -> PrimIO CInt
+
 %foreign "C:li_wifexited, posix-idris"
 prim__exited : AnyPtr -> PrimIO Bits8
 
@@ -157,10 +169,71 @@ export %inline
 fork : IO (Either Errno PidT)
 fork = toPidT Process.prim__fork
 
+||| Loads a new program into this process's memory.
+|||
+||| `path` : The path of the program to run
+||| `args` : Command-line arguments (a `NULL` terminated array of strings)
+||| `env ` : Environment (a `NULL` terminated array of strings of the for "a=b")
+|||
+||| This only returns in case of an error.
+export %inline
+execve :
+     String
+  -> (args : CArrayIO m (Maybe String))
+  -> (env  : CArrayIO n (Maybe String))
+  -> IO (Either Errno ())
+execve s a e = toUnit $ prim__execve s (unsafeUnwrap a) (unsafeUnwrap e)
+
+||| Convenience alias of `execve` that uses Idris lists for passing
+||| the arguments list and environment.
+export
+execle : String -> List String -> List (String,String) -> IO (Either Errno ())
+execle s a e = do
+  args <- fromListIO (map Just a ++ [Nothing])
+  env  <- fromListIO (map envpair e ++ [Nothing])
+  res  <- execve s args env
+  free args
+  free env
+  pure res
+
+  where
+    envpair : (String,String) -> Maybe String
+    envpair (n,v) = Just "\{n}=\{v}"
+
+||| Like `execve` but uses the environment of the current process.
+export %inline
+execv : String -> CArrayIO m (Maybe String) -> IO (Either Errno ())
+execv s a = toUnit $ prim__execv s (unsafeUnwrap a)
+
+||| Like `execv` but allows us to just use a filename
+||| and resolve in using the `$PATH` variable.
+export %inline
+execvp : String -> CArrayIO m (Maybe String) -> IO (Either Errno ())
+execvp s a = toUnit $ prim__execvp s (unsafeUnwrap a)
+
+||| Convenience alias for `execvp` that uses an Idris list for
+||| the list of arguments.
+export
+execlp : String -> List String -> IO (Either Errno ())
+execlp s a = do
+  args <- fromListIO (map Just a ++ [Nothing])
+  res  <- execvp s args
+  free args
+  pure res
+
+||| Runs the given shell command in a child process.
+|||
+||| This has a slightly different type signature that the actual
+||| `system` call in C, which allows us to use the same mechanism
+||| as with `wait` to get the returned exit status.
+export %inline
+system : (cmd : String) -> ProcStatus -> IO (Either Errno ())
+system cmd s = toUnit $ prim__system cmd s.ptr
+
 ||| Waits for one of the child processes of this process to
 ||| terminate.
 |||
-||| On success, this results the process ID of the child process
+||| On success, this returns the process ID of the child process
 ||| that terminated. In addition, the termination status of the child
 ||| is written into the given pointer.
 export %inline

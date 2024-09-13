@@ -233,3 +233,9 @@ The following will probably not be implemented:
 
 * `wait3` and `wait4` as they are (according to the book) not often used
   and lack standardization.
+
+### Chapter 27
+
+- [x] implement `execve` and related functions
+- [x] implement `system`
+- [ ] do the exercises
