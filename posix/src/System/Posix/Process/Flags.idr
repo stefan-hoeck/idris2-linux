@@ -64,4 +64,3 @@ idtypeCode : IdType -> Bits8
 idtypeCode P_ALL = 0
 idtypeCode P_PID = 1
 idtypeCode P_PGID = 2
-idtypeCode P_PIDFD = 3

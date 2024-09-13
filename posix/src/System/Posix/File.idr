@@ -387,3 +387,15 @@ rename f l = toUnit $ prim__rename f l
 export %inline
 readlink : (file : String) -> IO (Either Errno ByteString)
 readlink f = toBytes 4096 $ prim__readlink f
+
+--------------------------------------------------------------------------------
+-- Standard input and output
+--------------------------------------------------------------------------------
+
+export %inline
+stdout : HasIO io => String -> io ()
+stdout = liftIO . ignore . writeStr Stdout
+
+export %inline
+stdoutLn : HasIO io => String -> io ()
+stdoutLn = liftIO . ignore . writeStrLn Stdout

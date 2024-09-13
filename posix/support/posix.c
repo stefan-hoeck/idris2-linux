@@ -262,21 +262,41 @@ int li_waitid(idtype_t tpe, id_t id, siginfo_t *info, uint32_t options) {
   CHECKRES
 }
 
-uint8_t li_wifexited(int *status) { return WIFEXITED(*status); }
+int li_execve(const char *pth, char *const args[], char *const env[]) {
+  int res = execve(pth, args, env);
+  CHECKRES
+}
 
-uint8_t li_wexitstatus(int *status) { return WEXITSTATUS(*status); }
+int li_execvp(const char *pth, char *const args[]) {
+  int res = execvp(pth, args);
+  CHECKRES
+}
 
-uint8_t li_wifsignaled(int *status) { return WIFSIGNALED(*status); }
+int li_execv(const char *pth, char *const args[]) {
+  int res = execv(pth, args);
+  CHECKRES
+}
 
-uint32_t li_wtermsig(int *status) { return WTERMSIG(*status); }
+int li_system(const char *cmd) {
+  int res = system(cmd);
+  CHECKRES
+}
 
-uint8_t li_wcoredump(int *status) { return WCOREDUMP(*status); }
+uint8_t li_wifexited(int status) { return WIFEXITED(status); }
 
-uint8_t li_wifstopped(int *status) { return WIFSTOPPED(*status); }
+uint8_t li_wexitstatus(int status) { return WEXITSTATUS(status); }
 
-uint32_t li_wstopsig(int *status) { return WSTOPSIG(*status); }
+uint8_t li_wifsignaled(int status) { return WIFSIGNALED(status); }
 
-uint8_t li_wifcontinued(int *status) { return WIFCONTINUED(*status); }
+uint32_t li_wtermsig(int status) { return WTERMSIG(status); }
+
+uint8_t li_wcoredump(int status) { return WCOREDUMP(status); }
+
+uint8_t li_wifstopped(int status) { return WIFSTOPPED(status); }
+
+uint32_t li_wstopsig(int status) { return WSTOPSIG(status); }
+
+uint8_t li_wifcontinued(int status) { return WIFCONTINUED(status); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Signals

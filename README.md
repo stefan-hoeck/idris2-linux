@@ -233,3 +233,14 @@ The following will probably not be implemented:
 
 * `wait3` and `wait4` as they are (according to the book) not often used
   and lack standardization.
+
+### Chapter 27
+
+- [x] implement `execve` and related functions
+- [x] implement `system`
+- [ ] do the exercises
+
+The following will probably not be implemented:
+
+* `clone` as it takes a callback function and is probably not very
+  useful in this generality when using Idris.

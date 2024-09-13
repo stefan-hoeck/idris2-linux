@@ -26,6 +26,10 @@ import Example.Ch23.TimerfdExample
 
 import Example.Ch24.ForkExample
 
+import Example.Ch27.ExecveExample
+import Example.Ch27.ExecveHello
+import Example.Ch27.SystemExample
+
 import Example.Util.File
 import Example.Util.Opts
 import System
@@ -79,6 +83,9 @@ prog = do
     "timer_example" :: t => timerExample t
     "timerfd_example" :: t => timerfdExample t
     "fork_example" :: t => forkExample t
+    "execve_example" :: t => execveExample t
+    "execve_hello" :: t => execveHello t
+    "system_example" :: t => systemExample t
     _           => do
       pid  <- getpid
       ppid <- getppid
