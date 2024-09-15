@@ -64,8 +64,17 @@ parameters {auto has : Has Errno es}
 linuxIpkg : String
 linuxIpkg = "linux/linux.ipkg"
 
-other : IORef PthreadT -> MutexT -> CondT -> IO ()
-other ref mu co = do
+covering
+loop : IORef Nat -> Nat -> IO ()
+loop ref (S k) = modifyIORef ref S >> loop ref k
+loop ref 0     = do
+  pthreadTestCancel
+  modifyIORef ref S
+  loop ref 1000
+
+covering
+other : IORef Nat -> IORef PthreadT -> MutexT -> CondT -> IO ()
+other cnt ref mu co = do
   tid <- pthreadSelf
   stdoutLn "New thread's ID: \{show tid}"
   _ <- lockMutex mu
@@ -73,6 +82,7 @@ other ref mu co = do
   _ <- unlockMutex mu
   stdoutLn "Signalling waiting main thread."
   ignore $ condSignal co
+  loop cnt 1000
 
 covering
 prog : Prog [Errno, ArgErr] ()
@@ -110,20 +120,23 @@ prog = do
         writeAll fd "a temporary hello world\n"
         anyErr $ cleanup fd
         tid <- pthreadSelf
+        cnt <- newIORef Z
         ref <- newIORef tid
         injectIO $ lockMutex mu
         stdoutLn "My thread ID: \{show tid}"
-        _   <- liftIO (fork $ other ref mu co)
+        _   <- liftIO (fork $ other cnt ref mu co)
         stdoutLn "Forked child. Awaiting its signal."
         injectIO $ condWait co mu
         oid <- readIORef ref
         stdoutLn "Forked thread with ID: \{show oid}"
         stdoutLn "Eq of my thread ID: \{show $ tid == tid}"
         stdoutLn "Eq with other thread ID: \{show $ oid == tid}"
-        liftIO (pthreadJoin oid) >>= \case
-          Right () => stdoutLn "Done. Goodbye!"
-          Left EINVAL => stdoutLn "Thread can't be joined (anymore)."
-          Left x      => stdoutLn "Oops. There was an error: \{x}"
+        stdoutLn "Now canceling child."
+        injectIO (pthreadCancel oid)
+        res <- liftIO (pthreadJoin oid)
+        tot <- readIORef cnt
+        stdoutLn "Final count: \{show tot}"
+        stdoutLn "Joining result: \{show res}"
 
 covering
 main : IO ()
