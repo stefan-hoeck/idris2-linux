@@ -265,3 +265,24 @@ The following will probably not be implemented:
 The following will probably not be implemented:
 
 * Fine grained details about mutex and condition attributes.
+
+### Chapter 31
+
+The following will probably not be implemented:
+
+* `pthread_once` as it involves callbacks and is not clear how it
+  interacts with Scheme's thread management.
+* thread specific data, because we have other mechanisms in Idris to
+  achieve this
+* thread-local storage, because this makes use of a C language keyword.
+
+### Chapter 32
+
+- [x] implement `pthread_cancel`
+- [x] implement `pthread_setcanceltype` and `pthread_setcancelstate`
+- [x] implement `pthread_testcancel`
+
+The following will probably not be implemented:
+
+* registering and handling of thread cleanup handlers. I might come back
+  to this and check interop with the Scheme backends

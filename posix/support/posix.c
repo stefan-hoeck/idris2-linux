@@ -340,6 +340,18 @@ void li_pthread_cond_destroy(pthread_cond_t *m) {
   free(m);
 }
 
+uint8_t li_pthread_setcanceltype(uint8_t s) {
+  int res;
+  pthread_setcanceltype(s,&res);
+  return res;
+}
+
+uint8_t li_pthread_setcancelstate(uint8_t s) {
+  int res;
+  pthread_setcancelstate(s,&res);
+  return res;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Signals
 ////////////////////////////////////////////////////////////////////////////////

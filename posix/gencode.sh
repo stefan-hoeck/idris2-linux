@@ -331,6 +331,20 @@ data MutexType : Type where
 
 %runElab derive "MutexType" [Show,Eq,Ord,Finite]
 
+public export
+data CancelType : Type where
+  CANCEL_DEFERRED     : CancelType
+  CANCEL_ASYNCHRONOUS : CancelType
+
+%runElab derive "CancelType" [Show,Eq,Ord,Finite]
+
+public export
+data CancelState : Type where
+  CANCEL_ENABLE  : CancelState
+  CANCEL_DISABLE : CancelState
+
+%runElab derive "CancelState" [Show,Eq,Ord,Finite]
+
 EOT
 
 codegen/pthreads_gen >>src/System/Posix/Pthreads/Types.idr

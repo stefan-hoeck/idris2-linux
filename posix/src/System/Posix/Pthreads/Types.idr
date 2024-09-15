@@ -23,12 +23,36 @@ data MutexType : Type where
 
 %runElab derive "MutexType" [Show,Eq,Ord,Finite]
 
+public export
+data CancelType : Type where
+  CANCEL_DEFERRED     : CancelType
+  CANCEL_ASYNCHRONOUS : CancelType
+
+%runElab derive "CancelType" [Show,Eq,Ord,Finite]
+
+public export
+data CancelState : Type where
+  CANCEL_ENABLE  : CancelState
+  CANCEL_DISABLE : CancelState
+
+%runElab derive "CancelState" [Show,Eq,Ord,Finite]
+
 
 public export
 mutexCode : MutexType -> Bits8
 mutexCode MUTEX_NORMAL = 0
 mutexCode MUTEX_RECURSIVE = 1
 mutexCode MUTEX_ERRORCHECK = 2
+
+public export
+cancelType : CancelType -> Bits8
+cancelType CANCEL_DEFERRED = 0
+cancelType CANCEL_ASYNCHRONOUS = 1
+
+public export
+cancelState : CancelState -> Bits8
+cancelState CANCEL_ENABLE = 0
+cancelState CANCEL_DISABLE = 1
 
 public export %inline
 pthread_t_size : Nat

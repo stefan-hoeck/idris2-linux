@@ -56,6 +56,18 @@ prim__pthread_cond_wait : AnyPtr -> AnyPtr -> PrimIO Bits32
 %foreign "C:pthread_cond_timedwait, posix-idris"
 prim__pthread_cond_timedwait : AnyPtr -> AnyPtr -> AnyPtr -> PrimIO Bits32
 
+%foreign "C:pthread_cancel, posix-idris"
+prim__pthread_cancel : AnyPtr -> PrimIO Bits32
+
+%foreign "C:pthread_testcancel, posix-idris"
+prim__pthread_testcancel : PrimIO ()
+
+%foreign "C:li_pthread_setcanceltype, posix-idris"
+prim__pthread_setcanceltype : Bits8 -> PrimIO Bits8
+
+%foreign "C:li_pthread_setcancelstate, posix-idris"
+prim__pthread_setcancelstate : Bits8 -> PrimIO Bits8
+
 --------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------
@@ -225,3 +237,38 @@ export %inline
 condTimedwait : CondT -> MutexT -> Timespec -> IO (Either Errno ())
 condTimedwait p m t =
   posToUnit $ prim__pthread_cond_timedwait p.ptr m.ptr (unwrap t)
+
+--------------------------------------------------------------------------------
+-- Thread Cancelation
+--------------------------------------------------------------------------------
+
+toTpe : Bits8 -> CancelType
+toTpe b =
+  if b == cancelType CANCEL_DEFERRED then CANCEL_DEFERRED else CANCEL_ASYNCHRONOUS
+
+toState : Bits8 -> CancelState
+toState b =
+  if b == cancelState CANCEL_ENABLE then CANCEL_ENABLE else CANCEL_DISABLE
+
+||| Sends a cancelation request to the given thread.
+export %inline
+pthreadCancel : PthreadT -> IO (Either Errno ())
+pthreadCancel t = posToUnit $ prim__pthread_cancel t.ptr
+
+||| Tests for thread cancelation in the absence of other cancelation
+||| points.
+export %inline
+pthreadTestCancel : HasIO io => io ()
+pthreadTestCancel = primIO prim__pthread_testcancel
+
+||| Sets the current thread's cancel type returning the previous cancel type.
+export %inline
+setCancelType : HasIO io => CancelType -> io CancelType
+setCancelType t =
+  primIO $ primMap toTpe $ prim__pthread_setcanceltype (cancelType t)
+
+||| Sets the current thread's cancel state returning the previous cancel state.
+export %inline
+setCancelState : HasIO io => CancelState -> io CancelState
+setCancelState t =
+  primIO $ primMap toState $ prim__pthread_setcancelstate (cancelState t)
