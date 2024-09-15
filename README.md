@@ -240,7 +240,28 @@ The following will probably not be implemented:
 - [x] implement `system`
 - [ ] do the exercises
 
+### Chapter 28
+
 The following will probably not be implemented:
 
 * `clone` as it takes a callback function and is probably not very
   useful in this generality when using Idris.
+
+### Chapter 29
+
+- [x] implement `pthreadSelf`
+- [x] implement `pthreadJoin`
+
+The following will probably not be implemented:
+
+* `pthread_create`, `pthread_exit`, `pthread_detach`, and thread attributes
+  as the lifetime of threads is controlled by the Scheme runtime.
+
+### Chapter 30
+
+- [x] implement `MutexT` and utilities for working with mutexes
+- [x] implement `CondT` and utilities for working with condition variables
+
+The following will probably not be implemented:
+
+* Fine grained details about mutex and condition attributes.

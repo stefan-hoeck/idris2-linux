@@ -2,6 +2,7 @@ module Main
 
 import Data.C.Integer
 import Data.Fuel
+import Data.IORef
 
 import Example.Ch4.Copy
 import Example.Ch4.CopyWithHoles
@@ -32,6 +33,7 @@ import Example.Ch27.SystemExample
 
 import Example.Util.File
 import Example.Util.Opts
+import Example.Util.Pthreads
 import System
 import System.Posix.Dir
 import System.Posix.File.Stats
@@ -53,21 +55,31 @@ end = limit 1_000_000
 parameters {auto has : Has Errno es}
 
   readTill : FileDesc a => Fuel -> Nat -> a -> Prog es ()
-  readTill Dry      n fd = putStrLn "out of fuel"
+  readTill Dry      n fd = stdoutLn "out of fuel"
   readTill (More x) n fd =
     injectIO (read fd 0x10000) >>= \case
-      BS 0 _ => putStrLn "reached end of file after \{show n} bytes"
-      BS m y => putStrLn "read \{show m} bytes" >> readTill x (m+n) fd
+      BS 0 _ => stdoutLn "reached end of file after \{show n} bytes"
+      BS m y => stdoutLn "read \{show m} bytes" >> readTill x (m+n) fd
 
 linuxIpkg : String
 linuxIpkg = "linux/linux.ipkg"
+
+other : IORef PthreadT -> MutexT -> CondT -> IO ()
+other ref mu co = do
+  tid <- pthreadSelf
+  stdoutLn "New thread's ID: \{show tid}"
+  _ <- lockMutex mu
+  writeIORef ref tid
+  _ <- unlockMutex mu
+  stdoutLn "Signalling waiting main thread."
+  ignore $ condSignal co
 
 covering
 prog : Prog [Errno, ArgErr] ()
 prog = do
   (_::args) <- getArgs | [] => fail (WrongArgs usage)
   case args of
-    ["--help"]   => putStrLn usage
+    ["--help"]   => stdoutLn usage
     "copy"   :: t => copyProg t
     "copyh"  :: t => copyh t
     "tee"    :: t => tee t
@@ -86,26 +98,35 @@ prog = do
     "execve_example" :: t => execveExample t
     "execve_hello" :: t => execveHello t
     "system_example" :: t => systemExample t
-    _           => do
-      pid  <- getpid
-      ppid <- getppid
-      putStrLn "Process ID: \{show pid} (parent: \{show ppid})"
-      withFile linuxIpkg 0 0 (readTill end 0)
-      injectIO $ addFlags Stdin O_NONBLOCK
-      (fd,str) <- injectIO (mkstemp "linux/build/hello")
-      putStrLn "opened temporary file: \{str}"
-      writeAll fd "a temporary hello world\n"
-      anyErr $ cleanup fd
-      injectIO (readlink "/home/gundi/playground/linux.ipkg") >>= ignore . injectIO . writeBytes Stdout
-      putStrLn ""
-      readTill end 0 Stdin
-      injectIO getcwd >>= ignore . injectIO . writeBytes Stdout
-      putStrLn ""
-      injectIO (chdir "..")
-      injectIO getcwd >>= ignore . injectIO . writeBytes Stdout
-      putStrLn ""
-      injectIO (chroot "/etc")
+    _           =>
+      use [injectIO $ mkmutex MUTEX_NORMAL, injectIO $ mkcond] $ \[mu,co] => do
+        pid  <- getpid
+        ppid <- getppid
+        stdoutLn "Process ID: \{show pid} (parent: \{show ppid})"
+        withFile linuxIpkg 0 0 (readTill end 0)
+        injectIO $ addFlags Stdin O_NONBLOCK
+        (fd,str) <- injectIO (mkstemp "linux/build/hello")
+        stdoutLn "opened temporary file: \{str}"
+        writeAll fd "a temporary hello world\n"
+        anyErr $ cleanup fd
+        tid <- pthreadSelf
+        ref <- newIORef tid
+        injectIO $ lockMutex mu
+        stdoutLn "My thread ID: \{show tid}"
+        _   <- liftIO (fork $ other ref mu co)
+        stdoutLn "Forked child. Awaiting its signal."
+        injectIO $ condWait co mu
+        oid <- readIORef ref
+        stdoutLn "Forked thread with ID: \{show oid}"
+        stdoutLn "Eq of my thread ID: \{show $ tid == tid}"
+        stdoutLn "Eq with other thread ID: \{show $ oid == tid}"
+        liftIO (pthreadJoin oid) >>= \case
+          Right () => stdoutLn "Done. Goodbye!"
+          Left EINVAL => stdoutLn "Thread can't be joined (anymore)."
+          Left x      => stdoutLn "Oops. There was an error: \{x}"
 
 covering
 main : IO ()
-main = runProg $ handleErrors [prettyOut, prettyOut] prog
+main = do
+  runProg $ handleErrors [prettyOut, prettyOut] prog
+  exitSuccess

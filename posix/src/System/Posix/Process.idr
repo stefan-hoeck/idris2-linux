@@ -260,11 +260,6 @@ waitid : IdType -> PidT -> SiginfoT -> WaitFlags -> IO (Either Errno ())
 waitid t chld s (F f) =
   toUnit $ prim__waitid (idtypeCode t) chld (unwrap s) f
 
-%inline
-toBool : Bits8 -> Bool
-toBool 0 = False
-toBool _ = True
-
 ||| `True` if the process exited normally.
 export %inline
 exited : ProcStatus -> Bool
