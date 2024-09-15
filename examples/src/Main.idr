@@ -127,4 +127,6 @@ prog = do
 
 covering
 main : IO ()
-main = runProg $ handleErrors [prettyOut, prettyOut] prog
+main = do
+  runProg $ handleErrors [prettyOut, prettyOut] prog
+  exitSuccess
