@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -299,6 +300,47 @@ uint32_t li_wstopsig(int status) { return WSTOPSIG(status); }
 uint8_t li_wifcontinued(int status) { return WIFCONTINUED(status); }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Pthreads
+////////////////////////////////////////////////////////////////////////////////
+
+uint32_t li_pthread_join(pthread_t id) { return pthread_join(id, NULL); }
+
+uint32_t li_pthread_mutex_init(pthread_mutex_t *m, uint8_t type) {
+  pthread_mutexattr_t attr;
+  int res;
+
+  res = pthread_mutexattr_init(&attr);
+  if (res > 0) {
+    return res;
+  }
+
+  res = pthread_mutexattr_settype(&attr, type);
+  if (res > 0) {
+    return res;
+  }
+
+  res = pthread_mutex_init(m, &attr);
+
+  pthread_mutexattr_destroy(&attr);
+
+  return res;
+}
+
+void li_pthread_mutex_destroy(pthread_mutex_t *m) {
+  pthread_mutex_destroy(m);
+  free(m);
+}
+
+uint32_t li_pthread_cond_init(pthread_cond_t *c) {
+  return pthread_cond_init(c, NULL);
+}
+
+void li_pthread_cond_destroy(pthread_cond_t *m) {
+  pthread_cond_destroy(m);
+  free(m);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Signals
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -442,12 +484,12 @@ int li_clock_getres(clockid_t id, struct timespec *ref) {
   CHECKRES
 }
 
-int li_clock_nanosleep(clockid_t id, struct timespec *ref,
+uint32_t li_clock_nanosleep(clockid_t id, struct timespec *ref,
                        struct timespec *rem) {
   return clock_nanosleep(id, 0, ref, rem);
 }
 
-int li_clock_nanosleep_abs(clockid_t id, struct timespec *ref) {
+uint32_t li_clock_nanosleep_abs(clockid_t id, struct timespec *ref) {
   return clock_nanosleep(id, TIMER_ABSTIME, ref, NULL);
 }
 

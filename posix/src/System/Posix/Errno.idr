@@ -10,6 +10,11 @@ import public System.Posix.Errno.Type
 -- Utilities
 --------------------------------------------------------------------------------
 
+public export %inline
+toBool : Bits8 -> Bool
+toBool 0 = False
+toBool _ = True
+
 export %inline
 Interpolation Errno where
   interpolate = errorText
@@ -62,13 +67,13 @@ toPidT act =
           False => MkIORes (Right r) w
 
 export %inline
-posToUnit : PrimIO CInt -> IO (Either Errno ())
+posToUnit : PrimIO Bits32 -> IO (Either Errno ())
 posToUnit act =
   fromPrim $ \w =>
     let MkIORes r w := act w
-     in case r > 0 of
-          True  => MkIORes (Left . fromCode $ cast r) w
-          False => MkIORes (Right ()) w
+     in case r of
+          0 => MkIORes (Right ()) w
+          _ => MkIORes (Left $ fromCode r) w
 
 export %inline
 toRes : IO a -> PrimIO CInt -> IO (Either Errno a)

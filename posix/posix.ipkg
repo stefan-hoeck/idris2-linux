@@ -25,6 +25,9 @@ modules = System.Callback
         , System.Posix.Process
         , System.Posix.Process.Flags
 
+        , System.Posix.Pthreads
+        , System.Posix.Pthreads.Types
+
         , System.Posix.Signal
         , System.Posix.Signal.Types
 

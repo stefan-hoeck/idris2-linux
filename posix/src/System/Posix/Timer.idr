@@ -222,10 +222,10 @@ prim__nanosleep : AnyPtr -> AnyPtr -> PrimIO CInt
 prim__nanosleep1 : AnyPtr -> PrimIO CInt
 
 %foreign "C:li_clock_nanosleep, posix-idris"
-prim__clock_nanosleep : Bits8 -> AnyPtr -> AnyPtr -> PrimIO CInt
+prim__clock_nanosleep : Bits8 -> AnyPtr -> AnyPtr -> PrimIO Bits32
 
 %foreign "C:li_clock_nanosleep_abs, posix-idris"
-prim__clock_nanosleep_abs : Bits8 -> AnyPtr -> PrimIO CInt
+prim__clock_nanosleep_abs : Bits8 -> AnyPtr -> PrimIO Bits32
 
 --------------------------------------------------------------------------------
 -- API
