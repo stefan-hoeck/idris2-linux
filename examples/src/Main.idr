@@ -120,7 +120,10 @@ prog = do
         stdoutLn "Forked thread with ID: \{show oid}"
         stdoutLn "Eq of my thread ID: \{show $ tid == tid}"
         stdoutLn "Eq with other thread ID: \{show $ oid == tid}"
-        ignore $ liftIO (pthreadJoin oid)
+        liftIO (pthreadJoin oid) >>= \case
+          Right () => stdoutLn "Done. Goodbye!"
+          Left EINVAL => stdoutLn "Thread can't be joined (anymore)."
+          Left x      => stdoutLn "Oops. There was an error: \{x}"
 
 covering
 main : IO ()
