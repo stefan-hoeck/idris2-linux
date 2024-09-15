@@ -120,7 +120,7 @@ prog = do
         stdoutLn "Forked thread with ID: \{show oid}"
         stdoutLn "Eq of my thread ID: \{show $ tid == tid}"
         stdoutLn "Eq with other thread ID: \{show $ oid == tid}"
-        injectIO (pthreadJoin oid)
+        ignore $ liftIO (pthreadJoin oid)
 
 covering
 main : IO ()
