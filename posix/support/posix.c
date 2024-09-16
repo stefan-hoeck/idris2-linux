@@ -352,6 +352,18 @@ uint8_t li_pthread_setcancelstate(uint8_t s) {
   return res;
 }
 
+void *li_pthread_sigmask1(int how, sigset_t *set) {
+  pthread_sigmask(how, set, NULL);
+}
+
+sigset_t *li_pthread_sigmask(int how, sigset_t *set) {
+  sigset_t *old = malloc(sizeof(sigset_t));
+  pthread_sigmask(how, set, old);
+  return old;
+}
+
+sigset_t *li_pthread_siggetmask() { return li_pthread_sigmask(0, NULL); }
+
 ////////////////////////////////////////////////////////////////////////////////
 // Signals
 ////////////////////////////////////////////////////////////////////////////////
@@ -408,6 +420,16 @@ int li_sigsuspend(sigset_t *set) {
 int li_sigwaitinfo(sigset_t *set, siginfo_t *info) {
   int res = sigwaitinfo(set, info);
   CHECKRES
+}
+
+int li_sigwait(sigset_t *set) {
+  int sig;
+  int res = sigwait(set, &sig);
+  if (res < 0) {
+    return -errno;
+  } else {
+    return sig;
+  }
 }
 
 int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, uint64_t nsec) {

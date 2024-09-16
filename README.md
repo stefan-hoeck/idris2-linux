@@ -286,3 +286,11 @@ The following will probably not be implemented:
 
 * registering and handling of thread cleanup handlers. I might come back
   to this and check interop with the Scheme backends
+
+### Chapter 33
+
+- [x] implement `pthread_sigmask` in various forms
+- [x] implement `pthread_kill`
+- [x] implement `pthread_sigqueue`
+- [x] implement `sigwait`
+- [ ] do the exercises

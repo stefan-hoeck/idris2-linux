@@ -64,6 +64,9 @@ prim__sigwaitinfo : AnyPtr -> AnyPtr -> PrimIO CInt
 %foreign "C:li_sigtimedwait, posix-idris"
 prim__sigtimedwait : AnyPtr -> AnyPtr -> TimeT -> NsecT -> PrimIO CInt
 
+%foreign "C:li_sigwait, posix-idris"
+prim__sigwait : AnyPtr -> PrimIO CInt
+
 export %foreign "C:get_siginfo_t_si_signo, posix-idris"
 get_siginfo_t_si_signo: AnyPtr -> PrimIO Bits32
 
@@ -274,6 +277,13 @@ sigsuspend (S s) =
 export %inline
 sigwaitinfo : (set : SigsetT) -> (info : SiginfoT) -> IO (Either Errno ())
 sigwaitinfo (S s) (ST i) = toUnit $ prim__sigwaitinfo s i
+
+||| Synchronously awaits one of the signals in `set`.
+|||
+||| This is like `sigwaitinfo` but with a simpler API.
+export %inline
+sigwait : (set : SigsetT) -> IO (Either Errno Signal)
+sigwait (S s) = toVal (S . cast) $ prim__sigwait s
 
 ||| Like `sigwaitinfo` but times out with `EAGAIN` after `sec` seconds and
 ||| `nsec` nanoseconds.
