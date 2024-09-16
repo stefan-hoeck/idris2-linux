@@ -3,6 +3,7 @@ module System.Posix.Pthreads
 import public Data.C.Ptr
 import public System.Posix.Errno
 import public System.Posix.Pthreads.Types
+import System.Posix.Signal
 import System.Posix.Time
 
 %default total
@@ -67,6 +68,18 @@ prim__pthread_setcanceltype : Bits8 -> PrimIO Bits8
 
 %foreign "C:li_pthread_setcancelstate, posix-idris"
 prim__pthread_setcancelstate : Bits8 -> PrimIO Bits8
+
+%foreign "C:li_pthread_sigmask1, posix-idris"
+prim__pthread_sigmask1 : Bits8 -> AnyPtr -> PrimIO ()
+
+%foreign "C:li_pthread_sigmask, posix-idris"
+prim__pthread_sigmask : Bits8 -> AnyPtr -> PrimIO AnyPtr
+
+%foreign "C:li_pthread_siggetmask, posix-idris"
+prim__pthread_siggetmask : PrimIO AnyPtr
+
+%foreign "C:pthread_kill, posix-idris"
+prim__pthread_kill : AnyPtr -> Bits32 -> PrimIO Bits32
 
 --------------------------------------------------------------------------------
 -- API
@@ -272,3 +285,45 @@ export %inline
 setCancelState : HasIO io => CancelState -> io CancelState
 setCancelState t =
   primIO $ primMap toState $ prim__pthread_setcancelstate (cancelState t)
+
+--------------------------------------------------------------------------------
+-- Signals and Threads
+--------------------------------------------------------------------------------
+
+||| Adjust the thread's signal mask according to the given `How`
+||| and signal set.
+|||
+||| Note: This allocates a new `sigset_t` pointer and returns the
+|||       previously set signal mask. Client code is responsible to
+|||       free the memory for this once it is no longer used.
+|||       See also `pthreadSigmask'` for a version that does not return
+|||       the previous signal mask.
+export %inline
+pthreadSigmask : HasIO io => How -> SigsetT -> io SigsetT
+pthreadSigmask h p =
+  primIO $ \w =>
+    let MkIORes p2 w := prim__pthread_sigmask (howCode h) (unwrap p) w
+     in MkIORes (wrap p2) w
+
+||| Like `sigprocmask` but does not allocate a pointer for the
+||| previous `sigset_t`.
+export %inline
+pthreadSigmask' : HasIO io => How -> SigsetT -> io ()
+pthreadSigmask' h p = primIO $ prim__pthread_sigmask1 (howCode h) (unwrap p)
+
+||| Returns the current signal mask of the thread.
+|||
+||| Note: This allocates a new `sigset_t` pointer and returns the
+|||       previously set signal mask. Client code is responsible to
+|||       free the memory for this once it is no longer used.
+export %inline
+pthreadSiggetmask : HasIO io => io SigsetT
+pthreadSiggetmask =
+  primIO $ \w =>
+    let MkIORes p w := prim__pthread_siggetmask w
+     in MkIORes (wrap p) w
+
+||| Sends the given signal to the given thread.
+export %inline
+pthreadKill : PthreadT -> Signal -> IO (Either Errno ())
+pthreadKill t s = posToUnit $ prim__pthread_kill t.ptr s.sig
