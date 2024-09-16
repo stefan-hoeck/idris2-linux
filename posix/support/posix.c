@@ -422,6 +422,16 @@ int li_sigwaitinfo(sigset_t *set, siginfo_t *info) {
   CHECKRES
 }
 
+int li_sigwait(sigset_t *set) {
+  int sig;
+  int res = sigwait(set, &sig);
+  if (res < 0) {
+    return -errno;
+  } else {
+    return sig;
+  }
+}
+
 int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, uint64_t nsec) {
   struct timespec ts;
   ts.tv_sec = sec;

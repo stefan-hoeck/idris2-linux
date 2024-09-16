@@ -1,12 +1,16 @@
 // Copyright 2024 Stefan Höck
 
+#define _GNU_SOURCE 1
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
+#include <pthread.h>
 #include <sys/inotify.h>
 #include <sys/signalfd.h>
 #include <sys/stat.h>
@@ -132,4 +136,13 @@ int64_t li_timerfd_read(int fd) {
   } else {
     return val;
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// pthreads
+////////////////////////////////////////////////////////////////////////////////
+
+uint32_t li_pthread_sigqueue(pthread_t p, int sig, int word) {
+  union sigval u = {.sival_int = word};
+  return pthread_sigqueue(p, sig, u);
 }

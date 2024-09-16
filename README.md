@@ -291,5 +291,6 @@ The following will probably not be implemented:
 
 - [x] implement `pthread_sigmask` in various forms
 - [x] implement `pthread_kill`
-- [ ] implement `pthread_sigqueue`
-- [ ] implement `sigwait`
+- [x] implement `pthread_sigqueue`
+- [x] implement `sigwait`
+- [ ] do the exercises

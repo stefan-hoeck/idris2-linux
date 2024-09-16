@@ -91,6 +91,10 @@ record PthreadT where
   constructor P
   ptr : AnyPtr
 
+export %inline
+unwrapPthreadT : PthreadT -> AnyPtr
+unwrapPthreadT = ptr
+
 ||| Returns the thread ID of the current thread.
 export %inline
 pthreadSelf : HasIO io => io PthreadT
