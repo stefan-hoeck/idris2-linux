@@ -303,3 +303,6 @@ To be added...
 
 - [x] implement `pipe`
 - [x] implement `pipe2`
+- [ ] implement `popen` and `pclose`
+- [x] implement `mkfifo`
+- [ ] do the exercises
