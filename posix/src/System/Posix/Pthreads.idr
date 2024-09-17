@@ -98,11 +98,11 @@ unwrapPthreadT = ptr
 ||| Returns the thread ID of the current thread.
 export %inline
 pthreadSelf : HasIO io => io PthreadT
-pthreadSelf = primIO $ primMap P $ prim__pthread_self
+pthreadSelf = primMap P $ prim__pthread_self
 
 ||| Blocks the current thread and waits for the given thread to terminate.
 export %inline
-pthreadJoin : PthreadT -> IO (Either Errno ())
+pthreadJoin : ErrIO io => PthreadT -> io ()
 pthreadJoin p = posToUnit $ prim__pthread_join p.ptr
 
 export %inline
@@ -146,13 +146,13 @@ SizeOf MutexT where sizeof_ = mutex_t_size
 |||
 ||| This must be freed with `destroyMutex`.
 export
-mkmutex : MutexType -> IO (Either Errno MutexT)
+mkmutex : ErrIO io => MutexType -> io MutexT
 mkmutex t = do
   m <- allocStruct MutexT
-  e <- posToUnit $ prim__pthread_mutex_init m.ptr (mutexCode t)
-  case e of
-    Left x  => freeStruct m $> Left x
-    Right () => pure (Right m)
+  x <- primIO $ prim__pthread_mutex_init m.ptr (mutexCode t)
+  case x of
+    0 => pure m
+    x => freeStruct m >> error (EN x)
 
 ||| Destroys a mutex and frees the memory allocated for it.
 export %inline
@@ -162,17 +162,17 @@ destroyMutex m = primIO $ prim__pthread_mutex_destroy m.ptr
 ||| Tries to lock the given mutex, blocking the calling thread
 ||| in case it is already locked.
 export %inline
-lockMutex : MutexT -> IO (Either Errno ())
+lockMutex : ErrIO io => MutexT -> io ()
 lockMutex p = posToUnit $ prim__pthread_mutex_lock p.ptr
 
 export %inline
-timedlockMutex : MutexT -> Timespec -> IO (Either Errno ())
+timedlockMutex : ErrIO io => MutexT -> Timespec -> io ()
 timedlockMutex p t = posToUnit $ prim__pthread_mutex_timedlock p.ptr (unwrap t)
 
 ||| Like `lockMutex` but fails with `EBUSY` in case the mutex is
 ||| already locked.
 export %inline
-trylockMutex : MutexT -> IO (Either Errno ())
+trylockMutex : ErrIO io => MutexT -> io ()
 trylockMutex p = posToUnit $ prim__pthread_mutex_trylock p.ptr
 
 ||| Unlocks the given mutex.
@@ -180,7 +180,7 @@ trylockMutex p = posToUnit $ prim__pthread_mutex_trylock p.ptr
 ||| This is an error if the calling thread is not the one holding
 ||| the mutex's lock.
 export %inline
-unlockMutex : MutexT -> IO (Either Errno ())
+unlockMutex : ErrIO io => MutexT -> io ()
 unlockMutex p = posToUnit $ prim__pthread_mutex_unlock p.ptr
 
 --------------------------------------------------------------------------------
@@ -209,13 +209,13 @@ SizeOf CondT where sizeof_ = cond_t_size
 |||
 ||| This must be freed with `destroyCond`.
 export
-mkcond : IO (Either Errno CondT)
+mkcond : ErrIO io => io CondT
 mkcond = do
   m <- allocStruct CondT
-  e <- posToUnit $ prim__pthread_cond_init m.ptr
-  case e of
-    Left x   => freeStruct m $> Left x
-    Right () => pure (Right m)
+  x <- primIO $ prim__pthread_cond_init m.ptr
+  case x of
+    0 => pure m
+    x => freeStruct m >> error (EN x)
 
 ||| Destroys a condition variable and frees the memory allocated for it.
 export %inline
@@ -228,14 +228,14 @@ destroyCond m = primIO $ prim__pthread_cond_destroy m.ptr
 ||| which of them will be signalled. We are only guaranteed that at least
 ||| of them will be woken up.
 export %inline
-condSignal : CondT -> IO (Either Errno ())
+condSignal : ErrIO io => CondT -> io ()
 condSignal p = posToUnit $ prim__pthread_cond_signal p.ptr
 
 ||| Broadcasts the given `pthread_cond_t`.
 |||
 ||| This will wake up all threads waiting on the given condition.
 export %inline
-condBroadcast : CondT -> IO (Either Errno ())
+condBroadcast : ErrIO io => CondT -> io ()
 condBroadcast p = posToUnit $ prim__pthread_cond_broadcast p.ptr
 
 ||| Blocks the given thread and waits for the given condition to
@@ -245,13 +245,13 @@ condBroadcast p = posToUnit $ prim__pthread_cond_broadcast p.ptr
 ||| lock is automatically released upon calling `condWait`, and when
 ||| the thread is woken up, the mutex will automatically be locked again.
 export %inline
-condWait : CondT -> MutexT -> IO (Either Errno ())
+condWait : ErrIO io => CondT -> MutexT -> io ()
 condWait p m = posToUnit $ prim__pthread_cond_wait p.ptr m.ptr
 
 ||| Like `condWait` but will return with `ETIMEDOUT` after the given
 ||| time interval expires.
 export %inline
-condTimedwait : CondT -> MutexT -> Timespec -> IO (Either Errno ())
+condTimedwait : ErrIO io => CondT -> MutexT -> Timespec -> io ()
 condTimedwait p m t =
   posToUnit $ prim__pthread_cond_timedwait p.ptr m.ptr (unwrap t)
 
@@ -263,13 +263,13 @@ toTpe : Bits8 -> CancelType
 toTpe b =
   if b == cancelType CANCEL_DEFERRED then CANCEL_DEFERRED else CANCEL_ASYNCHRONOUS
 
-toState : Bits8 -> CancelState
-toState b =
+toSt : Bits8 -> CancelState
+toSt b =
   if b == cancelState CANCEL_ENABLE then CANCEL_ENABLE else CANCEL_DISABLE
 
 ||| Sends a cancelation request to the given thread.
 export %inline
-pthreadCancel : PthreadT -> IO (Either Errno ())
+pthreadCancel : ErrIO io => PthreadT -> io ()
 pthreadCancel t = posToUnit $ prim__pthread_cancel t.ptr
 
 ||| Tests for thread cancelation in the absence of other cancelation
@@ -281,14 +281,12 @@ pthreadTestCancel = primIO prim__pthread_testcancel
 ||| Sets the current thread's cancel type returning the previous cancel type.
 export %inline
 setCancelType : HasIO io => CancelType -> io CancelType
-setCancelType t =
-  primIO $ primMap toTpe $ prim__pthread_setcanceltype (cancelType t)
+setCancelType t = primMap toTpe $ prim__pthread_setcanceltype (cancelType t)
 
 ||| Sets the current thread's cancel state returning the previous cancel state.
 export %inline
 setCancelState : HasIO io => CancelState -> io CancelState
-setCancelState t =
-  primIO $ primMap toState $ prim__pthread_setcancelstate (cancelState t)
+setCancelState t = primMap toSt $ prim__pthread_setcancelstate (cancelState t)
 
 --------------------------------------------------------------------------------
 -- Signals and Threads
@@ -329,5 +327,5 @@ pthreadSiggetmask =
 
 ||| Sends the given signal to the given thread.
 export %inline
-pthreadKill : PthreadT -> Signal -> IO (Either Errno ())
+pthreadKill : ErrIO io => PthreadT -> Signal -> io ()
 pthreadKill t s = posToUnit $ prim__pthread_kill t.ptr s.sig

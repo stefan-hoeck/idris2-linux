@@ -36,11 +36,7 @@ parameters {auto he : Has Errno es}
            {auto ha : Has ArgErr es}
 
   tryMkFifo : String -> Prog es ()
-  tryMkFifo s =
-    liftIO (mkfifo s 0o600) >>= \case
-      Right ()    => pure ()
-      Left EEXIST => pure ()
-      Left x      => fail x
+  tryMkFifo s = onErrno EEXIST (pure ()) (mkfifo s 0o600)
 
   covering
   serve : Bits64 -> Fd -> Prog es ()
@@ -61,7 +57,7 @@ parameters {auto he : Has Errno es}
 
   export
   fifoClient : List String -> Prog es ()
-  fifoClient ["--help"]  = stdoutLn "\{usage}"
+  fifoClient ["--help"]  = stdoutLn usage
   fifoClient [s]         = do
     n   <- readOptIO OBits32 s
     pid <- cast {to = Bits64} <$> getpid

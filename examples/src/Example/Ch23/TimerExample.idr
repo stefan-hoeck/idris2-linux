@@ -46,25 +46,25 @@ parameters {auto has : Has Errno es}
     cs  <- readIORef calls
     modifyIORef calls S
     when ((cast {to = Integer} cs `mod` 20) == 0)
-      (putStrLn "       Elapsed     Value  Interval")
+      (stdoutLn "       Elapsed     Value  Interval")
 
-    putStr "\{pre} \{prettyClock $ timeDifference now start}"
+    stdout "\{pre} \{prettyClock $ timeDifference now start}"
 
     when includeTimer $ do
-      injectIO (getitimer ITIMER_REAL it)
+      getitimer ITIMER_REAL it
       iv  <- interval it
       val <- value it
       is  <- sec iv
       iu  <- usec iv
       s   <- sec val
       u   <- usec val
-      putStr "\{timeval s u}\{timeval is iu}"
+      stdout "\{timeval s u}\{timeval is iu}"
 
-    putStr "\n"
+    stdout "\n"
 
   covering
   inner : Nat -> ClockT -> Prog es Nat
-  inner 0     cl = putStrLn "That's all folks" $> 0
+  inner 0     cl = stdoutLn "That's all folks" $> 0
   inner (S k) cl = do
     now <- clock
     case (((now - cl) * 10) `div` CLOCKS_PER_SEC) < 5 of
@@ -73,7 +73,7 @@ parameters {auto has : Has Errno es}
         use1 sigpending (flip sigismember SIGALRM) >>= \case
           False => inner (S k) cl
           True  => do
-            injectIO (sigwaitinfo ss si)
+            sigwaitinfo ss si
             displayTimes "ALARM:" True
             inner k cl
 
@@ -96,7 +96,7 @@ app s u is iu = do
   use [emptySigset, itimerval is iu s u, allocStruct SiginfoT] $ \[ss,it,si] => do
     sigaddset ss SIGALRM
     sigprocmask' SIG_BLOCK ss
-    injectIO (setitimer' ITIMER_REAL it)
+    setitimer' ITIMER_REAL it
     cl <- clock
     start <- liftIO (clockTime Monotonic)
     calls <- newIORef Z
@@ -105,7 +105,7 @@ app s u is iu = do
 
 export covering
 timerExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
-timerExample ["--help"]  = putStrLn "\{usage}"
+timerExample ["--help"]  = stdoutLn usage
 timerExample [ ]         = app "2" "0" "0" "0"
 timerExample [s]         = app s   "0" "0" "0"
 timerExample [s,u]       = app s   u   "0" "0"

@@ -26,26 +26,26 @@ parameters {auto he : Has Errno es}
 
   chld : Nat -> Vect 2 Fd -> Prog es ()
   chld n [i,o] = do
-    injectIO (close i)
+    close i
     pid <- getpid
     usleep 10000
     stdoutLn "Child \{show n} (PID=\{show pid}) closing pipe"
-    injectIO (close o)
+    close o
 
   run : Nat -> Nat -> Vect 2 Fd -> Prog es ()
   run 0     tot [i,o] = do
-    injectIO (close o)
-    n <- injectIO (read i 1)
+    close o
+    n <- read i 1
     stdoutLn "Parent ready to go."
   run (S k) tot fds   = do
-    0 <- injectIO fork | p => run k tot fds
+    0 <- fork | p => run k tot fds
     chld (tot `minus` k) fds
 
   export covering
   pipeSync : List String -> Prog es ()
-  pipeSync ["--help"]  = stdoutLn "\{usage}"
+  pipeSync ["--help"]  = stdoutLn usage
   pipeSync [s]         = do
     n <- readOptIO ONat s
-    fds <- use1 (malloc _ _) $ \r => injectIO (pipe r) >> readVectIO r
+    fds <- use1 (malloc _ _) $ \r => pipe r >> readVectIO r
     run n n fds
   pipeSync args        = fail (WrongArgs usage)

@@ -30,5 +30,5 @@ O_DIRECT = F o_direct
 ||| Linux-specific version of `pipe` that allows setting additional
 ||| flags (`O_NONBLOCK`, `O_CLOEXEC`, `O_DIRECT`).
 export %inline
-pipe2 : CArrayIO 2 Fd -> Flags -> IO (Either Errno ())
+pipe2 : ErrIO io => CArrayIO 2 Fd -> Flags -> io ()
 pipe2 p (F fs) = toUnit $ prim__pipe2 (unsafeUnwrap p) fs

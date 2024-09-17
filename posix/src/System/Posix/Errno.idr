@@ -17,80 +17,51 @@ toBool _ = True
 
 export %inline
 Interpolation Errno where
-  interpolate = errorText
-
-%default total
-codeMap : SortedMap Bits32 Errno
-codeMap = SortedMap.fromList $ map (\x => (errorCode x, x)) values
-
-||| Convert an error code to the corresponding `Errno`.
-|||
-||| This returns `EOTHER` in case `x` is none of the predefined error
-||| codes.
-export
-fromCode : Bits32 -> Errno
-fromCode x = fromMaybe EOTHER (lookup x codeMap)
+  interpolate x = "\{errorText x} (\{errorName x})"
 
 export %inline
 fromNeg : Neg n => Cast n Bits32 => n -> Errno
-fromNeg = fromCode . cast . negate
+fromNeg = EN . cast . negate
+
+public export
+interface HasIO io => ErrIO io where
+  error : Errno -> io a
+
+parameters {auto err : ErrIO io}
+  export %inline
+  toSize : PrimIO SsizeT -> io Bits32
+  toSize act = do
+    r <- primIO act
+    if r < 0 then error (fromNeg r) else pure (cast r)
+
+  export %inline
+  toUnit : PrimIO CInt -> io ()
+  toUnit act = do
+    r <- primIO act
+    if r < 0 then error (fromNeg r) else pure ()
+
+  export %inline
+  toPidT : PrimIO PidT -> io PidT
+  toPidT act = do
+    r <- primIO act
+    if r < 0 then error (fromNeg r) else pure r
+
+  export %inline
+  posToUnit : PrimIO Bits32 -> io ()
+  posToUnit act = do
+    0 <- primIO act | x => error (EN x)
+    pure ()
+
+  export %inline
+  toRes : io a -> PrimIO CInt -> io a
+  toRes wrap act = toUnit act >> wrap
+
+  export %inline
+  toVal : (CInt -> a) -> PrimIO CInt -> io a
+  toVal wrap act = do
+    r <- primIO act
+    if r < 0 then error (fromNeg r) else pure (wrap r)
 
 export %inline
-negErr : Neg n => Cast n Bits32 => n -> Either Errno a
-negErr x = Left (fromNeg x)
-
-export %inline
-toSize : PrimIO SsizeT -> IO (Either Errno Bits32)
-toSize act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r < 0 of
-          True  => MkIORes (negErr r) w
-          False => MkIORes (Right $ cast r) w
-
-export %inline
-toUnit : PrimIO CInt -> IO (Either Errno ())
-toUnit act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r < 0 of
-          True  => MkIORes (negErr r) w
-          False => MkIORes (Right ()) w
-
-export %inline
-toPidT : PrimIO PidT -> IO (Either Errno PidT)
-toPidT act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r < 0 of
-          True  => MkIORes (negErr r) w
-          False => MkIORes (Right r) w
-
-export %inline
-posToUnit : PrimIO Bits32 -> IO (Either Errno ())
-posToUnit act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r of
-          0 => MkIORes (Right ()) w
-          _ => MkIORes (Left $ fromCode r) w
-
-export %inline
-toRes : IO a -> PrimIO CInt -> IO (Either Errno a)
-toRes wrap act =
-  toUnit act >>= \case
-    Right () => Right <$> wrap
-    Left x   => pure (Left x)
-
-export %inline
-toVal : (CInt -> a) -> PrimIO CInt -> IO (Either Errno a)
-toVal wrap act =
-  fromPrim $ \w =>
-    let MkIORes r w := act w
-     in case r < 0 of
-          True  => MkIORes (negErr r) w
-          False => MkIORes (Right $ wrap r) w
-
-export %inline
-primMap : (a -> b) -> PrimIO a -> PrimIO b
-primMap f act w = let MkIORes v w := act w in MkIORes (f v) w
+primMap : HasIO io => (a -> b) -> PrimIO a -> io b
+primMap f act = primIO $ \w => let MkIORes v w := act w in MkIORes (f v) w

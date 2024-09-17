@@ -13,6 +13,6 @@ prim__pthread_sigqueue : AnyPtr -> Bits32 -> CInt -> PrimIO Bits32
 |||
 ||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
 export %inline
-pthreadSigqueue : PthreadT -> Signal -> (word : CInt) -> IO (Either Errno ())
+pthreadSigqueue : ErrIO io => PthreadT -> Signal -> (word : CInt) -> io ()
 pthreadSigqueue p s word =
   posToUnit $ prim__pthread_sigqueue (unwrapPthreadT p) s.sig word

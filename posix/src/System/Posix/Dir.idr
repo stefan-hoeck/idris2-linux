@@ -60,53 +60,52 @@ record Dir where
 ||| This fails if the directory exists already. It also fails, if the
 ||| parent directory does not exist.
 export %inline
-mkdir : (pth : String) -> Mode -> IO (Either Errno ())
+mkdir : ErrIO io => (pth : String) -> Mode -> io ()
 mkdir f (M m) = toUnit $ prim__mkdir f m
 
 ||| Opens a directory.
 export
-opendir : String -> IO (Either Errno Dir)
+opendir : ErrIO io => String -> io Dir
 opendir s = do
-  p <- fromPrim $ prim__calloc_dir
+  p <- primIO $ prim__calloc_dir
   toRes (pure $ MkDir p) $ prim__opendir s p
 
 ||| Opens a directory from a file descriptor.
 export
-fdopendir : FileDesc a => a -> IO (Either Errno Dir)
+fdopendir : ErrIO io => FileDesc a => a -> io Dir
 fdopendir fd = do
-  p <- fromPrim $ prim__calloc_dir
+  p <- primIO $ prim__calloc_dir
   toRes (pure $ MkDir p) $ prim__fdopendir (fileDesc fd) p
 
 ||| Closes a directory.
 export
-rewinddir : Dir -> IO ()
-rewinddir (MkDir p) = fromPrim $ prim__rewinddir p
+rewinddir : HasIO io => Dir -> io ()
+rewinddir (MkDir p) = primIO $ prim__rewinddir p
 
 ||| Closes a directory.
 export
-closedir : Dir -> IO (Either Errno ())
+closedir : ErrIO io => Dir -> io ()
 closedir (MkDir p) = toUnit $ prim__closedir p
 
 ||| Reads the next entry from a directory.
 export
-readdir : Dir -> IO (Either Errno $ Maybe ByteString)
+readdir : ErrIO io => Dir -> io (Maybe ByteString)
 readdir (MkDir p) =
   toBytes 256 (\b,_ => prim__readdir p b) >>= \case
-    Right (BS 0 _) => pure $ Right Nothing
-    Right bs       => pure $ Right (Just bs)
-    Left x         => pure (Left x)
+    BS 0 _ => pure Nothing
+    bs     => pure (Just bs)
 
 ||| Returns the current working directory.
 export %inline
-getcwd : IO (Either Errno ByteString)
+getcwd : ErrIO io => io ByteString
 getcwd = toBytes 4096 (prim__getcwd)
 
 ||| Changes the current working directory
 export
-chdir : String -> IO (Either Errno ())
+chdir : ErrIO io => String -> io ()
 chdir p = toUnit $ prim__chdir p
 
 ||| Changes the current working directory
 export
-chroot : String -> IO (Either Errno ())
+chroot : ErrIO io => String -> io ()
 chroot p = toUnit $ prim__chroot p

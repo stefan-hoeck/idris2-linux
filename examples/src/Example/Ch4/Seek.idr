@@ -44,8 +44,7 @@ disp True  = toHexString (Just ':')
 parameters {auto hf : Has Errno es}
 
   readHere : Bool -> Fd -> Bits32 -> Prog es ()
-  readHere b fd n =
-    injectIO (read fd n) >>= \x => putStrLn "\{rd b n}: \{disp b x}"
+  readHere b fd n = read fd n >>= \x => stdoutLn "\{rd b n}: \{disp b x}"
 
   seek : List Cmd -> (fd : Fd) -> Prog es ()
   seek []        fd = pure ()
@@ -54,18 +53,17 @@ parameters {auto hf : Has Errno es}
       cmd : Cmd -> Prog es ()
       cmd (Seek i)    = do
         o <- lseek fd i SEEK_SET
-        putStrLn "s\{show i}: moved to \{show o}"
+        stdoutLn "s\{show i}: moved to \{show o}"
 
       cmd (Read m)    = readHere False fd m
       cmd (ReadHex m) = readHere True  fd m
 
       cmd (Write str) =
-        injectIO (writeStr fd str) >>= \n =>
-          putStrLn "s\{str}: wrote \{show n} bytes"
+        writeStr fd str >>= \n => stdoutLn "s\{str}: wrote \{show n} bytes"
 
   export
   seekProg : Has ArgErr es => List String -> Prog es ()
-  seekProg ["--help"] = putStrLn "\{usage}"
+  seekProg ["--help"] = stdoutLn usage
   seekProg (i::t) = do
     fi <- readOptIO OPath i
     cs <- injectEither (traverse readCmd t)

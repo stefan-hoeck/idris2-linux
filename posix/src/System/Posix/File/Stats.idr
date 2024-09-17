@@ -239,21 +239,21 @@ prim__fstat : Bits32 -> AnyPtr -> PrimIO CInt
 --------------------------------------------------------------------------------
 
 export %inline
-statvfs : String -> Statvfs -> IO (Either Errno ())
+statvfs : ErrIO io => String -> Statvfs -> io ()
 statvfs s p = toUnit $ prim__statvfs s p.ptr
 
 export %inline
-fstatvfs : FileDesc a => a -> Statvfs -> IO (Either Errno ())
+fstatvfs : ErrIO io => FileDesc a => a -> Statvfs -> io ()
 fstatvfs fd p = toUnit $ prim__fstatvfs (fileDesc fd) p.ptr
 
 export %inline
-stat : String -> FileStats -> IO (Either Errno ())
+stat : ErrIO io => String -> FileStats -> io ()
 stat s p = toUnit $ prim__stat s p.ptr
 
 export %inline
-lstat : String -> FileStats -> IO (Either Errno ())
+lstat : ErrIO io => String -> FileStats -> io ()
 lstat s p = toUnit $ prim__lstat s p.ptr
 
 export
-fstat : FileDesc a => a -> FileStats -> IO (Either Errno ())
+fstat : ErrIO io => FileDesc a => a -> FileStats -> io ()
 fstat fd p = toUnit $ prim__fstat (fileDesc fd) p.ptr

@@ -78,16 +78,16 @@ record InotifyRes where
 
 ||| Opens a new `inotify` file descriptor.
 export %inline
-inotifyInit : InotifyFlags -> IO (Either Errno Inotify)
+inotifyInit : ErrIO io => InotifyFlags -> io Inotify
 inotifyInit (IF f) = toVal (I . cast) $ prim__inotify_init1 f
 
 ||| Watches a file for the given events.
 export %inline
-inotifyAddWatch : Inotify -> String -> InotifyMask -> IO (Either Errno Watch)
+inotifyAddWatch : ErrIO io => Inotify -> String -> InotifyMask -> io Watch
 inotifyAddWatch (I f) s (IM m) = toVal (W . cast) $ prim__inotify_add_watch f s m
 
 export %inline
-inotifyRm : Inotify -> Watch -> IO (Either Errno ())
+inotifyRm : ErrIO io => Inotify -> Watch -> io ()
 inotifyRm (I f) (W w) = toUnit $ prim__inotify_rm f w
 
 results : SnocList InotifyRes -> AnyPtr -> AnyPtr -> Bits32 -> List InotifyRes
@@ -96,11 +96,10 @@ results : SnocList InotifyRes -> AnyPtr -> AnyPtr -> Bits32 -> List InotifyRes
 |||
 ||| This will block the
 export
-inotifyRead : (buf : Bits32) -> Inotify -> IO (Either Errno $ List InotifyRes)
+inotifyRead : ErrIO io => (buf : Bits32) -> Inotify -> io (List InotifyRes)
 inotifyRead buf i =
-  withPtr (cast buf) $ \p => readPtr i p buf >>= \case
-    Left x  => pure (Left x)
-    Right x => pure (Right $ results [<] p p x)
+  withPtr (cast buf) $ \p => readPtr i p buf >>= \x =>
+    pure (results [<] p p x)
 
 --------------------------------------------------------------------------------
 -- Extracting Results

@@ -1,6 +1,7 @@
 module Example.Ch20.SigSender
 
 import Example.Util.Opts
+import System.Posix.File
 import System.Posix.Signal
 import System
 
@@ -19,8 +20,8 @@ usage =
 parameters {auto hf : Has Errno es}
 
   run : PidT -> Nat -> Signal -> Maybe Signal -> Prog es ()
-  run p 0     s m = for_ m $ \s2 => usleep 1000 >> injectIO (kill p s2)
-  run p (S k) s m = injectIO (kill p s) >> run p k s m
+  run p 0     s m = for_ m $ \s2 => usleep 1000 >> kill p s2
+  run p (S k) s m = kill p s >> run p k s m
 
   app : Has ArgErr es => (p,n,s1 : String) -> Maybe String -> Prog es ()
   app p n s1 s2 = do
@@ -32,7 +33,7 @@ parameters {auto hf : Has Errno es}
 
   export
   sigSend : Has ArgErr es => List String -> Prog es ()
-  sigSend ["--help"]  = putStrLn "\{usage}"
+  sigSend ["--help"]  = stdoutLn usage
   sigSend [p,n,s1]    = app p n s1 Nothing
   sigSend [p,n,s1,s2] = app p n s1 (Just s2)
   sigSend args       = fail (WrongArgs usage)

@@ -52,7 +52,7 @@ Cast Timerfd Fd where cast = MkFd . fd
 ||| * In general, use `readTimerfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `timerfd`.
 export %inline
-timerfd : ClockId -> TimerfdFlags -> IO (Either Errno Timerfd)
+timerfd : ErrIO io => ClockId -> TimerfdFlags -> io Timerfd
 timerfd c (F f) = toVal (TFD . cast) $ prim__timerfd_create (clockCode c) f
 
 ||| Sets the time of a `timerfd`.
@@ -61,19 +61,19 @@ timerfd c (F f) = toVal (TFD . cast) $ prim__timerfd_create (clockCode c) f
 ||| Use the `TFD_TIMER_ABSTIME` flag if the time should be interpreted as
 ||| an absolute wall clock time.
 export %inline
-settime : Timerfd -> Bits32 -> (new,old : Itimerspec) -> IO (Either Errno ())
+settime : ErrIO io => Timerfd -> Bits32 -> (new,old : Itimerspec) -> io ()
 settime t f new old =
   toUnit $ prim__timerfd_settime t.fd f (unwrap new) (unwrap old)
 
 ||| Like `settime` but without storing the currently set `itimerspec`.
 export %inline
-settime' : Timerfd -> Bits32 -> (new : Itimerspec) -> IO (Either Errno ())
+settime' : ErrIO io => Timerfd -> Bits32 -> (new : Itimerspec) -> io ()
 settime' t f new = toUnit $ prim__timerfd_settime1 t.fd f (unwrap new)
 
 ||| Reads the currently set `itimerspec` of a `timerfd` and uses the given
 ||| pointer to place the data.
 export %inline
-gettime : Timerfd -> (old : Itimerspec) -> IO (Either Errno ())
+gettime : ErrIO io => Timerfd -> (old : Itimerspec) -> io ()
 gettime t old = toUnit $ prim__timerfd_gettime t.fd (unwrap old)
 
 ||| Reads data from a `timerfd`.
@@ -84,10 +84,7 @@ gettime t old = toUnit $ prim__timerfd_gettime t.fd (unwrap old)
 ||| The value returned is the number of times the timer expired since
 ||| the last read.
 export %inline
-readTimerfd : Timerfd -> IO (Either Errno Bits64)
-readTimerfd t =
-  fromPrim $ \w =>
-    let MkIORes r w := prim__timerfd_read t.fd w
-     in case r < 0 of
-          True  => MkIORes (negErr r) w
-          False => MkIORes (Right $ cast r) w
+readTimerfd : ErrIO io => Timerfd -> io Bits64
+readTimerfd t = do
+  r <- primIO $ prim__timerfd_read t.fd
+  if r < 0 then error (fromNeg r) else pure (cast r)

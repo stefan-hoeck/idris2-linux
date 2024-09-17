@@ -168,19 +168,17 @@ Monoid Mode where neutral = M 0
 ||| Converts a number of bytes read into a buffer to a `ByteString`
 export %inline
 toBytes :
-     Bits32
+     {auto has : ErrIO io}
+  -> Bits32
   -> (Buffer -> Bits32 -> PrimIO SsizeT)
-  -> IO (Either Errno ByteString)
-toBytes n act =
-  fromPrim $ \w =>
-    let MkIORes buf w := prim__newBuf n w
-        MkIORes rd  w := act buf n w
-     in case rd < 0 of
-          False => MkIORes (Right $ unsafeByteString (cast rd) buf) w
-          True  => MkIORes (Left $ fromNeg rd) w
+  -> io ByteString
+toBytes n act = do
+  buf <- primIO $ prim__newBuf n
+  rd  <- primIO $ act buf n
+  if rd < 0 then error (fromNeg rd) else pure (unsafeByteString (cast rd) buf)
 
 export %inline
-toFD : PrimIO CInt -> IO (Either Errno Fd)
+toFD : ErrIO io => PrimIO CInt -> io Fd
 toFD = toVal (MkFd . cast)
 
 --------------------------------------------------------------------------------
@@ -189,35 +187,36 @@ toFD = toVal (MkFd . cast)
 
 ||| Tries to open a file with the given flags and mode.
 export %inline
-openFile : String -> Flags -> Mode -> IO (Either Errno Fd)
+openFile : ErrIO io => String -> Flags -> Mode -> io Fd
 openFile p (F f) (M m) = toFD (prim__open p f m)
 
 parameters {auto fid : FileDesc a}
+           {auto has : ErrIO io}
            (fd       : a)
 
   ||| Closes a file descriptor.
   export %inline
-  close : IO (Either Errno ())
+  close : io ()
   close = toUnit (prim__close $ fileDesc fd)
 
   ||| Reads at most `n` bytes from a file into an allocated pointer.
   export %inline
-  readPtr : AnyPtr -> (n : Bits32) -> IO (Either Errno Bits32)
+  readPtr : AnyPtr -> (n : Bits32) -> io Bits32
   readPtr ptr n = toSize $ prim__readptr (fileDesc fd) ptr n
 
   ||| Reads at most `n * sizeof a` bytes into a preallocated array.
   export %inline
-  readArr : {n : _} -> SizeOf b => CArrayIO n b -> IO (Either Errno Bits32)
+  readArr : {n : _} -> SizeOf b => CArrayIO n b -> io Bits32
   readArr p = readPtr (unsafeUnwrap p) (cast $ n * sizeof b)
 
   ||| Reads at most `n` bytes from a file into a buffer.
   export %inline
-  readRaw : Buffer -> (n : Bits32) -> IO (Either Errno Bits32)
+  readRaw : Buffer -> (n : Bits32) -> io Bits32
   readRaw buf n = toSize $ prim__read (fileDesc fd) buf n
 
   ||| Reads at most `n` bytes from a file into a bytestring.
   export
-  read : (n : Bits32) -> IO (Either Errno ByteString)
+  read : (n : Bits32) -> io ByteString
   read n = toBytes n $  prim__read (fileDesc fd)
 
   ||| Atomically reads up to `n` bytes from the given file at
@@ -227,7 +226,7 @@ parameters {auto fid : FileDesc a}
   |||        arbitrary data streams such as pipes or sockets.
   |||        Also, it will not change the position of the open file description.
   export
-  pread : (n : Bits32) -> OffT -> IO (Either Errno ByteString)
+  pread : (n : Bits32) -> OffT -> io ByteString
   pread n off = toBytes n $ \b,x => prim__pread (fileDesc fd) b x off
 
   ||| Writes up to the number of bytes in the bytestring
@@ -236,7 +235,7 @@ parameters {auto fid : FileDesc a}
   ||| Note: This is an atomic operation if `fd` is a regular file that
   |||       was opened in "append" mode (with the `O_APPEND` flag).
   export
-  writeBytes : ByteString -> IO (Either Errno Bits32)
+  writeBytes : ByteString -> io Bits32
   writeBytes (BS n $ BV b o _) =
     toSize $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
 
@@ -246,7 +245,7 @@ parameters {auto fid : FileDesc a}
   ||| Note: This is an atomic operation if `fd` is a regular file that
   |||       was opened in "append" mode (with the `O_APPEND` flag).
   export %inline
-  writeRaw : Buffer -> (offset,n : Bits32) -> IO (Either Errno Bits32)
+  writeRaw : Buffer -> (offset,n : Bits32) -> io Bits32
   writeRaw buf o n = toSize $ prim__write (fileDesc fd) buf o n
 
   ||| Writes up to the number of bytes from the given C ptr.
@@ -254,7 +253,7 @@ parameters {auto fid : FileDesc a}
   ||| Note: This is an atomic operation if `fd` is a regular file that
   |||       was opened in "append" mode (with the `O_APPEND` flag).
   export %inline
-  writePtr : AnyPtr -> (n : Bits32) -> IO (Either Errno Bits32)
+  writePtr : AnyPtr -> (n : Bits32) -> io Bits32
   writePtr buf n = toSize $ prim__writeptr (fileDesc fd) buf 0 n
 
   ||| Writes the content of the given array.
@@ -262,7 +261,7 @@ parameters {auto fid : FileDesc a}
   ||| Note: This is an atomic operation if `fd` is a regular file that
   |||       was opened in "append" mode (with the `O_APPEND` flag).
   export %inline
-  writeArr : {n : _} -> SizeOf b => CArrayIO n b -> IO (Either Errno Bits32)
+  writeArr : {n : _} -> SizeOf b => CArrayIO n b -> io Bits32
   writeArr p = writePtr (unsafeUnwrap p) (cast $ n * sizeof b)
 
 
@@ -273,20 +272,20 @@ parameters {auto fid : FileDesc a}
   |||        arbitrary data streams such as pipes or sockets.
   |||        Also, it will not change the position of the open file description.
   export
-  pwriteBytes : ByteString -> OffT -> IO (Either Errno Bits32)
+  pwriteBytes : ByteString -> OffT -> io Bits32
   pwriteBytes (BS n $ BV b o _) off =
     toSize $ prim__pwrite (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) off
 
   export %inline
-  write : {n : _} -> IBuffer n -> IO (Either Errno Bits32)
+  write : {n : _} -> IBuffer n -> io Bits32
   write ibuf = writeBytes (fromIBuffer ibuf)
 
   export %inline
-  writeStr : String -> IO (Either Errno Bits32)
+  writeStr : String -> io Bits32
   writeStr = writeBytes . fromString
 
   export %inline
-  writeStrLn : String -> IO (Either Errno Bits32)
+  writeStrLn : String -> io Bits32
   writeStrLn = writeStr . (++ "\n")
 
 --------------------------------------------------------------------------------
@@ -309,7 +308,7 @@ parameters {auto fid : FileDesc a}
   ||| The duplicate is guaranteed to be given the smallest available
   ||| file descriptor.
   export %inline
-  dup : IO (Either Errno Fd)
+  dup : io Fd
   dup = toFD $ prim__dup (fileDesc fd)
 
   ||| Duplicates the given open file descriptor.
@@ -317,7 +316,7 @@ parameters {auto fid : FileDesc a}
   ||| The new file descriptor vill have the integer value of `fd2`.
   ||| This is an atomic operation that will close `fd2` if it is still open.
   export %inline
-  dup2 : FileDesc b => (fd2 : b) -> IO (Either Errno Fd)
+  dup2 : FileDesc b => (fd2 : b) -> io Fd
   dup2 fd2 = toFD $ prim__dup2 (fileDesc fd) (fileDesc fd2)
 
   ||| Duplicates the given open file descriptor.
@@ -325,7 +324,7 @@ parameters {auto fid : FileDesc a}
   ||| The new file descriptor vill have the integer value of `fd2`.
   ||| This is an atomic operation that will close `fd2` if it is still open.
   export %inline
-  dupfd : (start : Bits32) -> IO (Either Errno Fd)
+  dupfd : (start : Bits32) -> io Fd
   dupfd fd2 = toFD $ prim__dupfd (fileDesc fd) fd2
 
 --------------------------------------------------------------------------------
@@ -334,52 +333,46 @@ parameters {auto fid : FileDesc a}
 
   ||| Gets the flags set at an open file descriptor.
   export
-  getFlags : IO (Either Errno Flags)
-  getFlags  =
-    fromPrim $ \w =>
-      let MkIORes r w := prim__getFlags (fileDesc fd) w
-       in case r < 0 of
-            True  => MkIORes (negErr r) w
-            False => MkIORes (Right $ F $ cast r) w
+  getFlags : io Flags
+  getFlags  = do
+    r <- primIO $ prim__getFlags (fileDesc fd)
+    if r < 0 then error (fromNeg r) else pure (F $ cast r)
 
   ||| Sets the flags of an open file descriptor.
   |||
   ||| Note: This replaces the currently set flags. See also `addFlags`.
   export %inline
-  setFlags : Flags -> IO (Either Errno ())
+  setFlags : Flags -> io ()
   setFlags (F fs) = toUnit $ prim__setFlags (fileDesc fd) fs
 
   ||| Adds the given flags to the flags set for an open
   ||| file descriptor by ORing them with the currently set flags.
   export
-  addFlags : Flags -> IO (Either Errno ())
-  addFlags fs =
-    getFlags >>= \case
-      Right x => setFlags (x <+> fs)
-      Left  x => pure (Left x)
+  addFlags : Flags -> io ()
+  addFlags fs = getFlags >>= \x => setFlags (x <+> fs)
 
   ||| Truncates a file to the given length.
   export %inline
-  ftruncate : OffT -> IO (Either Errno ())
+  ftruncate : OffT -> io ()
   ftruncate len = toUnit $ prim__ftruncate (fileDesc fd) len
 
 ||| Truncates a file to the given length.
 export %inline
-truncate : String -> OffT -> IO (Either Errno ())
+truncate : ErrIO io => String -> OffT -> io ()
 truncate f len = toUnit $ prim__truncate f len
 
 ||| Atomically creates and opens a temporary, unique file.
 export
-mkstemp : String -> IO (Either Errno (Fd, String))
+mkstemp : ErrIO io => String -> io (Fd, String)
 mkstemp f =
   let pat := "\{f}XXXXXX"
       len := stringByteLength pat
    in do
-        buf <- fromPrim $ prim__newBuf (cast len)
+        buf <- primIO $ prim__newBuf (cast len)
         setString buf 0 pat
-        Right fd <- toFD (prim__mkstemp buf) | Left x => pure (Left x)
+        fd <- toFD (prim__mkstemp buf)
         str <- getString buf 0 len
-        pure $ Right (fd, str)
+        pure (fd, str)
 
 --------------------------------------------------------------------------------
 -- Links
@@ -387,12 +380,12 @@ mkstemp f =
 
 ||| Creates a (hard) link to a file.
 export %inline
-link : (file, link : String) -> IO (Either Errno ())
+link : ErrIO io => (file, link : String) -> io ()
 link f l = toUnit $ prim__link f l
 
 ||| Creates a (hard) link to a file.
 export %inline
-symlink : (file, link : String) -> IO (Either Errno ())
+symlink : ErrIO io => (file, link : String) -> io ()
 symlink f l = toUnit $ prim__symlink f l
 
 ||| Deletes a (hard) link to a file.
@@ -403,13 +396,13 @@ symlink f l = toUnit $ prim__symlink f l
 |||       open file descriptor is closed, but the file name will already
 |||       disapper from the file system before that.
 export %inline
-unlink : (file : String) -> IO (Either Errno ())
+unlink : ErrIO io => (file : String) -> io ()
 unlink f = toUnit $ prim__unlink f
 
 ||| Removes a file or (empty) directory calling `unlink` or `rmdir`
 ||| internally.
 export %inline
-remove : (file : String) -> IO (Either Errno ())
+remove : ErrIO io => (file : String) -> io ()
 remove f = toUnit $ prim__remove f
 
 ||| Renames a file within a file system.
@@ -417,7 +410,7 @@ remove f = toUnit $ prim__remove f
 ||| Note: This will fail if the two paths point to different file systems.
 |||       In that case, the file needs to be copied from one FS to the other.
 export %inline
-rename : (file, link : String) -> IO (Either Errno ())
+rename : ErrIO io => (file, link : String) -> io ()
 rename f l = toUnit $ prim__rename f l
 
 ||| Returns the path of a file a symbolic link points to
@@ -425,7 +418,7 @@ rename f l = toUnit $ prim__rename f l
 ||| This allocates a buffer of 4096 bytes for the byte array holding
 ||| the result.
 export %inline
-readlink : (file : String) -> IO (Either Errno ByteString)
+readlink : ErrIO io => (file : String) -> io ByteString
 readlink f = toBytes 4096 $ prim__readlink f
 
 --------------------------------------------------------------------------------
@@ -433,9 +426,25 @@ readlink f = toBytes 4096 $ prim__readlink f
 --------------------------------------------------------------------------------
 
 export %inline
-stdout : HasIO io => String -> io ()
-stdout = liftIO . ignore . writeStr Stdout
+stdout : ErrIO io => String -> io ()
+stdout = ignore . writeStr Stdout
 
 export %inline
-stdoutLn : HasIO io => String -> io ()
-stdoutLn = liftIO . ignore . writeStrLn Stdout
+stdoutLn : ErrIO io => String -> io ()
+stdoutLn = ignore . writeStrLn Stdout
+
+export %inline
+prnt : ErrIO io => Show a => a -> io ()
+prnt = stdout . show
+
+export %inline
+prntLn : ErrIO io => Show a => a -> io ()
+prntLn = stdoutLn . show
+
+export %inline
+stderr : ErrIO io => String -> io ()
+stderr = ignore . writeStr Stdout
+
+export %inline
+stderrLn : ErrIO io => String -> io ()
+stderrLn = ignore . writeStrLn Stdout
