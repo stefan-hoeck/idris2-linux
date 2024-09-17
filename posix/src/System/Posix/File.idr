@@ -41,6 +41,9 @@ prim__pread : (file : Bits32) -> Buffer -> (max : Bits32) -> OffT -> PrimIO Ssiz
 %foreign "C:li_write, posix-idris"
 prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
 
+%foreign "C:li_write, posix-idris"
+prim__writeptr : (file : Bits32) -> AnyPtr -> (off,max : Bits32) -> PrimIO SsizeT
+
 %foreign "C:li_pwrite, posix-idris"
 prim__pwrite : (file : Bits32) -> Buffer -> (off,max : Bits32) -> OffT -> PrimIO SsizeT
 
@@ -202,6 +205,11 @@ parameters {auto fid : FileDesc a}
   readPtr : AnyPtr -> (n : Bits32) -> IO (Either Errno Bits32)
   readPtr ptr n = toSize $ prim__readptr (fileDesc fd) ptr n
 
+  ||| Reads at most `n * sizeof a` bytes into a preallocated array.
+  export %inline
+  readArr : {n : _} -> SizeOf b => CArrayIO n b -> IO (Either Errno Bits32)
+  readArr p = readPtr (unsafeUnwrap p) (cast $ n * sizeof b)
+
   ||| Reads at most `n` bytes from a file into a buffer.
   export %inline
   readRaw : Buffer -> (n : Bits32) -> IO (Either Errno Bits32)
@@ -232,10 +240,30 @@ parameters {auto fid : FileDesc a}
   writeBytes (BS n $ BV b o _) =
     toSize $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
 
-  ||| Reads at most `n` bytes from a file into a bytestring.
+  ||| Writes up to the given number of bytes from the given buffer starting
+  ||| at the given offset.
+  |||
+  ||| Note: This is an atomic operation if `fd` is a regular file that
+  |||       was opened in "append" mode (with the `O_APPEND` flag).
   export %inline
   writeRaw : Buffer -> (offset,n : Bits32) -> IO (Either Errno Bits32)
   writeRaw buf o n = toSize $ prim__write (fileDesc fd) buf o n
+
+  ||| Writes up to the number of bytes from the given C ptr.
+  |||
+  ||| Note: This is an atomic operation if `fd` is a regular file that
+  |||       was opened in "append" mode (with the `O_APPEND` flag).
+  export %inline
+  writePtr : AnyPtr -> (n : Bits32) -> IO (Either Errno Bits32)
+  writePtr buf n = toSize $ prim__writeptr (fileDesc fd) buf 0 n
+
+  ||| Writes the content of the given array.
+  |||
+  ||| Note: This is an atomic operation if `fd` is a regular file that
+  |||       was opened in "append" mode (with the `O_APPEND` flag).
+  export %inline
+  writeArr : {n : _} -> SizeOf b => CArrayIO n b -> IO (Either Errno Bits32)
+  writeArr p = writePtr (unsafeUnwrap p) (cast $ n * sizeof b)
 
 
   ||| Atomically writes up to the number of bytes in the bytestring

@@ -11,6 +11,9 @@ import public System.Posix.File
 %foreign "C:li_pipe, posix-idris"
 prim__pipe : AnyPtr -> PrimIO CInt
 
+%foreign "C:li_mkfifo, posix-idris"
+prim__mkfifo : String -> ModeT -> PrimIO CInt
+
 --------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------
@@ -20,3 +23,8 @@ prim__pipe : AnyPtr -> PrimIO CInt
 export %inline
 pipe : CArrayIO 2 Fd -> IO (Either Errno ())
 pipe p = toUnit $ prim__pipe (unsafeUnwrap p)
+
+||| Creates a new FIFO (named pipe) on disc.
+export %inline
+mkfifo : String -> ModeT -> IO (Either Errno ())
+mkfifo pth m = toUnit $ prim__mkfifo pth m

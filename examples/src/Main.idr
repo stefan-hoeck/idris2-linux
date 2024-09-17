@@ -34,6 +34,7 @@ import Example.Ch27.SystemExample
 import Example.Ch44.BasicPipe
 import Example.Ch44.ChunkPipe
 import Example.Ch44.PipeSync
+import Example.Ch44.FifoServer
 
 import Example.Util.File
 import Example.Util.Opts
@@ -93,29 +94,31 @@ prog : Prog [Errno, ArgErr] ()
 prog = do
   (_::args) <- getArgs | [] => fail (WrongArgs usage)
   case args of
-    ["--help"]   => stdoutLn usage
-    "copy"   :: t => copyProg t
-    "copyh"  :: t => copyh t
-    "tee"    :: t => tee t
-    "seek"   :: t => seekProg t
-    "atomic_append" :: t => atomicProg t
-    "seek0_append" :: t => seekAppendProg t
-    "processes" :: t => processes t
-    "has_open" :: t => hasOpen t
-    "inotify" :: t => inotify t
-    "sig_send" :: t => sigSend t
-    "sig_receive" :: t => sigReceive t
-    "sig_receive_fd" :: t => sigReceiveFd t
-    "timer_example" :: t => timerExample t
-    "timerfd_example" :: t => timerfdExample t
-    "fork_example" :: t => forkExample t
-    "execve_example" :: t => execveExample t
-    "execve_hello" :: t => execveHello t
-    "system_example" :: t => systemExample t
-    "basic_pipe" :: t => basicPipe t
-    "chunk_pipe" :: t => chunkPipe t
-    "pipe_sync" :: t => pipeSync t
-    _           =>
+    ["--help"]                     => stdoutLn usage
+    "copy"                    :: t => copyProg t
+    "copyh"                   :: t => copyh t
+    "tee"                     :: t => tee t
+    "seek"                    :: t => seekProg t
+    "atomic_append"           :: t => atomicProg t
+    "seek0_append"            :: t => seekAppendProg t
+    "processes"               :: t => processes t
+    "has_open"                :: t => hasOpen t
+    "inotify"                 :: t => inotify t
+    "sig_send"                :: t => sigSend t
+    "sig_receive"             :: t => sigReceive t
+    "sig_receive_fd"          :: t => sigReceiveFd t
+    "timer_example"           :: t => timerExample t
+    "timerfd_example"         :: t => timerfdExample t
+    "fork_example"            :: t => forkExample t
+    "execve_example"          :: t => execveExample t
+    "execve_hello"            :: t => execveHello t
+    "system_example"          :: t => systemExample t
+    "basic_pipe"              :: t => basicPipe t
+    "chunk_pipe"              :: t => chunkPipe t
+    "pipe_sync"               :: t => pipeSync t
+    "fifo_server"             :: t => fifoServer t
+    "fifo_client"             :: t => fifoClient t
+    _                              =>
       use [injectIO $ mkmutex MUTEX_NORMAL, injectIO $ mkcond] $ \[mu,co] => do
         pid  <- getpid
         ppid <- getppid

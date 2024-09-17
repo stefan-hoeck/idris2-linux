@@ -300,3 +300,6 @@ The following will probably not be implemented:
 To be added...
 
 ### Chapter 44
+
+- [x] implement `pipe`
+- [x] implement `pipe2`
