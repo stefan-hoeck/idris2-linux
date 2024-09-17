@@ -306,3 +306,7 @@ To be added...
 - [ ] implement `popen` and `pclose`
 - [x] implement `mkfifo`
 - [ ] do the exercises
+
+### Chapter 45
+
+- [ ] do the exercises
