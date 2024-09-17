@@ -19,7 +19,7 @@ usage =
   Runs shell commands given at the command-line.
   """
 
-printStatus : HasIO io => ProcStatus -> io ()
+printStatus : ErrIO io => ProcStatus -> io ()
 printStatus s =
   let x    := cast {to = Bits64} s.status
       hx   := hex 4 x
@@ -35,9 +35,9 @@ covering
 loop : Has Errno es => Prog es ()
 loop = do
   _   <- stdout "Command: "
-  cmd <- injectIO (read Stdin 4096)
+  cmd <- read Stdin 4096
   when (cmd.size > 0) $ do
-    status <- injectIO (system $ toString cmd)
+    status <- system $ toString cmd
     printStatus status
     loop
   stdoutLn "\nGoodbye!"

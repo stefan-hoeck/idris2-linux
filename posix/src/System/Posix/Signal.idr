@@ -142,19 +142,19 @@ sigismember (S p) s =
 
 ||| Sends a signal to a running process or a group of processes.
 export %inline
-kill : PidT -> Signal -> IO (Either Errno ())
+kill : ErrIO io => PidT -> Signal -> io ()
 kill p s = toUnit $ prim__kill p s.sig
 
 ||| Sends a signal to the calling thread.
 export %inline
-raise : Signal -> IO ()
-raise s = fromPrim $ prim__raise s.sig
+raise : HasIO io => Signal -> io ()
+raise s = primIO $ prim__raise s.sig
 
 ||| Sends a realtime signal plus data word to a running process.
 |||
 ||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
 export %inline
-sigqueue : PidT -> Signal -> (word : CInt) -> IO (Either Errno ())
+sigqueue : ErrIO io => PidT -> Signal -> (word : CInt) -> io ()
 sigqueue p s word = toUnit $ prim__sigqueue p s.sig word
 
 ||| Adjust the process signal mask according to the given `How`
@@ -212,11 +212,10 @@ abort = primIO prim__abort
 
 ||| Suspends the current thread until a non-blocked signal is encountered.
 export %inline
-pause : IO (Either Errno ())
-pause =
-  toUnit prim__pause >>= \case
-    Left EINTR => pure $ Right () -- this is the normal case
-    x          => pure x
+pause : ErrIO io => io ()
+pause = do
+  r <- fromNeg <$> primIO prim__pause
+  if r == EINTR then pure () else error r
 
 --------------------------------------------------------------------------------
 -- Synchronous Signal Handling
@@ -238,7 +237,7 @@ SizeOf SiginfoT where
 
 export %inline
 signal : HasIO io => SiginfoT -> io Signal
-signal s = primIO $ primMap S $ get_siginfo_t_si_signo s.ptr
+signal s = primMap S $ get_siginfo_t_si_signo s.ptr
 
 export %inline
 code : HasIO io => SiginfoT -> io CInt
@@ -264,34 +263,34 @@ value s = primIO $ get_siginfo_t_si_value s.ptr
 ||| pauses the thread (see `pause`) and restores the signal set
 ||| afterwards.
 export %inline
-sigsuspend : (set : SigsetT) -> IO (Either Errno ())
-sigsuspend (S s) =
-  toUnit (prim__sigsuspend s) >>= \case
-    Left EINTR => pure $ Right () -- this is the normal case
-    x          => pure x
+sigsuspend : ErrIO io => (set : SigsetT) -> io ()
+sigsuspend (S s) = do
+  r <- fromNeg <$> primIO (prim__sigsuspend s)
+  if r == EINTR then pure () else error r
 
 ||| Synchronously awaits one of the signals in `set`.
 |||
 ||| Note: Usually, the signals in `set` should first be blocked via
 |||       `sigprocmask`.
 export %inline
-sigwaitinfo : (set : SigsetT) -> (info : SiginfoT) -> IO (Either Errno ())
+sigwaitinfo : ErrIO io => (set : SigsetT) -> (info : SiginfoT) -> io ()
 sigwaitinfo (S s) (ST i) = toUnit $ prim__sigwaitinfo s i
 
 ||| Synchronously awaits one of the signals in `set`.
 |||
 ||| This is like `sigwaitinfo` but with a simpler API.
 export %inline
-sigwait : (set : SigsetT) -> IO (Either Errno Signal)
+sigwait : ErrIO io => (set : SigsetT) -> io Signal
 sigwait (S s) = toVal (S . cast) $ prim__sigwait s
 
 ||| Like `sigwaitinfo` but times out with `EAGAIN` after `sec` seconds and
 ||| `nsec` nanoseconds.
 export %inline
 sigtimedwait :
-     (set  : SigsetT)
+     {auto has : ErrIO io}
+  -> (set  : SigsetT)
   -> (info : SiginfoT)
   -> (sec  : TimeT)
   -> (nsec : NsecT)
-  -> IO (Either Errno ())
+  -> io ()
 sigtimedwait (S s) (ST i) sec nsec = toUnit $ prim__sigtimedwait s i sec nsec

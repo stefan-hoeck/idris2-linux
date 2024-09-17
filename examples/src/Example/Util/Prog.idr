@@ -13,6 +13,10 @@ public export
 0 Prog : List Type -> Type -> Type
 Prog es a = EitherT (HSum es) IO a
 
+export %inline
+Has Errno es => ErrIO (EitherT (HSum es) IO) where
+  error = throwError . inject
+
 --------------------------------------------------------------------------------
 -- Lifting computations
 --------------------------------------------------------------------------------
@@ -28,16 +32,6 @@ export
 injectEither : Has e es => Either e a -> Prog es a
 injectEither (Left x)  = fail x
 injectEither (Right x) = pure x
-
-||| Inject an effectful computation of type `Either e a` into a `Prog es a`.
-export
-injectIO : Has e es => IO (Either e a) -> Prog es a
-injectIO io = liftIO io >>= injectEither
-
-||| A specialized version of `injectIO` with better type inference
-export %inline
-wrapIO : IO (Either e a) -> Prog [e] a
-wrapIO = injectIO
 
 --------------------------------------------------------------------------------
 -- Error handling
@@ -82,6 +76,15 @@ handleErrors hs =
     Left x  => anyErr $ collapse' $ hzipWith id hs x
     Right _ => pure ()
 
+export
+onErrno : Has Errno es => Errno -> Prog es a -> Prog es a -> Prog es a
+onErrno err h =
+  bracketCase $ \case
+    Right a => pure a
+    Left  x => case project Errno x of
+      Just e  => if err == e then h else fail e
+      Nothing => throwError x
+
 ||| Specialized version of `handleErrors` for better type inference
 export %inline
 handleError : Handler e -> Prog [e] () -> Prog fs ()
@@ -105,6 +108,14 @@ logAndDropErr h =
 -- Running programs
 --------------------------------------------------------------------------------
 
+export %inline
+stdoutLn' : String -> Prog [] ()
+stdoutLn' = clear {es = [Errno]} . stdoutLn
+
+export %inline
+stderrLn' : String -> Prog [] ()
+stderrLn' = clear {es = [Errno]} . stderrLn
+
 ||| Runs a program that has all its errors handled.
 export
 runProg : Prog [] a -> IO a
@@ -116,11 +127,15 @@ runProgWith hs = runProg . handleErrors hs
 
 export %inline
 prettyOut : Interpolation a => a -> Prog [] ()
-prettyOut = putStrLn . interpolate
+prettyOut = stdoutLn' . interpolate
 
 export %inline
 prettyErr : Interpolation a => a -> Prog [] ()
-prettyErr = ignore . liftIO . writeStrLn Stderr . interpolate
+prettyErr = stderrLn' . interpolate
+
+export %inline
+prettyErrno : Errno -> Prog [] ()
+prettyErrno = prettyErr
 
 --------------------------------------------------------------------------------
 -- Resource handling

@@ -45,7 +45,7 @@ parameters {auto hf : Has Errno es}
 
   export covering
   copyProg : Has ArgErr es => List String -> Prog es ()
-  copyProg ["--help"] = putStrLn "\{usage}"
+  copyProg ["--help"] = stdoutLn usage
   copyProg [i,o] = do
     fi  <- readOptIO OPath i
     fo  <- readOptIO OPath o

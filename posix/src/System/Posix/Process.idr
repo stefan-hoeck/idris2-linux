@@ -126,22 +126,22 @@ getegid = primIO prim__getegid
 
 ||| Tries to set the real user ID of the current process
 export %inline
-setuid : UidT -> IO (Either Errno ())
+setuid : ErrIO io => UidT -> io ()
 setuid uid = toUnit $ prim__setuid uid
 
 ||| Tries to set the effective user ID of the current process
 export %inline
-seteuid : UidT -> IO (Either Errno ())
+seteuid : ErrIO io => UidT -> io ()
 seteuid uid = toUnit $ prim__seteuid uid
 
 ||| Tries to set the real group ID of the current process
 export %inline
-setgid : GidT -> IO (Either Errno ())
+setgid : ErrIO io => GidT -> io ()
 setgid gid = toUnit $ prim__setgid gid
 
 ||| Tries to set the effective group ID of the current process
 export %inline
-setegid : GidT -> IO (Either Errno ())
+setegid : ErrIO io => GidT -> io ()
 setegid gid = toUnit $ prim__setegid gid
 
 ||| Process status returned by a call to `wait` or `waitpid`.
@@ -169,7 +169,7 @@ SetPtr ProcStatus where
 ||| the functions returns `0` for the child process and
 ||| the child's process ID for the parent.
 export %inline
-fork : IO (Either Errno PidT)
+fork : ErrIO io => io PidT
 fork = toPidT Process.prim__fork
 
 ||| Loads a new program into this process's memory.
@@ -181,16 +181,17 @@ fork = toPidT Process.prim__fork
 ||| This only returns in case of an error.
 export %inline
 execve :
-     String
+     {auto has : ErrIO io}
+  -> String
   -> (args : CArrayIO m (Maybe String))
   -> (env  : CArrayIO n (Maybe String))
-  -> IO (Either Errno ())
+  -> io ()
 execve s a e = toUnit $ prim__execve s (unsafeUnwrap a) (unsafeUnwrap e)
 
 ||| Convenience alias of `execve` that uses Idris lists for passing
 ||| the arguments list and environment.
 export
-execle : String -> List String -> List (String,String) -> IO (Either Errno ())
+execle : ErrIO io => String -> List String -> List (String,String) -> io ()
 execle s a e = do
   args <- fromListIO (map Just a ++ [Nothing])
   env  <- fromListIO (map envpair e ++ [Nothing])
@@ -205,19 +206,19 @@ execle s a e = do
 
 ||| Like `execve` but uses the environment of the current process.
 export %inline
-execv : String -> CArrayIO m (Maybe String) -> IO (Either Errno ())
+execv : ErrIO io => String -> CArrayIO m (Maybe String) -> io ()
 execv s a = toUnit $ prim__execv s (unsafeUnwrap a)
 
 ||| Like `execv` but allows us to just use a filename
 ||| and resolve in using the `$PATH` variable.
 export %inline
-execvp : String -> CArrayIO m (Maybe String) -> IO (Either Errno ())
+execvp : ErrIO io => String -> CArrayIO m (Maybe String) -> io ()
 execvp s a = toUnit $ prim__execvp s (unsafeUnwrap a)
 
 ||| Convenience alias for `execvp` that uses an Idris list for
 ||| the list of arguments.
 export
-execlp : String -> List String -> IO (Either Errno ())
+execlp : ErrIO io => String -> List String -> io ()
 execlp s a = do
   args <- fromListIO (map Just a ++ [Nothing])
   res  <- execvp s args
@@ -230,7 +231,7 @@ execlp s a = do
 ||| `system` call in C, which allows us to use the same mechanism
 ||| as with `wait` to get the returned exit status.
 export %inline
-system : (cmd : String) -> IO (Either Errno ProcStatus)
+system : ErrIO io => (cmd : String) -> io ProcStatus
 system cmd = toVal PS $ prim__system cmd
 
 ||| Waits for one of the child processes of this process to
@@ -240,7 +241,7 @@ system cmd = toVal PS $ prim__system cmd
 ||| that terminated. In addition, the termination status of the child
 ||| is written into the given pointer.
 export %inline
-wait : Box ProcStatus -> IO (Either Errno PidT)
+wait : ErrIO io => Box ProcStatus -> io PidT
 wait s = toPidT $ prim__wait (unsafeUnwrap s)
 
 ||| Waits for the given child processes of to terminate.
@@ -249,14 +250,14 @@ wait s = toPidT $ prim__wait (unsafeUnwrap s)
 ||| In addition, it is possible to be notified about child processes that have
 ||| been terminated by a signal.
 export %inline
-waitpid : PidT -> Box ProcStatus -> WaitFlags -> IO (Either Errno PidT)
+waitpid : ErrIO io => PidT -> Box ProcStatus -> WaitFlags -> io PidT
 waitpid chld s (F f) = toPidT $ prim__waitpid chld (unsafeUnwrap s) f
 
 ||| More powerful version of `waitpid` supporting additional flags and
 ||| waiting on groups of children. Wait results are stored in the
 ||| provided `SiginfoT` pointer.
 export %inline
-waitid : IdType -> PidT -> SiginfoT -> WaitFlags -> IO (Either Errno ())
+waitid : ErrIO io => IdType -> PidT -> SiginfoT -> WaitFlags -> io ()
 waitid t chld s (F f) =
   toUnit $ prim__waitid (idtypeCode t) chld (unwrap s) f
 

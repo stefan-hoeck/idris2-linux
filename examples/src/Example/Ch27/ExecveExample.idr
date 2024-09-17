@@ -24,8 +24,8 @@ env = [("GREET","salut"), ("BYE","adieu")]
 
 export
 execveExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
-execveExample ["--help"]  = putStrLn "\{usage}"
+execveExample ["--help"]  = stdoutLn usage
 execveExample []          = do
-  p <- injectIO getcwd
-  injectIO (execle"\{toString p}/examples/build/exec/linux-examples" args env)
+  p <- getcwd
+  execle"\{toString p}/examples/build/exec/linux-examples" args env
 execveExample args        = fail (WrongArgs usage)

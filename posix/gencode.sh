@@ -20,6 +20,13 @@ import Derive.Prelude
 %default total
 %language ElabReflection
 
+public export
+record Errno where
+  constructor EN
+  errno : Bits32
+
+%runElab derive "Errno" [Show,Eq,Ord,FromInteger]
+
 EOT
 
 codegen/error_gen >>src/System/Posix/Errno/Type.idr

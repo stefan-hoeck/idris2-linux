@@ -25,15 +25,15 @@ parameters {auto he : Has Errno es}
   covering
   prnt : PidT -> Vect 2 Fd -> Prog es ()
   prnt pid [i,o] = do
-    injectIO (close o)
+    close o
     stdoutLn "Spawned child \{show pid}"
     streamRaw i 0x1000 (writeRawAll Stdout 0)
-    injectIO (close i)
+    close i
 
   covering
   chld : String -> Vect 2 Fd -> Prog es ()
   chld s [i,o] = do
-    injectIO (close i)
+    close i
     pid <- getpid
     writeAllStr o "Hello. I'm child number \{show pid}\n"
     writeAllStr o "Here's the message I got:\n"
@@ -42,12 +42,12 @@ parameters {auto he : Has Errno es}
   covering
   run : String -> Prog es ()
   run s = do
-    fds <- use1 (malloc _ _) $ \r => injectIO (pipe r) >> readVectIO r
-    0 <- injectIO fork | p => prnt p fds
+    fds <- use1 (malloc _ _) $ \r => pipe r >> readVectIO r
+    0 <- fork | p => prnt p fds
     chld s fds
 
   export covering
   basicPipe : List String -> Prog es ()
-  basicPipe ["--help"]  = stdoutLn "\{usage}"
+  basicPipe ["--help"]  = stdoutLn usage
   basicPipe [s]         = run s
   basicPipe args        = fail (WrongArgs usage)

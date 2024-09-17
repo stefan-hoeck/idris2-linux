@@ -7,19 +7,19 @@ import public Example.Util.Prog
 %default total
 
 export %inline
-Resource Dir where cleanup d = handleError prettyErr (wrapIO $ closedir d)
+Resource Dir where cleanup d = handleError prettyErrno (closedir d)
 
 parameters {auto hf : Has Errno es}
 
   export covering
   withDirSt : String -> s -> (s -> String -> Prog es s) -> Prog es s
-  withDirSt pth ini f = use1 (injectIO $ opendir pth) (flip go ini)
+  withDirSt pth ini f = use1 (opendir pth) (flip go ini)
 
     where
       covering
       go : Dir -> s -> Prog es s
       go dir st = do
-        injectIO (readdir dir) >>= \case
+        readdir dir >>= \case
           Nothing   => pure st
           Just p    => f st (toString p) >>= go dir
 

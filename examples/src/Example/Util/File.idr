@@ -13,7 +13,7 @@ import public System.Posix.File
 
 export %inline
 FileDesc a => Resource a where
-  cleanup fd = handleError prettyErr (wrapIO $ close fd)
+  cleanup fd = handleError {e = Errno} prettyErr (close fd)
 
 tryLT : (m,n : Nat) -> Maybe0 (LT m n)
 tryLT m n with (m < n) proof eq
@@ -24,7 +24,7 @@ parameters {auto has : Has Errno es}
 
   export %inline
   fopen : String -> Flags -> Mode -> Prog es Fd
-  fopen pth fs m = injectIO (openFile pth fs m)
+  fopen pth fs m = openFile pth fs m
 
   export %inline
   withFile : String -> Flags -> Mode -> (Fd -> Prog es a) -> Prog es a
@@ -32,7 +32,8 @@ parameters {auto has : Has Errno es}
 
   export
   writeVect :
-       {n : _}
+       {0 fd   : Type}
+    -> {n      : _}
     -> {auto _ : SizeOf a}
     -> {auto _ : SetPtr a}
     -> {auto _ : FileDesc fd}
@@ -42,11 +43,12 @@ parameters {auto has : Has Errno es}
   writeVect fd vs =
     use1 (malloc a n) $ \p => do
       writeVectIO vs p
-      injectIO (writeArr fd p)
+      writeArr fd p
 
   export
   writeList :
-       {auto _ : SizeOf a}
+       {0 fd   : Type}
+    -> {auto _ : SizeOf a}
     -> {auto _ : SetPtr a}
     -> {auto _ : FileDesc fd}
     -> fd
@@ -56,7 +58,8 @@ parameters {auto has : Has Errno es}
 
   export
   writeVal :
-       {auto _ : SizeOf a}
+       {0 fd   : Type}
+    -> {auto _ : SizeOf a}
     -> {auto _ : SetPtr a}
     -> {auto _ : FileDesc fd}
     -> fd
@@ -66,8 +69,7 @@ parameters {auto has : Has Errno es}
 
   export
   readFile : String -> Bits32 -> Prog es ByteString
-  readFile pth buf =
-    withFile pth O_RDONLY 0 (\x => injectIO (read x buf))
+  readFile pth buf = withFile pth O_RDONLY 0 (flip read buf)
 
   export
   readStr : String -> Bits32 -> Prog es String
@@ -77,7 +79,7 @@ parameters {auto has : Has Errno es}
   writeAll : FileDesc a => a -> ByteString -> Prog es ()
   writeAll fd (BS 0 _) = pure ()
   writeAll fd bs       =
-    injectIO (writeBytes fd bs) >>= \m => writeAll fd (drop (cast m) bs)
+    writeBytes fd bs >>= \m => writeAll fd (drop (cast m) bs)
 
   export covering %inline
   writeAllStr : FileDesc a => a -> String -> Prog es ()
@@ -87,7 +89,7 @@ parameters {auto has : Has Errno es}
   writeRawAll : FileDesc a => a -> Bits32 -> Buffer -> Bits32 -> Prog es ()
   writeRawAll fd o buf 0 = pure ()
   writeRawAll fd o buf n =
-    injectIO (writeRaw fd buf o n) >>= \w => writeRawAll fd (o+w) buf (n-w)
+    writeRaw fd buf o n >>= \w => writeRawAll fd (o+w) buf (n-w)
 
   export covering
   stream :
@@ -97,7 +99,7 @@ parameters {auto has : Has Errno es}
     -> (ByteString -> Prog es ())
     -> Prog es ()
   stream fd buf run =
-    injectIO (read fd buf) >>= \case
+    read fd buf >>= \case
       BS 0 _ => pure ()
       bs     => run bs >> stream fd buf run
 
@@ -115,13 +117,14 @@ parameters {auto has : Has Errno es}
     where
       go : Buffer -> Prog es ()
       go buf =
-        injectIO (readRaw fd buf sz) >>= \case
+        readRaw fd buf sz >>= \case
           0 => pure ()
           n => run buf n >> go buf
 
   export
   readVect :
-       {auto _ : SizeOf a}
+       {0 fd   : Type}
+    -> {auto _ : SizeOf a}
     -> {auto _ : Deref a}
     -> {auto _ : FileDesc fd}
     -> fd
@@ -129,14 +132,15 @@ parameters {auto has : Has Errno es}
     -> Prog es (Vect n a)
   readVect fd n =
     use1 (malloc a n) $ \p => do
-      bs <- injectIO (readArr fd p)
+      bs <- readArr fd p
       if bs < cast (n * sizeof a)
         then fail EINVAL
         else readVectIO p
 
   export
   readVal :
-       {auto _ : SizeOf a}
+       {0 fd   : Type}
+    -> {auto _ : SizeOf a}
     -> {auto _ : Deref a}
     -> {auto _ : FileDesc fd}
     -> fd

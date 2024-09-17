@@ -21,10 +21,10 @@ prim__mkfifo : String -> ModeT -> PrimIO CInt
 ||| Creates a pipe and writes the two file descriptors into the given C-array,
 ||| the read end at position 0 the write end at position 1.
 export %inline
-pipe : CArrayIO 2 Fd -> IO (Either Errno ())
+pipe : ErrIO io => CArrayIO 2 Fd -> io ()
 pipe p = toUnit $ prim__pipe (unsafeUnwrap p)
 
 ||| Creates a new FIFO (named pipe) on disc.
 export %inline
-mkfifo : String -> ModeT -> IO (Either Errno ())
+mkfifo : ErrIO io => String -> ModeT -> io ()
 mkfifo pth m = toUnit $ prim__mkfifo pth m

@@ -24,11 +24,11 @@ parameters {auto hf : Has Errno es}
   seekWriteBytes : Fd -> Prog es ()
   seekWriteBytes fd = do
     ignore $ lseek fd 0 SEEK_SET
-    ignore (injectIO $ writeBytes fd "hello world")
+    ignore (writeBytes fd "hello world")
 
   export covering
   seekAppendProg : Has ArgErr es => List String -> Prog es ()
-  seekAppendProg ["--help"] = putStrLn "\{usage}"
+  seekAppendProg ["--help"] = stdoutLn usage
   seekAppendProg [is] = do
     fi <- readOptIO OPath is
     withFile fi append 0o666 seekWriteBytes

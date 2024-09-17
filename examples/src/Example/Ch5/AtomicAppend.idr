@@ -33,18 +33,18 @@ parameters {auto hf : Has Errno es}
   appendBytes : Nat -> Fd -> Prog es ()
   appendBytes 0     fd = pure ()
   appendBytes (S k) fd =
-    ignore (injectIO $ writeBytes fd "A") >> appendBytes k fd
+    ignore (writeBytes fd "A") >> appendBytes k fd
 
   seekWriteBytes : Nat -> Fd -> Prog es ()
   seekWriteBytes 0     fd = pure ()
   seekWriteBytes (S k) fd = do
     ignore $ lseek fd 0 SEEK_END
-    ignore (injectIO $ writeBytes fd "A")
+    ignore (writeBytes fd "A")
     seekWriteBytes k fd
 
   export covering
   atomicProg : Has ArgErr es => List String -> Prog es ()
-  atomicProg ["--help"] = putStrLn "\{usage}"
+  atomicProg ["--help"] = stdoutLn usage
   atomicProg [is,ns] = do
     fi <- readOptIO OPath is
     n  <- readOptIO ONat ns

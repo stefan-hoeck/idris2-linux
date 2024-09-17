@@ -62,7 +62,7 @@ parameters {auto has : Has Errno es}
   readTill : FileDesc a => Fuel -> Nat -> a -> Prog es ()
   readTill Dry      n fd = stdoutLn "out of fuel"
   readTill (More x) n fd =
-    injectIO (read fd 0x10000) >>= \case
+    read fd 0x10000 >>= \case
       BS 0 _ => stdoutLn "reached end of file after \{show n} bytes"
       BS m y => stdoutLn "read \{show m} bytes" >> readTill x (m+n) fd
 
@@ -70,7 +70,7 @@ linuxIpkg : String
 linuxIpkg = "linux/linux.ipkg"
 
 covering
-loop : IORef Nat -> Nat -> IO ()
+loop : IORef Nat -> Nat -> Prog [Errno] ()
 loop ref (S k) = modifyIORef ref S >> loop ref k
 loop ref 0     = do
   pthreadTestCancel
@@ -79,15 +79,16 @@ loop ref 0     = do
 
 covering
 other : IORef Nat -> IORef PthreadT -> MutexT -> CondT -> IO ()
-other cnt ref mu co = do
-  tid <- pthreadSelf
-  stdoutLn "New thread's ID: \{show tid}"
-  _ <- lockMutex mu
-  writeIORef ref tid
-  _ <- unlockMutex mu
-  stdoutLn "Signalling waiting main thread."
-  ignore $ condSignal co
-  loop cnt 1000
+other cnt ref mu co =
+  runProg $ handleErrors [prettyOut] $ do
+    tid <- pthreadSelf
+    stdoutLn "New thread's ID: \{show tid}"
+    lockMutex mu
+    writeIORef ref tid
+    unlockMutex mu
+    stdoutLn "Signalling waiting main thread."
+    ignore $ condSignal co
+    loop cnt 1000
 
 covering
 prog : Prog [Errno, ArgErr] ()
@@ -119,31 +120,31 @@ prog = do
     "fifo_server"             :: t => fifoServer t
     "fifo_client"             :: t => fifoClient t
     _                              =>
-      use [injectIO $ mkmutex MUTEX_NORMAL, injectIO $ mkcond] $ \[mu,co] => do
+      use [mkmutex MUTEX_NORMAL, mkcond] $ \[mu,co] => do
         pid  <- getpid
         ppid <- getppid
         stdoutLn "Process ID: \{show pid} (parent: \{show ppid})"
         withFile linuxIpkg 0 0 (readTill end 0)
-        injectIO $ addFlags Stdin O_NONBLOCK
-        (fd,str) <- injectIO (mkstemp "linux/build/hello")
+        addFlags Stdin O_NONBLOCK
+        (fd,str) <- mkstemp "linux/build/hello"
         stdoutLn "opened temporary file: \{str}"
         writeAll fd "a temporary hello world\n"
         anyErr $ cleanup fd
         tid <- pthreadSelf
         cnt <- newIORef Z
         ref <- newIORef tid
-        injectIO $ lockMutex mu
+        lockMutex mu
         stdoutLn "My thread ID: \{show tid}"
         _   <- liftIO (fork $ other cnt ref mu co)
         stdoutLn "Forked child. Awaiting its signal."
-        injectIO $ condWait co mu
+        condWait co mu
         oid <- readIORef ref
         stdoutLn "Forked thread with ID: \{show oid}"
         stdoutLn "Eq of my thread ID: \{show $ tid == tid}"
         stdoutLn "Eq with other thread ID: \{show $ oid == tid}"
         stdoutLn "Now canceling child."
-        injectIO (pthreadCancel oid)
-        res <- liftIO (pthreadJoin oid)
+        pthreadCancel oid
+        res <- pthreadJoin oid
         tot <- readIORef cnt
         stdoutLn "Final count: \{show tot}"
         stdoutLn "Joining result: \{show res}"

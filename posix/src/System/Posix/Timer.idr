@@ -60,7 +60,7 @@ setusec s v = primIO $ set_timeval_tv_usec s.ptr v
 
 export %inline
 timeval : HasIO io => TimeT -> SusecondsT -> io Timeval
-timeval s u = primIO $ primMap TV $ prim__timeval s u
+timeval s u = primMap TV $ prim__timeval s u
 
 --------------------------------------------------------------------------------
 -- Itimerval
@@ -97,11 +97,11 @@ SizeOf Itimerval where
 
 export %inline
 interval : HasIO io => Itimerval -> io Timeval
-interval s = primIO $ primMap TV $ get_itimerval_it_interval s.ptr
+interval s = primMap TV $ get_itimerval_it_interval s.ptr
 
 export %inline
 value : HasIO io => Itimerval -> io Timeval
-value s = primIO $ primMap TV $ get_itimerval_it_value s.ptr
+value s = primMap TV $ get_itimerval_it_value s.ptr
 
 export %inline
 setinterval : HasIO io => Itimerval -> Timeval -> io ()
@@ -123,7 +123,7 @@ itimerval :
   -> (usecValue    : SusecondsT)
   -> io Itimerval
 itimerval si ui sv uv = do
-  primIO $ primMap ITV $ prim__itimerval si ui sv uv
+  primMap ITV $ prim__itimerval si ui sv uv
 
 --------------------------------------------------------------------------------
 -- Itimerspec
@@ -161,11 +161,11 @@ SizeOf Itimerspec where
 namespace Itimerspec
   export %inline
   interval : HasIO io => Itimerspec -> io Timespec
-  interval s = primIO $ primMap wrap $ get_itimerspec_it_interval s.ptr
+  interval s = primMap wrap $ get_itimerspec_it_interval s.ptr
 
   export %inline
   value : HasIO io => Itimerspec -> io Timespec
-  value s = primIO $ primMap wrap $ get_itimerspec_it_value s.ptr
+  value s = primMap wrap $ get_itimerspec_it_value s.ptr
 
 
   export %inline
@@ -188,7 +188,7 @@ itimerspec :
   -> (usecValue    : NsecT)
   -> io Itimerspec
 itimerspec si ni sv nv = do
-  primIO $ primMap ITS $ prim__itimerspec si ni sv nv
+  primMap ITS $ prim__itimerspec si ni sv nv
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -252,17 +252,17 @@ clock = primIO prim__clock
 ||| * ITIMER_PROF: Counts down in process time
 |||   (i.e. the sum of kernel-mode and user-mode CPU time) and raises SIGPROF
 export %inline
-setitimer : Which -> (new,old : Itimerval) -> IO (Either Errno ())
+setitimer : ErrIO io => Which -> (new,old : Itimerval) -> io ()
 setitimer w (ITV n) (ITV o) = toUnit $ prim__setitimer (whichCode w) n o
 
 ||| Like `setitimer` but does not store the old timer in a pointer.
 export %inline
-setitimer' : Which -> (new : Itimerval) -> IO (Either Errno ())
+setitimer' : ErrIO io => Which -> (new : Itimerval) -> io ()
 setitimer' w (ITV n) = toUnit $ prim__setitimer1 (whichCode w) n
 
 ||| Writes the currently set timer for `Which` into `old.
 export %inline
-getitimer : Which -> (old : Itimerval) -> IO (Either Errno ())
+getitimer : ErrIO io => Which -> (old : Itimerval) -> io ()
 getitimer w (ITV o) = toUnit $ prim__getitimer (whichCode w) o
 
 ||| A very basic version of `setitimer` that raises `SIGALRM`
@@ -278,13 +278,13 @@ alarm s = primIO $ prim__alarm s
 ||| Writes the current time for the given clock into the
 ||| `Timespec` pointer.
 export %inline
-clockGetTime : ClockId -> Timespec -> IO (Either Errno ())
+clockGetTime : ErrIO io => ClockId -> Timespec -> io ()
 clockGetTime c t = toUnit $ prim__clock_gettime (clockCode c) (unwrap t)
 
 ||| Writes the resolution for the given clock into the
 ||| `Timespec` pointer.
 export %inline
-clockGetRes : ClockId -> Timespec -> IO (Either Errno ())
+clockGetRes : ErrIO io => ClockId -> Timespec -> io ()
 clockGetRes c t = toUnit $ prim__clock_getres (clockCode c) (unwrap t)
 
 ||| High resolution sleeping for the duration given in `dur`.
@@ -292,18 +292,18 @@ clockGetRes c t = toUnit $ prim__clock_getres (clockCode c) (unwrap t)
 ||| In case this is interrupted by a signal, it returns `Left EINTR`
 ||| and writes the remaining duration into `rem`.
 export %inline
-nanosleep : (dur,rem : Timespec) -> IO (Either Errno ())
+nanosleep : ErrIO io => (dur,rem : Timespec) -> io ()
 nanosleep d r = toUnit $ prim__nanosleep (unwrap d) (unwrap r)
 
 ||| Like `nanosleep` but without the capability of keeping track of the
 ||| remaining duration in case of a signal interrupt.
 export %inline
-nanosleep' : (dur : Timespec) -> IO (Either Errno ())
+nanosleep' : ErrIO io => (dur : Timespec) -> io ()
 nanosleep' d = toUnit $ prim__nanosleep1 (unwrap d)
 
 ||| Like `nanosleep` but allows us to specify the system clock to use.
 export %inline
-clockNanosleep : ClockId -> (dur,rem : Timespec) -> IO (Either Errno ())
+clockNanosleep : ErrIO io => ClockId -> (dur,rem : Timespec) -> io ()
 clockNanosleep c d r =
   posToUnit $ prim__clock_nanosleep (clockCode c) (unwrap d) (unwrap r)
 
@@ -312,7 +312,6 @@ clockNanosleep c d r =
 ||| This is useful to get exact wakeup times even in case of lots of signal
 ||| interrupts.
 export %inline
-clockNanosleepAbs : ClockId -> (time : Timespec) -> IO (Either Errno ())
+clockNanosleepAbs : ErrIO io => ClockId -> (time : Timespec) -> io ()
 clockNanosleepAbs c d =
   posToUnit $ prim__clock_nanosleep_abs (clockCode c) (unwrap d)
-

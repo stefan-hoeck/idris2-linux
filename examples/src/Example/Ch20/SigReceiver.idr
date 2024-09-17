@@ -27,32 +27,32 @@ parameters {auto hf : Has Errno es}
   covering
   loop : SortedMap Signal Nat -> SigsetT -> SiginfoT -> Prog es ()
   loop cs set info = do
-    injectIO (sigwaitinfo set info)
+    sigwaitinfo set info
     sig <- signal info
     case sig == SIGINT of
       False => loop (insertWith (+) sig 1 cs) set info
       True  => do
-        putStrLn "\nGot SIGINT. Signal counts:"
-        for_ (SortedMap.toList cs) $ \(s,n) => putStrLn "\{s}: \{show n}"
+        stdoutLn "\nGot SIGINT. Signal counts:"
+        for_ (SortedMap.toList cs) $ \(s,n) => stdoutLn "\{s}: \{show n}"
 
   covering
   app : Has ArgErr es => Nat -> Prog es ()
   app n =
     use [fullSigset, allocStruct SiginfoT] $ \[fs,info] => do
       pid       <- getpid
-      putStrLn "PID: \{show pid}"
+      stdoutLn "PID: \{show pid}"
       sigprocmask' SIG_SETMASK fs
       when (n > 0) $ do
-        putStrLn "sleeping for \{show n} seconds"
+        stdoutLn "sleeping for \{show n} seconds"
         sleep (cast n)
         ss <- pendingSignals
-        putStrLn "pending signals: \{unwords $ map interpolate ss}"
+        stdoutLn "pending signals: \{unwords $ map interpolate ss}"
 
       loop empty fs info
 
   export covering
   sigReceive : Has ArgErr es => List String -> Prog es ()
-  sigReceive ["--help"] = putStrLn "\{usage}"
+  sigReceive ["--help"] = stdoutLn usage
   sigReceive [s]        = readOptIO ONat s >>= app
   sigReceive []         = app 0
   sigReceive args       = fail (WrongArgs usage)

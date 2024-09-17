@@ -48,9 +48,9 @@ parameters {auto has : Has Errno es}
   loop : (rem : Nat) -> Prog es ()
   loop 0 = pure ()
   loop n = do
-    x   <- injectIO (readTimerfd fd)
+    x   <- readTimerfd fd
     now <- liftIO (clockTime Monotonic)
-    putStrLn "\{prettyClock now start}: \{expirations x}; \{tot exp n x}"
+    stdoutLn "\{prettyClock now start}: \{expirations x}; \{tot exp n x}"
     loop (n `minus` cast x)
 
 readPair : Has ArgErr es => String -> Prog es (TimeT, NsecT)
@@ -76,14 +76,14 @@ covering
 app : Has Errno es => Has ArgErr es => (t,exp : String) -> Prog es ()
 app t exps = do
   exp  <- readOptIO ONat exps
-  use [injectIO (timerfd CLOCK_MONOTONIC 0), readSpec t] $ \[fd,it] => do
-  injectIO (settime' fd 0 it)
+  use [timerfd CLOCK_MONOTONIC 0, readSpec t] $ \[fd,it] => do
+  settime' fd 0 it
   start <- liftIO (clockTime Monotonic)
   loop exp fd start exp
 
 export covering
 timerfdExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
-timerfdExample ["--help"]  = putStrLn "\{usage}"
+timerfdExample ["--help"]  = stdoutLn usage
 timerfdExample [s]         = app s "1"
 timerfdExample [s,m]       = app s m
 timerfdExample args        = fail (WrongArgs usage)

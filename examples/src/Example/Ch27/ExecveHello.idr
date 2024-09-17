@@ -16,12 +16,12 @@ usage =
   """
 
 covering
-run : HasIO io => List String -> io ()
+run : ErrIO io => List String -> io ()
 run as = do
-  for_ (zipWithIndex as) $ \(n,s) => putStrLn "args[\{show n}] = \{s}"
-  for_ !getEnvironment $ \(n,s) => putStrLn "\{n}=\{s}"
+  for_ (zipWithIndex as) $ \(n,s) => stdoutLn "args[\{show n}] = \{s}"
+  for_ !getEnvironment $ \(n,s)   => stdoutLn "\{n}=\{s}"
 
 export covering
-execveHello : Has ArgErr es => List String -> Prog es ()
-execveHello ["--help"] = putStrLn "\{usage}"
+execveHello : Has Errno es => Has ArgErr es => List String -> Prog es ()
+execveHello ["--help"] = stdoutLn usage
 execveHello _          = getArgs >>= run

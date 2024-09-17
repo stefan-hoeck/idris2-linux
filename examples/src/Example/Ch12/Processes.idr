@@ -50,12 +50,12 @@ parameters {auto hf : Has Errno es}
     r <- dropErr toEOF (readFile "/proc/\{p}/status" 0x10000)
     let m := processInfo r
     case (lookup "Name" m, hasUID u m) of
-      (Just n,True) => liftIO (ignore $ writeStrLn Stdout "\{p}: \{n}")
+      (Just n,True) => stdoutLn "\{p}: \{n}"
       _             => pure ()
 
   export covering
   processes : Has ArgErr es => List String -> Prog es ()
-  processes ["--help"] = putStrLn "\{usage}"
+  processes ["--help"] = stdoutLn usage
   processes [u]        = do
     Just uid <- getuid u | Nothing => fail (Invalid OUser u)
     withDir "/proc" (inDir uid)

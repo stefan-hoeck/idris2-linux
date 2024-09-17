@@ -24,8 +24,8 @@ parameters {auto hf : Has Errno es}
   srch bs p f =
     let pth := "/proc/\{p}/fd/\{f}"
      in dropErr toEOF $ do
-          x <- injectIO (readlink pth)
-          when (x == bs) (putStrLn "\{p}")
+          x <- readlink pth
+          when (x == bs) (stdoutLn "\{p}")
 
   covering
   inProc : ByteString -> String -> Prog es ()
@@ -33,6 +33,6 @@ parameters {auto hf : Has Errno es}
 
   export covering
   hasOpen : Has ArgErr es => List String -> Prog es ()
-  hasOpen ["--help"] = putStrLn "\{usage}"
+  hasOpen ["--help"] = stdoutLn usage
   hasOpen [p]        = withDir "/proc" (inProc $ fromString p)
   hasOpen _          = fail (WrongArgs usage)

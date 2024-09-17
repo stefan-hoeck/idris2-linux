@@ -49,14 +49,14 @@ parameters {auto hf : Has Errno es}
   covering
   observe : Inotify -> Prog es ()
   observe fd = do
-    rs <- injectIO (inotifyRead 0x10000 fd)
-    traverse_ (putStrLn . showRes) rs
+    rs <- inotifyRead 0x10000 fd
+    traverse_ (stdoutLn . showRes) rs
     observe fd
 
   export covering
   inotify : Has ArgErr es => List String -> Prog es ()
-  inotify ["--help"] = putStrLn "\{usage}"
+  inotify ["--help"] = stdoutLn usage
   inotify args       = do
-    fd <- injectIO (inotifyInit 0)
-    _  <- traverse (\s => injectIO (inotifyAddWatch fd s IN_ALL_EVENTS)) args
+    fd <- inotifyInit 0
+    _  <- traverse (\s => inotifyAddWatch fd s IN_ALL_EVENTS) args
     observe fd

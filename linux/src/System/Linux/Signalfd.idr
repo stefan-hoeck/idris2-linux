@@ -93,7 +93,7 @@ Cast Signalfd Fd where cast = MkFd . fd
 ||| * In general, use `readSignalfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `signalfd`.
 export %inline
-signalfd : (set : SigsetT) -> SignalfdFlags -> IO (Either Errno Signalfd)
+signalfd : ErrIO io => (set : SigsetT) -> SignalfdFlags -> io Signalfd
 signalfd set (F f) = toVal (SFD . cast) $ prim__signalfd (unwrap set) f
 
 ||| Result type when reading from a `Signalfd`.
@@ -191,13 +191,14 @@ addrlsb (SI p) = primIO $ prim__ssi_addr_lsb p
 |||       result is a wrapper around the same pointer.
 export
 readSignalfd :
-     {n : _}
+     {auto has : ErrIO io}
+  -> {n : _}
   -> Signalfd
   -> (arr : CArrayIO n SiginfoFd)
-  -> IO (Either Errno $ (n ** CArrayIO n SiginfoFd))
+  -> io (n ** CArrayIO n SiginfoFd)
 readSignalfd fd arr =
   let p  := unsafeUnwrap arr
       sz := sizeof SiginfoFd
-   in readPtr fd p (cast $ n * sz) >>= \case
-        Left x   => pure (Left x)
-        Right bs => pure (Right (cast (bs `div` cast sz) ** unsafeWrap p))
+   in do
+     bs <- readPtr fd p (cast $ n * sz)
+     pure (cast (bs `div` cast sz) ** unsafeWrap p)
