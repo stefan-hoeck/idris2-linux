@@ -1,14 +1,17 @@
-# idris2-linux: Utilities for using Idris2 on GNU/Linux systems
+# POSIX and Linux System Calls in Idris2
 
-Although it says "GNU/Linux" in the title, a lot of the stuff in here
-might also work on other (POSIX) systems. That stuff should eventually
-go to some kind of idris2-posix library. But it is now too early for
-that.
+This project has been split into two libraries, both providing bindings
+to the most important system calls and utilities available on Unix-like
+operating systems.
 
-This library is the result of working through the
+The libraries are the result of working through the
 [Linux Programming Interface](https://www.man7.org/tlpi/) and writing
-bindings for the most important system calls in Idris. As I crawl
-through the chapters, the todo list below will continuously grow.
+bindings for the most important system calls
+(usually via the corresponding C functions) in Idris. As I crawl
+through the chapters, the todo-list below will continuously grow.
+
+In the `examples` subproject you can find many of the example applications
+and exercises from the book implemented as a single command-line application.
 
 ## Chapter Overview
 
@@ -220,7 +223,7 @@ The following will probably not be implemented:
 The following will probably not be implemented:
 
 * Installing exit handlers via `atexit` and `onexit`, as these might suffer
-  the same limitations as other callbacks when used from Schemes.
+  from the same limitations as other callbacks when used from Schemes.
 
 ### Chapter 26
 
