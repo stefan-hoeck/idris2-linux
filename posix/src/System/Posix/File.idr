@@ -9,7 +9,7 @@ import public Data.Buffer.Core
 import public Data.ByteString
 import public Data.ByteVect
 
-import public Data.C.Integer
+import public Data.C.Ptr
 
 import public System.Posix.Errno
 import public System.Posix.File.Flags
@@ -24,7 +24,7 @@ import public System.Posix.File.Whence
 --------------------------------------------------------------------------------
 
 %foreign "C:li_open, posix-idris"
-prim__open : String -> CInt -> ModeT -> PrimIO CInt
+prim__open : String -> Bits32 -> ModeT -> PrimIO CInt
 
 %foreign "C:li_close, posix-idris"
 prim__close : Bits32 -> PrimIO CInt
@@ -41,6 +41,9 @@ prim__pread : (file : Bits32) -> Buffer -> (max : Bits32) -> OffT -> PrimIO Ssiz
 %foreign "C:li_write, posix-idris"
 prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
 
+%foreign "C:li_write, posix-idris"
+prim__writeptr : (file : Bits32) -> AnyPtr -> (off,max : Bits32) -> PrimIO SsizeT
+
 %foreign "C:li_pwrite, posix-idris"
 prim__pwrite : (file : Bits32) -> Buffer -> (off,max : Bits32) -> OffT -> PrimIO SsizeT
 
@@ -48,7 +51,7 @@ prim__pwrite : (file : Bits32) -> Buffer -> (off,max : Bits32) -> OffT -> PrimIO
 prim__lseek : (file : Bits32) -> (off : OffT) -> (whence : CInt) -> PrimIO OffT
 
 %foreign "C:li_set_flags, posix-idris"
-prim__setFlags : (file : Bits32) -> (flags : CInt) -> PrimIO CInt
+prim__setFlags : (file : Bits32) -> (flags : Bits32) -> PrimIO CInt
 
 %foreign "C:li_get_flags, posix-idris"
 prim__getFlags : (file : Bits32) -> PrimIO CInt
@@ -113,6 +116,18 @@ Cast Bits32 Fd where cast = MkFd
 export %inline
 fileDesc : FileDesc a => a -> Bits32
 fileDesc = fd . cast
+
+public export %inline
+SizeOf Fd where
+  sizeof_ = sizeof Bits32
+
+export %inline
+Deref Fd where
+  deref p = MkFd <$> deref p
+
+export %inline
+SetPtr Fd where
+  setPtr p = setPtr p . fd
 
 ||| Standard input and output file descriptors
 public export
@@ -190,6 +205,11 @@ parameters {auto fid : FileDesc a}
   readPtr : AnyPtr -> (n : Bits32) -> IO (Either Errno Bits32)
   readPtr ptr n = toSize $ prim__readptr (fileDesc fd) ptr n
 
+  ||| Reads at most `n * sizeof a` bytes into a preallocated array.
+  export %inline
+  readArr : {n : _} -> SizeOf b => CArrayIO n b -> IO (Either Errno Bits32)
+  readArr p = readPtr (unsafeUnwrap p) (cast $ n * sizeof b)
+
   ||| Reads at most `n` bytes from a file into a buffer.
   export %inline
   readRaw : Buffer -> (n : Bits32) -> IO (Either Errno Bits32)
@@ -220,10 +240,30 @@ parameters {auto fid : FileDesc a}
   writeBytes (BS n $ BV b o _) =
     toSize $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
 
-  ||| Reads at most `n` bytes from a file into a bytestring.
+  ||| Writes up to the given number of bytes from the given buffer starting
+  ||| at the given offset.
+  |||
+  ||| Note: This is an atomic operation if `fd` is a regular file that
+  |||       was opened in "append" mode (with the `O_APPEND` flag).
   export %inline
   writeRaw : Buffer -> (offset,n : Bits32) -> IO (Either Errno Bits32)
   writeRaw buf o n = toSize $ prim__write (fileDesc fd) buf o n
+
+  ||| Writes up to the number of bytes from the given C ptr.
+  |||
+  ||| Note: This is an atomic operation if `fd` is a regular file that
+  |||       was opened in "append" mode (with the `O_APPEND` flag).
+  export %inline
+  writePtr : AnyPtr -> (n : Bits32) -> IO (Either Errno Bits32)
+  writePtr buf n = toSize $ prim__writeptr (fileDesc fd) buf 0 n
+
+  ||| Writes the content of the given array.
+  |||
+  ||| Note: This is an atomic operation if `fd` is a regular file that
+  |||       was opened in "append" mode (with the `O_APPEND` flag).
+  export %inline
+  writeArr : {n : _} -> SizeOf b => CArrayIO n b -> IO (Either Errno Bits32)
+  writeArr p = writePtr (unsafeUnwrap p) (cast $ n * sizeof b)
 
 
   ||| Atomically writes up to the number of bytes in the bytestring
@@ -300,7 +340,7 @@ parameters {auto fid : FileDesc a}
       let MkIORes r w := prim__getFlags (fileDesc fd) w
        in case r < 0 of
             True  => MkIORes (negErr r) w
-            False => MkIORes (Right $ F r) w
+            False => MkIORes (Right $ F $ cast r) w
 
   ||| Sets the flags of an open file descriptor.
   |||

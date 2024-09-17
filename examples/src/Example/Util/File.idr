@@ -1,9 +1,10 @@
 module Example.Util.File
 
+import Data.Vect
 import Data.Maybe0
 import Data.Array.Index
 import Data.Buffer.Core
-import Data.C.Integer
+import Data.C.Ptr
 
 import public Example.Util.Prog
 import public System.Posix.File
@@ -22,8 +23,46 @@ tryLT m n with (m < n) proof eq
 parameters {auto has : Has Errno es}
 
   export %inline
+  fopen : String -> Flags -> Mode -> Prog es Fd
+  fopen pth fs m = injectIO (openFile pth fs m)
+
+  export %inline
   withFile : String -> Flags -> Mode -> (Fd -> Prog es a) -> Prog es a
-  withFile pth fs m = use1 (injectIO $ openFile pth fs m)
+  withFile pth fs m = use1 (fopen pth fs m)
+
+  export
+  writeVect :
+       {n : _}
+    -> {auto _ : SizeOf a}
+    -> {auto _ : SetPtr a}
+    -> {auto _ : FileDesc fd}
+    -> fd
+    -> Vect n a
+    -> Prog es Bits32
+  writeVect fd vs =
+    use1 (malloc a n) $ \p => do
+      writeVectIO vs p
+      injectIO (writeArr fd p)
+
+  export
+  writeList :
+       {auto _ : SizeOf a}
+    -> {auto _ : SetPtr a}
+    -> {auto _ : FileDesc fd}
+    -> fd
+    -> List a
+    -> Prog es Bits32
+  writeList fd vs = writeVect fd (fromList vs)
+
+  export
+  writeVal :
+       {auto _ : SizeOf a}
+    -> {auto _ : SetPtr a}
+    -> {auto _ : FileDesc fd}
+    -> fd
+    -> a
+    -> Prog es Bits32
+  writeVal fd v = writeVect fd [v]
 
   export
   readFile : String -> Bits32 -> Prog es ByteString
@@ -39,6 +78,10 @@ parameters {auto has : Has Errno es}
   writeAll fd (BS 0 _) = pure ()
   writeAll fd bs       =
     injectIO (writeBytes fd bs) >>= \m => writeAll fd (drop (cast m) bs)
+
+  export covering %inline
+  writeAllStr : FileDesc a => a -> String -> Prog es ()
+  writeAllStr fd = writeAll fd . fromString
 
   export covering
   writeRawAll : FileDesc a => a -> Bits32 -> Buffer -> Bits32 -> Prog es ()
@@ -75,3 +118,27 @@ parameters {auto has : Has Errno es}
         injectIO (readRaw fd buf sz) >>= \case
           0 => pure ()
           n => run buf n >> go buf
+
+  export
+  readVect :
+       {auto _ : SizeOf a}
+    -> {auto _ : Deref a}
+    -> {auto _ : FileDesc fd}
+    -> fd
+    -> (n      : Nat)
+    -> Prog es (Vect n a)
+  readVect fd n =
+    use1 (malloc a n) $ \p => do
+      bs <- injectIO (readArr fd p)
+      if bs < cast (n * sizeof a)
+        then fail EINVAL
+        else readVectIO p
+
+  export
+  readVal :
+       {auto _ : SizeOf a}
+    -> {auto _ : Deref a}
+    -> {auto _ : FileDesc fd}
+    -> fd
+    -> Prog es a
+  readVal fd = head <$> readVect fd 1

@@ -33,7 +33,7 @@ uint32_t li_errno() { return errno; }
 // Files
 ////////////////////////////////////////////////////////////////////////////////
 
-int li_open(const char *name, int flags, mode_t mode) {
+int li_open(const char *name, uint32_t flags, mode_t mode) {
   int res = open(name, flags, mode);
   CHECKRES
 }
@@ -83,7 +83,7 @@ ssize_t li_pwrite(int fd, char *buf, size_t offset, size_t bytes, off_t off) {
   CHECKRES
 }
 
-int li_set_flags(int fd, int flags) {
+int li_set_flags(int fd, uint32_t flags) {
   int res = fcntl(fd, F_SETFL, flags);
   CHECKRES
 }
@@ -135,6 +135,20 @@ int li_unlink(const char *pth) {
 
 int li_remove(const char *pth) {
   int res = remove(pth);
+  CHECKRES
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Pipes
+////////////////////////////////////////////////////////////////////////////////
+
+int li_pipe(int fs[2]) {
+  int res = pipe(fs);
+  CHECKRES
+}
+
+int li_mkfifo(const char *pth, mode_t mode) {
+  int res = mkfifo(pth, mode);
   CHECKRES
 }
 
