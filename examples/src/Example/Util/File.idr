@@ -32,7 +32,8 @@ parameters {auto has : Has Errno es}
 
   export
   writeVect :
-       {n : _}
+       {0 fd   : Type}
+    -> {n      : _}
     -> {auto _ : SizeOf a}
     -> {auto _ : SetPtr a}
     -> {auto _ : FileDesc fd}
@@ -46,7 +47,8 @@ parameters {auto has : Has Errno es}
 
   export
   writeList :
-       {auto _ : SizeOf a}
+       {0 fd   : Type}
+    -> {auto _ : SizeOf a}
     -> {auto _ : SetPtr a}
     -> {auto _ : FileDesc fd}
     -> fd
@@ -56,7 +58,8 @@ parameters {auto has : Has Errno es}
 
   export
   writeVal :
-       {auto _ : SizeOf a}
+       {0 fd   : Type}
+    -> {auto _ : SizeOf a}
     -> {auto _ : SetPtr a}
     -> {auto _ : FileDesc fd}
     -> fd
@@ -120,7 +123,8 @@ parameters {auto has : Has Errno es}
 
   export
   readVect :
-       {auto _ : SizeOf a}
+       {0 fd   : Type}
+    -> {auto _ : SizeOf a}
     -> {auto _ : Deref a}
     -> {auto _ : FileDesc fd}
     -> fd
