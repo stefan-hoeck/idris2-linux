@@ -6,7 +6,7 @@ import System
 import System.GetOpts
 import System.Posix.Signal
 
-import public Data.C.Integer
+import public Data.C.Ptr
 import public Example.Util.Prog
 
 %default total

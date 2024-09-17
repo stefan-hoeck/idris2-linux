@@ -22,6 +22,8 @@ modules = System.Callback
         , System.Posix.File.Type
         , System.Posix.File.Whence
 
+        , System.Posix.Pipe
+
         , System.Posix.Process
         , System.Posix.Process.Flags
 

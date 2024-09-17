@@ -31,6 +31,10 @@ import Example.Ch27.ExecveExample
 import Example.Ch27.ExecveHello
 import Example.Ch27.SystemExample
 
+import Example.Ch44.BasicPipe
+import Example.Ch44.ChunkPipe
+import Example.Ch44.PipeSync
+
 import Example.Util.File
 import Example.Util.Opts
 import Example.Util.Pthreads
@@ -108,6 +112,9 @@ prog = do
     "execve_example" :: t => execveExample t
     "execve_hello" :: t => execveHello t
     "system_example" :: t => systemExample t
+    "basic_pipe" :: t => basicPipe t
+    "chunk_pipe" :: t => chunkPipe t
+    "pipe_sync" :: t => pipeSync t
     _           =>
       use [injectIO $ mkmutex MUTEX_NORMAL, injectIO $ mkcond] $ \[mu,co] => do
         pid  <- getpid

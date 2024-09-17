@@ -9,6 +9,8 @@ depends = base >= 0.7.0
 modules = System.Linux.Inotify
         , System.Linux.Inotify.Flags
 
+        , System.Linux.Pipe
+
         , System.Linux.Pthreads
 
         , System.Linux.Signalfd

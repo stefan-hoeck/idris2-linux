@@ -40,6 +40,10 @@ parameters {auto has : Has Errno es}
   writeAll fd bs       =
     injectIO (writeBytes fd bs) >>= \m => writeAll fd (drop (cast m) bs)
 
+  export covering %inline
+  writeAllStr : FileDesc a => a -> String -> Prog es ()
+  writeAllStr fd = writeAll fd . fromString
+
   export covering
   writeRawAll : FileDesc a => a -> Bits32 -> Buffer -> Bits32 -> Prog es ()
   writeRawAll fd o buf 0 = pure ()

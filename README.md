@@ -294,3 +294,9 @@ The following will probably not be implemented:
 - [x] implement `pthread_sigqueue`
 - [x] implement `sigwait`
 - [ ] do the exercises
+
+### Chapters 34 - 43
+
+To be added...
+
+### Chapter 44

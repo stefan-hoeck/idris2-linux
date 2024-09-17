@@ -45,7 +45,7 @@ import Derive.Prelude
 public export
 record Flags where
   constructor F
-  flags : CInt
+  flags : Bits32
 
 %runElab derive "Flags" [Show,Eq,Ord,FromInteger]
 
