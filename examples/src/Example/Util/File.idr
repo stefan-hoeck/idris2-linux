@@ -42,7 +42,7 @@ parameters {auto has : Has Errno es}
     -> Prog es Bits32
   writeVect fd vs =
     use1 (malloc a n) $ \p => do
-      writeVectIO vs p
+      runIO $ writeVect p vs
       writeArr fd p
 
   export
@@ -135,7 +135,7 @@ parameters {auto has : Has Errno es}
       bs <- readArr fd p
       if bs < cast (n * sizeof a)
         then fail EINVAL
-        else readVectIO p
+        else runIO $ readVect p
 
   export
   readVal :

@@ -23,7 +23,7 @@ parameters {auto has : Has Errno es}
            {auto haa : Has ArgErr es}
            (ss       : SigsetT)
            (si       : SiginfoT)
-           (status   : Box ProcStatus)
+           (status   : IOBox ProcStatus)
 
   child : PidT -> IORef Nat -> Prog es ()
   child prnt x = do
@@ -54,7 +54,7 @@ parameters {auto has : Has Errno es}
     kill p SIGUSR1
     stdoutLn "[ parent ] waiting for child to finish"
     chld <- wait status
-    st   <- unboxIO status
+    st   <- runIO (unbox status)
     stdoutLn "[ parent ] child \{show chld} exited with status \{show $ exitstatus st}"
 
   forkTest : Prog es ()

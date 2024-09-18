@@ -27,7 +27,7 @@ parameters {auto hf : Has Errno es}
   loop : SortedMap Signal Nat -> Signalfd -> CArrayIO 1 SiginfoFd -> Prog es ()
   loop cs fd arr = do
     (1 ** p) <- readSignalfd fd arr | _ => loop cs fd arr
-    sig <- unboxIO p >>= signal
+    sig <- runIO (unbox p) >>= signal
     case sig == SIGINT of
       False => loop (insertWith (+) sig 1 cs) fd arr
       True  => do
@@ -37,7 +37,7 @@ parameters {auto hf : Has Errno es}
   covering
   app : Has ArgErr es => Nat -> Prog es ()
   app n =
-    use [fullSigset,IO.malloc SiginfoFd 1] $ \[fs,arr] =>
+    use [fullSigset,malloc SiginfoFd 1] $ \[fs,arr] =>
       use1 (signalfd fs 0) $ \fd => do
         pid       <- getpid
         stdoutLn "PID: \{show pid}"

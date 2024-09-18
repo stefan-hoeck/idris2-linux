@@ -25,6 +25,12 @@ url    = "https://github.com/stefan-hoeck/idris2-cptr"
 commit = "latest:main"
 ipkg   = "struct-gen/struct-gen.ipkg"
 
+[custom.all.ref1]
+type   = "github"
+url    = "https://github.com/stefan-hoeck/idris2-ref1"
+commit = "latest:main"
+ipkg   = "ref1.ipkg"
+
 [custom.all.array]
 type   = "github"
 url    = "https://github.com/stefan-hoeck/idris2-array"

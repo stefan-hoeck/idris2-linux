@@ -1,10 +1,10 @@
 module System.Posix.Process
 
+import System.Posix.File
+import System.Posix.Signal
 import public Data.C.Ptr
 import public System.Posix.Errno
-import System.Posix.File
 import public System.Posix.Process.Flags
-import System.Posix.Signal
 
 %default total
 
@@ -241,7 +241,7 @@ system cmd = toVal PS $ prim__system cmd
 ||| that terminated. In addition, the termination status of the child
 ||| is written into the given pointer.
 export %inline
-wait : ErrIO io => Box ProcStatus -> io PidT
+wait : ErrIO io => IOBox ProcStatus -> io PidT
 wait s = toPidT $ prim__wait (unsafeUnwrap s)
 
 ||| Waits for the given child processes of to terminate.
