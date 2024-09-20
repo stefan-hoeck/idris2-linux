@@ -193,5 +193,5 @@ sigName =
     ]
 
 public export %inline
-siginfo_t_size : Nat
+siginfo_t_size : Bits32
 siginfo_t_size = 128

@@ -37,5 +37,5 @@ SFD_NONBLOCK : SignalfdFlags
 SFD_NONBLOCK = 2048
 
 public export
-signalfd_siginfo_size : Nat
+signalfd_siginfo_size : Bits32
 signalfd_siginfo_size = 128

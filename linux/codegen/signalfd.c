@@ -17,7 +17,7 @@ void *main() {
   print_flag("SFD_NONBLOCK", SFD_NONBLOCK);
 
   printf("\npublic export\n");
-  printf("signalfd_siginfo_size : Nat\n");
+  printf("signalfd_siginfo_size : Bits32\n");
   printf("signalfd_siginfo_size = %zd\n", sizeof(struct signalfd_siginfo));
 
   exit(0);

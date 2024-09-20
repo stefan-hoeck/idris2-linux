@@ -42,7 +42,7 @@ parameters {auto he : Has Errno es}
   covering
   run : String -> Prog es ()
   run s = do
-    fds <- use1 (malloc _ _) $ \r => pipe r >> runIO (readVect r)
+    fds <- use1 (malloc _ _) $ \r => pipe r >> runIO (withIArray r toVect)
     0 <- fork | p => prnt p fds
     chld s fds
 

@@ -55,13 +55,13 @@ cancelState CANCEL_ENABLE = 0
 cancelState CANCEL_DISABLE = 1
 
 public export %inline
-pthread_t_size : Nat
+pthread_t_size : Bits32
 pthread_t_size = 8
 
 public export %inline
-mutex_t_size : Nat
+mutex_t_size : Bits32
 mutex_t_size = 40
 
 public export %inline
-cond_t_size : Nat
+cond_t_size : Bits32
 cond_t_size = 48

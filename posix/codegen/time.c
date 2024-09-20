@@ -9,7 +9,7 @@
 
 void *main() {
   printf("\npublic export %%inline\n");
-  printf("timespec_size : Nat\n");
+  printf("timespec_size : Bits32\n");
   printf("timespec_size = %zd\n", sizeof(struct timespec));
 
   exit(0);

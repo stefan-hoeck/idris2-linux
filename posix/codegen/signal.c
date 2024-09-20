@@ -99,7 +99,7 @@ void *main() {
   printf("    ]\n");
 
   printf("\npublic export %%inline\n");
-  printf("siginfo_t_size : Nat\n");
+  printf("siginfo_t_size : Bits32\n");
   printf("siginfo_t_size = %zd\n", sizeof(siginfo_t));
 
   exit(0);
