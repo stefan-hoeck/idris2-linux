@@ -191,66 +191,6 @@ EIDRM : Errno
 EIDRM = 43
 
 public export %inline
-ECHRNG : Errno
-ECHRNG = 44
-
-public export %inline
-EL2NSYNC : Errno
-EL2NSYNC = 45
-
-public export %inline
-EL3HLT : Errno
-EL3HLT = 46
-
-public export %inline
-EL3RST : Errno
-EL3RST = 47
-
-public export %inline
-ELNRNG : Errno
-ELNRNG = 48
-
-public export %inline
-EUNATCH : Errno
-EUNATCH = 49
-
-public export %inline
-ENOCSI : Errno
-ENOCSI = 50
-
-public export %inline
-EL2HLT : Errno
-EL2HLT = 51
-
-public export %inline
-EBADE : Errno
-EBADE = 52
-
-public export %inline
-EBADR : Errno
-EBADR = 53
-
-public export %inline
-EXFULL : Errno
-EXFULL = 54
-
-public export %inline
-ENOANO : Errno
-ENOANO = 55
-
-public export %inline
-EBADRQC : Errno
-EBADRQC = 56
-
-public export %inline
-EBADSLT : Errno
-EBADSLT = 57
-
-public export %inline
-EBFONT : Errno
-EBFONT = 59
-
-public export %inline
 ENOSTR : Errno
 ENOSTR = 60
 
@@ -267,32 +207,12 @@ ENOSR : Errno
 ENOSR = 63
 
 public export %inline
-ENONET : Errno
-ENONET = 64
-
-public export %inline
-ENOPKG : Errno
-ENOPKG = 65
-
-public export %inline
 EREMOTE : Errno
 EREMOTE = 66
 
 public export %inline
 ENOLINK : Errno
 ENOLINK = 67
-
-public export %inline
-EADV : Errno
-EADV = 68
-
-public export %inline
-ESRMNT : Errno
-ESRMNT = 69
-
-public export %inline
-ECOMM : Errno
-ECOMM = 70
 
 public export %inline
 EPROTO : Errno
@@ -303,10 +223,6 @@ EMULTIHOP : Errno
 EMULTIHOP = 72
 
 public export %inline
-EDOTDOT : Errno
-EDOTDOT = 73
-
-public export %inline
 EBADMSG : Errno
 EBADMSG = 74
 
@@ -315,48 +231,8 @@ EOVERFLOW : Errno
 EOVERFLOW = 75
 
 public export %inline
-ENOTUNIQ : Errno
-ENOTUNIQ = 76
-
-public export %inline
-EBADFD : Errno
-EBADFD = 77
-
-public export %inline
-EREMCHG : Errno
-EREMCHG = 78
-
-public export %inline
-ELIBACC : Errno
-ELIBACC = 79
-
-public export %inline
-ELIBBAD : Errno
-ELIBBAD = 80
-
-public export %inline
-ELIBSCN : Errno
-ELIBSCN = 81
-
-public export %inline
-ELIBMAX : Errno
-ELIBMAX = 82
-
-public export %inline
-ELIBEXEC : Errno
-ELIBEXEC = 83
-
-public export %inline
 EILSEQ : Errno
 EILSEQ = 84
-
-public export %inline
-ERESTART : Errno
-ERESTART = 85
-
-public export %inline
-ESTRPIPE : Errno
-ESTRPIPE = 86
 
 public export %inline
 EUSERS : Errno
@@ -479,32 +355,8 @@ ESTALE : Errno
 ESTALE = 116
 
 public export %inline
-EUCLEAN : Errno
-EUCLEAN = 117
-
-public export %inline
-ENOTNAM : Errno
-ENOTNAM = 118
-
-public export %inline
-ENAVAIL : Errno
-ENAVAIL = 119
-
-public export %inline
-EISNAM : Errno
-EISNAM = 120
-
-public export %inline
-EREMOTEIO : Errno
-EREMOTEIO = 121
-
-public export %inline
 EDQUOT : Errno
 EDQUOT = 122
-
-public export %inline
-ENOMEDIUM : Errno
-ENOMEDIUM = 123
 
 public export %inline
 EMEDIUMTYPE : Errno
@@ -545,6 +397,154 @@ ERFKILL = 132
 public export %inline
 EHWPOISON : Errno
 EHWPOISON = 133
+
+public export %inline
+ECHRNG : Errno
+ECHRNG = 44
+
+public export %inline
+EL2NSYNC : Errno
+EL2NSYNC = 45
+
+public export %inline
+EL3HLT : Errno
+EL3HLT = 46
+
+public export %inline
+EL3RST : Errno
+EL3RST = 47
+
+public export %inline
+ELNRNG : Errno
+ELNRNG = 48
+
+public export %inline
+EUNATCH : Errno
+EUNATCH = 49
+
+public export %inline
+ENOCSI : Errno
+ENOCSI = 50
+
+public export %inline
+EL2HLT : Errno
+EL2HLT = 51
+
+public export %inline
+EBADE : Errno
+EBADE = 52
+
+public export %inline
+EBADR : Errno
+EBADR = 53
+
+public export %inline
+EXFULL : Errno
+EXFULL = 54
+
+public export %inline
+ENOANO : Errno
+ENOANO = 55
+
+public export %inline
+EBADRQC : Errno
+EBADRQC = 56
+
+public export %inline
+EBADSLT : Errno
+EBADSLT = 57
+
+public export %inline
+EBFONT : Errno
+EBFONT = 59
+
+public export %inline
+ENONET : Errno
+ENONET = 64
+
+public export %inline
+ENOPKG : Errno
+ENOPKG = 65
+
+public export %inline
+EADV : Errno
+EADV = 68
+
+public export %inline
+ESRMNT : Errno
+ESRMNT = 69
+
+public export %inline
+ECOMM : Errno
+ECOMM = 70
+
+public export %inline
+EDOTDOT : Errno
+EDOTDOT = 73
+
+public export %inline
+ENOTUNIQ : Errno
+ENOTUNIQ = 76
+
+public export %inline
+EBADFD : Errno
+EBADFD = 77
+
+public export %inline
+EREMCHG : Errno
+EREMCHG = 78
+
+public export %inline
+ELIBACC : Errno
+ELIBACC = 79
+
+public export %inline
+ELIBBAD : Errno
+ELIBBAD = 80
+
+public export %inline
+ELIBSCN : Errno
+ELIBSCN = 81
+
+public export %inline
+ELIBMAX : Errno
+ELIBMAX = 82
+
+public export %inline
+ELIBEXEC : Errno
+ELIBEXEC = 83
+
+public export %inline
+ERESTART : Errno
+ERESTART = 85
+
+public export %inline
+ESTRPIPE : Errno
+ESTRPIPE = 86
+
+public export %inline
+EUCLEAN : Errno
+EUCLEAN = 117
+
+public export %inline
+ENOTNAM : Errno
+ENOTNAM = 118
+
+public export %inline
+ENAVAIL : Errno
+ENAVAIL = 119
+
+public export %inline
+EISNAM : Errno
+EISNAM = 120
+
+public export %inline
+EREMOTEIO : Errno
+EREMOTEIO = 121
+
+public export %inline
+ENOMEDIUM : Errno
+ENOMEDIUM = 123
 
 export
 errorText : Errno -> String
@@ -590,48 +590,17 @@ errorText 39 = "Directory not empty"
 errorText 40 = "Too many levels of symbolic links"
 errorText 42 = "No message of desired type"
 errorText 43 = "Identifier removed"
-errorText 44 = "Channel number out of range"
-errorText 45 = "Level 2 not synchronized"
-errorText 46 = "Level 3 halted"
-errorText 47 = "Level 3 reset"
-errorText 48 = "Link number out of range"
-errorText 49 = "Protocol driver not attached"
-errorText 50 = "No CSI structure available"
-errorText 51 = "Level 2 halted"
-errorText 52 = "Invalid exchange"
-errorText 53 = "Invalid request descriptor"
-errorText 54 = "Exchange full"
-errorText 55 = "No anode"
-errorText 56 = "Invalid request code"
-errorText 57 = "Invalid slot"
-errorText 59 = "Bad font file format"
 errorText 60 = "Device not a stream"
 errorText 61 = "No data available"
 errorText 62 = "Timer expired"
 errorText 63 = "Out of streams resources"
-errorText 64 = "Machine is not on the network"
-errorText 65 = "Package not installed"
 errorText 66 = "Object is remote"
 errorText 67 = "Link has been severed"
-errorText 68 = "Advertise error"
-errorText 69 = "Srmount error"
-errorText 70 = "Communication error on send"
 errorText 71 = "Protocol error"
 errorText 72 = "Multihop attempted"
-errorText 73 = "RFS specific error"
 errorText 74 = "Bad message"
 errorText 75 = "Value too large for defined data type"
-errorText 76 = "Name not unique on network"
-errorText 77 = "File descriptor in bad state"
-errorText 78 = "Remote address changed"
-errorText 79 = "Can not access a needed shared library"
-errorText 80 = "Accessing a corrupted shared library"
-errorText 81 = ".lib section in a.out corrupted"
-errorText 82 = "Attempting to link in too many shared libraries"
-errorText 83 = "Cannot exec a shared library directly"
 errorText 84 = "Invalid or incomplete multibyte or wide character"
-errorText 85 = "Interrupted system call should be restarted"
-errorText 86 = "Streams pipe error"
 errorText 87 = "Too many users"
 errorText 88 = "Socket operation on non-socket"
 errorText 89 = "Destination address required"
@@ -662,13 +631,7 @@ errorText 113 = "No route to host"
 errorText 114 = "Operation already in progress"
 errorText 115 = "Operation now in progress"
 errorText 116 = "Stale file handle"
-errorText 117 = "Structure needs cleaning"
-errorText 118 = "Not a XENIX named type file"
-errorText 119 = "No XENIX semaphores available"
-errorText 120 = "Is a named type file"
-errorText 121 = "Remote I/O error"
 errorText 122 = "Disk quota exceeded"
-errorText 123 = "No medium found"
 errorText 124 = "Wrong medium type"
 errorText 125 = "Operation canceled"
 errorText 126 = "Required key not available"
@@ -679,6 +642,43 @@ errorText 130 = "Owner died"
 errorText 131 = "State not recoverable"
 errorText 132 = "Operation not possible due to RF-kill"
 errorText 133 = "Memory page has hardware error"
+errorText 44 = "Channel number out of range"
+errorText 45 = "Level 2 not synchronized"
+errorText 46 = "Level 3 halted"
+errorText 47 = "Level 3 reset"
+errorText 48 = "Link number out of range"
+errorText 49 = "Protocol driver not attached"
+errorText 50 = "No CSI structure available"
+errorText 51 = "Level 2 halted"
+errorText 52 = "Invalid exchange"
+errorText 53 = "Invalid request descriptor"
+errorText 54 = "Exchange full"
+errorText 55 = "No anode"
+errorText 56 = "Invalid request code"
+errorText 57 = "Invalid slot"
+errorText 59 = "Bad font file format"
+errorText 64 = "Machine is not on the network"
+errorText 65 = "Package not installed"
+errorText 68 = "Advertise error"
+errorText 69 = "Srmount error"
+errorText 70 = "Communication error on send"
+errorText 73 = "RFS specific error"
+errorText 76 = "Name not unique on network"
+errorText 77 = "File descriptor in bad state"
+errorText 78 = "Remote address changed"
+errorText 79 = "Can not access a needed shared library"
+errorText 80 = "Accessing a corrupted shared library"
+errorText 81 = ".lib section in a.out corrupted"
+errorText 82 = "Attempting to link in too many shared libraries"
+errorText 83 = "Cannot exec a shared library directly"
+errorText 85 = "Interrupted system call should be restarted"
+errorText 86 = "Streams pipe error"
+errorText 117 = "Structure needs cleaning"
+errorText 118 = "Not a XENIX named type file"
+errorText 119 = "No XENIX semaphores available"
+errorText 120 = "Is a named type file"
+errorText 121 = "Remote I/O error"
+errorText 123 = "No medium found"
 errorText (EN x) = "Unknown error: \{show x}"
 
 export
@@ -725,48 +725,17 @@ errorName 39 = "ENOTEMPTY"
 errorName 40 = "ELOOP"
 errorName 42 = "ENOMSG"
 errorName 43 = "EIDRM"
-errorName 44 = "ECHRNG"
-errorName 45 = "EL2NSYNC"
-errorName 46 = "EL3HLT"
-errorName 47 = "EL3RST"
-errorName 48 = "ELNRNG"
-errorName 49 = "EUNATCH"
-errorName 50 = "ENOCSI"
-errorName 51 = "EL2HLT"
-errorName 52 = "EBADE"
-errorName 53 = "EBADR"
-errorName 54 = "EXFULL"
-errorName 55 = "ENOANO"
-errorName 56 = "EBADRQC"
-errorName 57 = "EBADSLT"
-errorName 59 = "EBFONT"
 errorName 60 = "ENOSTR"
 errorName 61 = "ENODATA"
 errorName 62 = "ETIME"
 errorName 63 = "ENOSR"
-errorName 64 = "ENONET"
-errorName 65 = "ENOPKG"
 errorName 66 = "EREMOTE"
 errorName 67 = "ENOLINK"
-errorName 68 = "EADV"
-errorName 69 = "ESRMNT"
-errorName 70 = "ECOMM"
 errorName 71 = "EPROTO"
 errorName 72 = "EMULTIHOP"
-errorName 73 = "EDOTDOT"
 errorName 74 = "EBADMSG"
 errorName 75 = "EOVERFLOW"
-errorName 76 = "ENOTUNIQ"
-errorName 77 = "EBADFD"
-errorName 78 = "EREMCHG"
-errorName 79 = "ELIBACC"
-errorName 80 = "ELIBBAD"
-errorName 81 = "ELIBSCN"
-errorName 82 = "ELIBMAX"
-errorName 83 = "ELIBEXEC"
 errorName 84 = "EILSEQ"
-errorName 85 = "ERESTART"
-errorName 86 = "ESTRPIPE"
 errorName 87 = "EUSERS"
 errorName 88 = "ENOTSOCK"
 errorName 89 = "EDESTADDRREQ"
@@ -797,13 +766,7 @@ errorName 113 = "EHOSTUNREACH"
 errorName 114 = "EALREADY"
 errorName 115 = "EINPROGRESS"
 errorName 116 = "ESTALE"
-errorName 117 = "EUCLEAN"
-errorName 118 = "ENOTNAM"
-errorName 119 = "ENAVAIL"
-errorName 120 = "EISNAM"
-errorName 121 = "EREMOTEIO"
 errorName 122 = "EDQUOT"
-errorName 123 = "ENOMEDIUM"
 errorName 124 = "EMEDIUMTYPE"
 errorName 125 = "ECANCELED"
 errorName 126 = "ENOKEY"
@@ -814,4 +777,41 @@ errorName 130 = "EOWNERDEAD"
 errorName 131 = "ENOTRECOVERABLE"
 errorName 132 = "ERFKILL"
 errorName 133 = "EHWPOISON"
+errorName 44 = "ECHRNG"
+errorName 45 = "EL2NSYNC"
+errorName 46 = "EL3HLT"
+errorName 47 = "EL3RST"
+errorName 48 = "ELNRNG"
+errorName 49 = "EUNATCH"
+errorName 50 = "ENOCSI"
+errorName 51 = "EL2HLT"
+errorName 52 = "EBADE"
+errorName 53 = "EBADR"
+errorName 54 = "EXFULL"
+errorName 55 = "ENOANO"
+errorName 56 = "EBADRQC"
+errorName 57 = "EBADSLT"
+errorName 59 = "EBFONT"
+errorName 64 = "ENONET"
+errorName 65 = "ENOPKG"
+errorName 68 = "EADV"
+errorName 69 = "ESRMNT"
+errorName 70 = "ECOMM"
+errorName 73 = "EDOTDOT"
+errorName 76 = "ENOTUNIQ"
+errorName 77 = "EBADFD"
+errorName 78 = "EREMCHG"
+errorName 79 = "ELIBACC"
+errorName 80 = "ELIBBAD"
+errorName 81 = "ELIBSCN"
+errorName 82 = "ELIBMAX"
+errorName 83 = "ELIBEXEC"
+errorName 85 = "ERESTART"
+errorName 86 = "ESTRPIPE"
+errorName 117 = "EUCLEAN"
+errorName 118 = "ENOTNAM"
+errorName 119 = "ENAVAIL"
+errorName 120 = "EISNAM"
+errorName 121 = "EREMOTEIO"
+errorName 123 = "ENOMEDIUM"
 errorName (EN _) = "EUNKNOWN"
