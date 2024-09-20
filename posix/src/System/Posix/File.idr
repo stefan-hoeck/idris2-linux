@@ -207,7 +207,7 @@ parameters {auto fid : FileDesc a}
   ||| Reads at most `n * sizeof a` bytes into a preallocated array.
   export %inline
   readArr : {n : _} -> SizeOf b => CArrayIO n b -> io Bits32
-  readArr p = readPtr (unsafeUnwrap p) (cast $ n * sizeof b)
+  readArr p = readPtr (unsafeUnwrap p) (cast n * sizeof b)
 
   ||| Reads at most `n` bytes from a file into a buffer.
   export %inline
@@ -262,7 +262,7 @@ parameters {auto fid : FileDesc a}
   |||       was opened in "append" mode (with the `O_APPEND` flag).
   export %inline
   writeArr : {n : _} -> SizeOf b => CArrayIO n b -> io Bits32
-  writeArr p = writePtr (unsafeUnwrap p) (cast $ n * sizeof b)
+  writeArr p = writePtr (unsafeUnwrap p) (cast n * sizeof b)
 
 
   ||| Atomically writes up to the number of bytes in the bytestring

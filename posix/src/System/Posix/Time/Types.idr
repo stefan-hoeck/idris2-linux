@@ -14,5 +14,5 @@ import Data.C.Integer
 
 
 public export %inline
-timespec_size : Nat
+timespec_size : Bits32
 timespec_size = 16

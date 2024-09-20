@@ -43,9 +43,9 @@ fromMode m =
     _ => Other
 
 public export
-statvfs_size : Nat
+statvfs_size : Bits32
 statvfs_size = 112
 
 public export
-stat_size : Nat
+stat_size : Bits32
 stat_size = 144

@@ -133,9 +133,9 @@ parameters {auto has : Has Errno es}
   readVect fd n =
     use1 (malloc a n) $ \p => do
       bs <- readArr fd p
-      if bs < cast (n * sizeof a)
+      if bs < cast n * sizeof a
         then fail EINVAL
-        else runIO $ readVect p
+        else runIO $ withIArray p toVect
 
   export
   readVal :

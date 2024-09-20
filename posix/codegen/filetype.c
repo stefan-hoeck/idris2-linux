@@ -23,11 +23,11 @@ void *main() {
   printf("    _ => Other\n");
 
   printf("\npublic export\n");
-  printf("statvfs_size : Nat\n");
+  printf("statvfs_size : Bits32\n");
   printf("statvfs_size = %zd\n", sizeof(struct statvfs));
 
   printf("\npublic export\n");
-  printf("stat_size : Nat\n");
+  printf("stat_size : Bits32\n");
   printf("stat_size = %zd\n", sizeof(struct stat));
 
   exit(0);

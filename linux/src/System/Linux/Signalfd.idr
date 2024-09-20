@@ -200,5 +200,5 @@ readSignalfd fd arr =
   let p  := unsafeUnwrap arr
       sz := sizeof SiginfoFd
    in do
-     bs <- readPtr fd p (cast $ n * sz)
+     bs <- readPtr fd p (cast n * sz)
      pure (cast (bs `div` cast sz) ** unsafeWrap p)
