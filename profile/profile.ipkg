@@ -1,0 +1,13 @@
+package linux-profile
+
+authors    = "stefan-hoeck"
+version    = 0.7.0
+sourcedir  = "src"
+depends    = cptr
+           , array
+           , elab-util
+           , profiler
+           , linux
+
+executable = "profile-linux"
+main       = Main

@@ -14,6 +14,7 @@ import Derive.Prelude
 
 %default total
 %language ElabReflection
+%hide Language.Reflection.TTImp.Mode
 
 public export
 record Flags where
@@ -28,6 +29,22 @@ Semigroup Flags where
 
 public export
 Monoid Flags where neutral = F 0
+
+||| File permissions.
+public export
+record Mode where
+  constructor M
+  mode : ModeT
+
+namespace Mode
+  %runElab derive "Mode" [Show,Eq,Ord,FromInteger]
+
+public export
+Semigroup Mode where
+  M x <+> M y = M $ x .|. y
+
+public export
+Monoid Mode where neutral = M 0
 
 
 public export
@@ -89,6 +106,66 @@ O_NONBLOCK = 2048
 public export
 O_SYNC : Flags
 O_SYNC = 1052672
+
+public export
+S_IRWXU : Mode
+S_IRWXU = 448
+
+public export
+S_IRUSR : Mode
+S_IRUSR = 256
+
+public export
+S_IWUSR : Mode
+S_IWUSR = 128
+
+public export
+S_IXUSR : Mode
+S_IXUSR = 64
+
+public export
+S_IRWXG : Mode
+S_IRWXG = 56
+
+public export
+S_IRGRP : Mode
+S_IRGRP = 32
+
+public export
+S_IWGRP : Mode
+S_IWGRP = 16
+
+public export
+S_IXGRP : Mode
+S_IXGRP = 8
+
+public export
+S_IRWXO : Mode
+S_IRWXO = 7
+
+public export
+S_IROTH : Mode
+S_IROTH = 4
+
+public export
+S_IWOTH : Mode
+S_IWOTH = 2
+
+public export
+S_IXOTH : Mode
+S_IXOTH = 1
+
+public export
+S_ISUID : Mode
+S_ISUID = 2048
+
+public export
+S_ISGID : Mode
+S_ISGID = 1024
+
+public export
+S_ISVTX : Mode
+S_ISVTX = 512
 
 ||| Flags for creating a file for output.
 export
