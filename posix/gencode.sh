@@ -48,6 +48,7 @@ import Derive.Prelude
 
 %default total
 %language ElabReflection
+%hide Language.Reflection.TTImp.Mode
 
 public export
 record Flags where
@@ -62,6 +63,22 @@ Semigroup Flags where
 
 public export
 Monoid Flags where neutral = F 0
+
+||| File permissions.
+public export
+record Mode where
+  constructor M
+  mode : ModeT
+
+namespace Mode
+  %runElab derive "Mode" [Show,Eq,Ord,FromInteger]
+
+public export
+Semigroup Mode where
+  M x <+> M y = M $ x .|. y
+
+public export
+Monoid Mode where neutral = M 0
 
 EOT
 

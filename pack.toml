@@ -10,8 +10,13 @@ ipkg = "linux.ipkg"
 
 [custom.all.linux-examples]
 type = "local"
-path = "."
-ipkg = "examples/linux-examples.ipkg"
+path = "examples"
+ipkg = "linux-examples.ipkg"
+
+[custom.all.linux-profile]
+type = "local"
+path = "profile"
+ipkg = "profile.ipkg"
 
 [custom.all.cptr]
 type   = "git"

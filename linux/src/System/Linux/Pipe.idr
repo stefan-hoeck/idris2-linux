@@ -11,7 +11,7 @@ import public System.Posix.Pipe
 %foreign "C:li_pipe2, linux-idris"
 prim__pipe2 : AnyPtr -> Bits32 -> PrimIO CInt
 
-%foreign "C:li_o_direct, linux-idris"
+export %foreign "C:li_o_direct, linux-idris"
 o_direct : Bits32
 
 ||| With this flag set, a pipe will treat every `write` as a distinct data

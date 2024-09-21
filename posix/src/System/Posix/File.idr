@@ -143,25 +143,6 @@ Cast StdIO Fd where
   cast = MkFd . cast . conIndexStdIO
 
 --------------------------------------------------------------------------------
--- Mode
---------------------------------------------------------------------------------
-
-||| File permissions.
-public export
-record Mode where
-  constructor M
-  mode : ModeT
-
-%runElab derive "Mode" [Show,Eq,Ord,FromInteger]
-
-public export
-Semigroup Mode where
-  M x <+> M y = M $ x .|. y
-
-public export
-Monoid Mode where neutral = M 0
-
---------------------------------------------------------------------------------
 -- Utilities
 --------------------------------------------------------------------------------
 
