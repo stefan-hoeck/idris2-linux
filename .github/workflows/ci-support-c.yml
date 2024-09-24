@@ -1,0 +1,40 @@
+---
+name: Compile C Libs
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        lib:
+          - posix
+          - linux
+    name: Compile ${{ matrix.lib }} C Libs for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./${{ matrix.lib }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build codegen
+        run: make -C codegen
+      - name: Build support
+        run: make -C support
