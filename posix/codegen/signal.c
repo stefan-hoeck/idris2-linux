@@ -27,6 +27,7 @@ int main() {
   print_how("SIG_UNBLOCK", SIG_UNBLOCK);
   print_how("SIG_SETMASK", SIG_SETMASK);
 
+#ifdef __GLIBC__
   printf("\npublic export\n");
   printf("SIGRTMIN : Signal\n");
   printf("SIGRTMIN = %d\n", SIGRTMIN);
@@ -34,6 +35,7 @@ int main() {
   printf("\npublic export\n");
   printf("SIGRTMAX : Signal\n");
   printf("SIGRTMAX = %d\n", SIGRTMAX);
+#endif
 
   print_signal("SIGHUP", SIGHUP);
   print_signal("SIGINT", SIGINT);
@@ -61,8 +63,10 @@ int main() {
   print_signal("SIGXFSZ", SIGXFSZ);
   print_signal("SIGVTALRM", SIGVTALRM);
   print_signal("SIGPROF", SIGPROF);
-  print_signal("SIGPOLL", SIGPOLL);
   print_signal("SIGSYS", SIGSYS);
+#ifdef __GLIBC__
+  print_signal("SIGPOLL", SIGPOLL);
+#endif
 
   printf("\nexport\n");
   printf("sigName : SortedMap Signal String\n");
@@ -94,8 +98,10 @@ int main() {
   print_pair("SIGXFSZ");
   print_pair("SIGVTALRM");
   print_pair("SIGPROF");
-  print_pair("SIGPOLL");
   print_pair("SIGSYS");
+#ifdef __GLIBC__
+  print_pair("SIGPOLL");
+#endif
   printf("    ]\n");
 
   printf("\npublic export %%inline\n");
