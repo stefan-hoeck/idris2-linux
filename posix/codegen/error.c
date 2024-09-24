@@ -432,7 +432,7 @@ void print_errornames() {
   printf("errorName (EN _) = \"EUNKNOWN\"\n");
 }
 
-void main() {
+int main() {
   print_errorcodes();
   print_errortexts();
   print_errornames();
