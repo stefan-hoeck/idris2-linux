@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *print_whence(const char *name, int value) {
+void print_whence(const char *name, int value) {
   printf("whenceCode %s = %d\n", name, value);
 }
 
-void *main() {
+int main() {
   print_whence("SEEK_SET", SEEK_SET);
   print_whence("SEEK_CUR", SEEK_CUR);
   print_whence("SEEK_END", SEEK_END);

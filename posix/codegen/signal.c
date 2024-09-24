@@ -6,21 +6,21 @@
 #include <string.h>
 #include <signal.h>
 
-void *print_how(const char *name, int value) {
+void print_how(const char *name, int value) {
   printf("howCode %s = %d\n", name, value);
 }
 
-void *print_signal(const char *name, int value) {
+void print_signal(const char *name, int value) {
   printf("\npublic export %%inline\n");
   printf("%s : Signal\n", name);
   printf("%s = %d\n", name, value);
 }
 
-void *print_pair(const char *name) {
+void print_pair(const char *name) {
   printf("    , (%s, \"%s\")\n", name, name);
 }
 
-void *main() {
+int main() {
   printf("\npublic export\n");
   printf("howCode : How -> Bits8\n");
   print_how("SIG_BLOCK  ", SIG_BLOCK);

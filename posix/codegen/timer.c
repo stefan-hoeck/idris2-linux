@@ -7,15 +7,15 @@
 #include <sys/time.h>
 #include <time.h>
 
-void *print_which(const char *name, int value) {
+void print_which(const char *name, int value) {
   printf("whichCode %s = %d\n", name, value);
 }
 
-void *print_clock(const char *name, int value) {
+void print_clock(const char *name, int value) {
   printf("clockCode %s = %d\n", name, value);
 }
 
-void *main() {
+int main() {
   printf("\npublic export\n");
   printf("whichCode : Which -> Bits8\n");
   print_which("ITIMER_REAL", ITIMER_REAL);

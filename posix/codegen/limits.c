@@ -4,13 +4,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void *print_limit(const char *name, int value) {
+void print_limit(const char *name, int value) {
   printf("\npublic export\n");
   printf("%s : Bits32\n", name);
   printf("%s = %d\n", name, value);
 }
 
-void *main() {
+int main() {
   print_limit("SC_ARG_MAX", _SC_ARG_MAX);
   print_limit("SC_CHILD_MAX", _SC_CHILD_MAX);
   print_limit("SC_HOST_NAME_MAX", _SC_HOST_NAME_MAX);
