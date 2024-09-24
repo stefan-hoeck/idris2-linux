@@ -5,13 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *print_code(const char *name, int val) {
+void print_code(const char *name, int val) {
   printf("\npublic export %%inline\n");
   printf("%s : Errno\n", name);
   printf("%s = %d\n", name, val);
 }
 
-void *print_errorcodes() {
+void print_errorcodes() {
   print_code("EPERM", EPERM);
   print_code("ENOENT", ENOENT);
   print_code("ESRCH", ESRCH);
@@ -148,15 +148,15 @@ void *print_errorcodes() {
 #endif
 }
 
-void *print_errtxt(int val) {
+void print_errtxt(int val) {
   printf("errorText %d = \"%s\"\n", val, strerror(val));
 }
 
-void *print_errname(int val, const char *name) {
+void print_errname(int val, const char *name) {
   printf("errorName %d = \"%s\"\n", val, name);
 }
 
-void *print_errortexts() {
+void print_errortexts() {
   printf("\nexport\nerrorText : Errno -> String\n");
   print_errtxt(EPERM);
   print_errtxt(ENOENT);
@@ -294,7 +294,7 @@ void *print_errortexts() {
   printf("errorText (EN x) = \"Unknown error: \\{show x}\"\n");
 }
 
-void *print_errornames() {
+void print_errornames() {
   printf("\nexport\nerrorName : Errno -> String\n");
   print_errname(EPERM, "EPERM");
   print_errname(ENOENT, "ENOENT");
@@ -432,7 +432,7 @@ void *print_errornames() {
   printf("errorName (EN _) = \"EUNKNOWN\"\n");
 }
 
-void *main() {
+void main() {
   print_errorcodes();
   print_errortexts();
   print_errornames();
