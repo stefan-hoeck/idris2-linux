@@ -6,17 +6,17 @@
 #include <string.h>
 #include <sys/wait.h>
 
-void *print_flag(const char *name, int value) {
+void print_flag(const char *name, int value) {
   printf("\npublic export\n");
   printf("%s : WaitFlags\n", name);
   printf("%s = %d\n", name, value);
 }
 
-void *print_idtype(const char *name, idtype_t tpe) {
+void print_idtype(const char *name, idtype_t tpe) {
   printf("idtypeCode %s = %d\n", name, tpe);
 }
 
-void *main() {
+int main() {
   print_flag("WUNTRACED", WUNTRACED);
   print_flag("WCONTINUED", WCONTINUED);
   print_flag("WNOHANG", WNOHANG);

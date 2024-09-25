@@ -7,15 +7,15 @@
 #include <sys/time.h>
 #include <time.h>
 
-void *print_which(const char *name, int value) {
+void print_which(const char *name, int value) {
   printf("whichCode %s = %d\n", name, value);
 }
 
-void *print_clock(const char *name, int value) {
+void print_clock(const char *name, int value) {
   printf("clockCode %s = %d\n", name, value);
 }
 
-void *main() {
+int main() {
   printf("\npublic export\n");
   printf("whichCode : Which -> Bits8\n");
   print_which("ITIMER_REAL", ITIMER_REAL);
@@ -37,13 +37,15 @@ void *main() {
   printf("itimerval_size : Bits32\n");
   printf("itimerval_size = %zd\n", sizeof(struct itimerval));
 
+#ifndef __APPLE__
   printf("\npublic export %%inline\n");
   printf("itimerspec_size : Bits32\n");
   printf("itimerspec_size = %zd\n", sizeof(struct itimerspec));
+#endif
 
   printf("\npublic export %%inline\n");
   printf("CLOCKS_PER_SEC : ClockT\n");
-  printf("CLOCKS_PER_SEC = %lld\n", CLOCKS_PER_SEC);
+  printf("CLOCKS_PER_SEC = %lld\n", (long long)CLOCKS_PER_SEC);
 
   exit(0);
 }

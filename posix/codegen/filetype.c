@@ -6,11 +6,11 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 
-void *print_case(const char *name, int value) {
+void print_case(const char *name, int value) {
   printf("    %d => %s\n", value, name);
 }
 
-void *main() {
+int main() {
   printf("fromMode m =\n");
   printf("  case m .&. %d of\n", S_IFMT);
   print_case("Regular", S_IFREG);

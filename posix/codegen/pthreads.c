@@ -6,19 +6,19 @@
 #include <string.h>
 #include <pthread.h>
 
-void *print_code(const char *name, int value) {
+void print_code(const char *name, int value) {
   printf("mutexCode %s = %d\n", name, value);
 }
 
-void *print_cncltype(const char *name, int value) {
+void print_cncltype(const char *name, int value) {
   printf("cancelType %s = %d\n", name, value);
 }
 
-void *print_cnclstate(const char *name, int value) {
+void print_cnclstate(const char *name, int value) {
   printf("cancelState %s = %d\n", name, value);
 }
 
-void *main() {
+int main() {
   printf("\npublic export\n");
   printf("mutexCode : MutexType -> Bits8\n");
   print_code("MUTEX_NORMAL", PTHREAD_MUTEX_NORMAL);

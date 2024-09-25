@@ -7,7 +7,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-void *main() {
+int main() {
   printf("\npublic export %%inline\n");
   printf("timespec_size : Bits32\n");
   printf("timespec_size = %zd\n", sizeof(struct timespec));

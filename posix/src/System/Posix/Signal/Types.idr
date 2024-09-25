@@ -151,12 +151,12 @@ SIGPROF : Signal
 SIGPROF = 27
 
 public export %inline
-SIGPOLL : Signal
-SIGPOLL = 29
-
-public export %inline
 SIGSYS : Signal
 SIGSYS = 31
+
+public export %inline
+SIGPOLL : Signal
+SIGPOLL = 29
 
 export
 sigName : SortedMap Signal String
@@ -188,8 +188,8 @@ sigName =
     , (SIGXFSZ, "SIGXFSZ")
     , (SIGVTALRM, "SIGVTALRM")
     , (SIGPROF, "SIGPROF")
-    , (SIGPOLL, "SIGPOLL")
     , (SIGSYS, "SIGSYS")
+    , (SIGPOLL, "SIGPOLL")
     ]
 
 public export %inline

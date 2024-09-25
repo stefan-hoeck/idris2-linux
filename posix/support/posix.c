@@ -366,7 +366,7 @@ uint8_t li_pthread_setcancelstate(uint8_t s) {
   return res;
 }
 
-void *li_pthread_sigmask1(int how, sigset_t *set) {
+void li_pthread_sigmask1(int how, sigset_t *set) {
   pthread_sigmask(how, set, NULL);
 }
 
@@ -387,11 +387,13 @@ int li_kill(pid_t p, int sig) {
   CHECKRES
 }
 
+#ifndef __APPLE__
 int li_sigqueue(pid_t p, int sig, int word) {
   union sigval u = {.sival_int = word};
   int res = sigqueue(p, sig, u);
   CHECKRES
 }
+#endif
 
 sigset_t *li_emptysigset() {
   sigset_t *set = malloc(sizeof(sigset_t));
@@ -405,7 +407,7 @@ sigset_t *li_fullsigset() {
   return set;
 }
 
-void *li_sigprocmask1(int how, sigset_t *set) { sigprocmask(how, set, NULL); }
+void li_sigprocmask1(int how, sigset_t *set) { sigprocmask(how, set, NULL); }
 
 sigset_t *li_sigprocmask(int how, sigset_t *set) {
   sigset_t *old = malloc(sizeof(sigset_t));
@@ -431,6 +433,7 @@ int li_sigsuspend(sigset_t *set) {
   CHECKRES
 }
 
+#ifndef __APPLE__
 int li_sigwaitinfo(sigset_t *set, siginfo_t *info) {
   int res = sigwaitinfo(set, info);
   CHECKRES
@@ -454,6 +457,7 @@ int li_sigtimedwait(sigset_t *set, siginfo_t *info, time_t sec, uint64_t nsec) {
   int res = sigtimedwait(set, info, &ts);
   CHECKRES
 }
+#endif
 
 int get_siginfo_t_si_signo(siginfo_t *i) { return i->si_signo; }
 
@@ -488,6 +492,7 @@ struct itimerval *li_itimerval(time_t int_sec, suseconds_t int_usec, time_t sec,
   return res;
 }
 
+#ifndef __APPLE__
 struct itimerspec *li_itimerspec(time_t int_sec, int64_t int_nsec, time_t sec,
                                  int64_t nsec) {
   struct itimerspec *res = malloc(sizeof(struct itimerspec));
@@ -497,6 +502,7 @@ struct itimerspec *li_itimerspec(time_t int_sec, int64_t int_nsec, time_t sec,
   res->it_interval.tv_nsec = int_nsec;
   return res;
 }
+#endif
 
 int li_setitimer(int which, const struct itimerval *new,
                  struct itimerval *old) {
@@ -532,6 +538,7 @@ int li_clock_getres(clockid_t id, struct timespec *ref) {
   CHECKRES
 }
 
+#ifndef __APPLE__
 uint32_t li_clock_nanosleep(clockid_t id, struct timespec *ref,
                             struct timespec *rem) {
   return clock_nanosleep(id, 0, ref, rem);
@@ -540,6 +547,7 @@ uint32_t li_clock_nanosleep(clockid_t id, struct timespec *ref,
 uint32_t li_clock_nanosleep_abs(clockid_t id, struct timespec *ref) {
   return clock_nanosleep(id, TIMER_ABSTIME, ref, NULL);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Structs
@@ -601,11 +609,13 @@ size_t get_stat_st_blksize(struct stat *v) { return v->st_blksize; }
 
 blkcnt_t get_stat_st_blocks(struct stat *v) { return v->st_blocks; }
 
+#ifndef __APPLE__
 struct timespec *get_stat_st_atim(struct stat *v) { return &(v->st_atim); }
 
 struct timespec *get_stat_st_mtim(struct stat *v) { return &(v->st_mtim); }
 
 struct timespec *get_stat_st_ctim(struct stat *v) { return &(v->st_ctim); }
+#endif
 
 // timeval
 
@@ -639,6 +649,7 @@ void set_itimerval_it_value(struct itimerval *v, struct timeval *val) {
 
 // itimerspec
 
+#ifndef __APPLE__
 struct timespec *get_itimerspec_it_interval(struct itimerspec *v) {
   return &v->it_interval;
 }
@@ -654,3 +665,4 @@ void set_itimerspec_it_interval(struct itimerspec *v, struct timespec *val) {
 void set_itimerspec_it_value(struct itimerspec *v, struct timespec *val) {
   v->it_value = *val;
 }
+#endif

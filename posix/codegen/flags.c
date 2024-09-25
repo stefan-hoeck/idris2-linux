@@ -5,19 +5,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *print_flag(const char *name, int value) {
+void print_flag(const char *name, int value) {
   printf("\npublic export\n");
   printf("%s : Flags\n", name);
   printf("%s = %d\n", name, value);
 }
 
-void *print_mode(const char *name, int value) {
+void print_mode(const char *name, int value) {
   printf("\npublic export\n");
   printf("%s : Mode\n", name);
   printf("%s = %d\n", name, value);
 }
 
-void *main() {
+int main() {
   print_flag("O_RDONLY", O_RDONLY);
   print_flag("O_WRONLY", O_WRONLY);
   print_flag("O_RDWR", O_RDWR);

@@ -359,28 +359,8 @@ EDQUOT : Errno
 EDQUOT = 122
 
 public export %inline
-EMEDIUMTYPE : Errno
-EMEDIUMTYPE = 124
-
-public export %inline
 ECANCELED : Errno
 ECANCELED = 125
-
-public export %inline
-ENOKEY : Errno
-ENOKEY = 126
-
-public export %inline
-EKEYEXPIRED : Errno
-EKEYEXPIRED = 127
-
-public export %inline
-EKEYREVOKED : Errno
-EKEYREVOKED = 128
-
-public export %inline
-EKEYREJECTED : Errno
-EKEYREJECTED = 129
 
 public export %inline
 EOWNERDEAD : Errno
@@ -389,14 +369,6 @@ EOWNERDEAD = 130
 public export %inline
 ENOTRECOVERABLE : Errno
 ENOTRECOVERABLE = 131
-
-public export %inline
-ERFKILL : Errno
-ERFKILL = 132
-
-public export %inline
-EHWPOISON : Errno
-EHWPOISON = 133
 
 public export %inline
 ECHRNG : Errno
@@ -546,6 +518,34 @@ public export %inline
 ENOMEDIUM : Errno
 ENOMEDIUM = 123
 
+public export %inline
+EMEDIUMTYPE : Errno
+EMEDIUMTYPE = 124
+
+public export %inline
+ENOKEY : Errno
+ENOKEY = 126
+
+public export %inline
+EKEYEXPIRED : Errno
+EKEYEXPIRED = 127
+
+public export %inline
+EKEYREVOKED : Errno
+EKEYREVOKED = 128
+
+public export %inline
+EKEYREJECTED : Errno
+EKEYREJECTED = 129
+
+public export %inline
+ERFKILL : Errno
+ERFKILL = 132
+
+public export %inline
+EHWPOISON : Errno
+EHWPOISON = 133
+
 export
 errorText : Errno -> String
 errorText 1 = "Operation not permitted"
@@ -632,16 +632,9 @@ errorText 114 = "Operation already in progress"
 errorText 115 = "Operation now in progress"
 errorText 116 = "Stale file handle"
 errorText 122 = "Disk quota exceeded"
-errorText 124 = "Wrong medium type"
 errorText 125 = "Operation canceled"
-errorText 126 = "Required key not available"
-errorText 127 = "Key has expired"
-errorText 128 = "Key has been revoked"
-errorText 129 = "Key was rejected by service"
 errorText 130 = "Owner died"
 errorText 131 = "State not recoverable"
-errorText 132 = "Operation not possible due to RF-kill"
-errorText 133 = "Memory page has hardware error"
 errorText 44 = "Channel number out of range"
 errorText 45 = "Level 2 not synchronized"
 errorText 46 = "Level 3 halted"
@@ -679,6 +672,13 @@ errorText 119 = "No XENIX semaphores available"
 errorText 120 = "Is a named type file"
 errorText 121 = "Remote I/O error"
 errorText 123 = "No medium found"
+errorText 124 = "Wrong medium type"
+errorText 126 = "Required key not available"
+errorText 127 = "Key has expired"
+errorText 128 = "Key has been revoked"
+errorText 129 = "Key was rejected by service"
+errorText 132 = "Operation not possible due to RF-kill"
+errorText 133 = "Memory page has hardware error"
 errorText (EN x) = "Unknown error: \{show x}"
 
 export
@@ -767,16 +767,9 @@ errorName 114 = "EALREADY"
 errorName 115 = "EINPROGRESS"
 errorName 116 = "ESTALE"
 errorName 122 = "EDQUOT"
-errorName 124 = "EMEDIUMTYPE"
 errorName 125 = "ECANCELED"
-errorName 126 = "ENOKEY"
-errorName 127 = "EKEYEXPIRED"
-errorName 128 = "EKEYREVOKED"
-errorName 129 = "EKEYREJECTED"
 errorName 130 = "EOWNERDEAD"
 errorName 131 = "ENOTRECOVERABLE"
-errorName 132 = "ERFKILL"
-errorName 133 = "EHWPOISON"
 errorName 44 = "ECHRNG"
 errorName 45 = "EL2NSYNC"
 errorName 46 = "EL3HLT"
@@ -814,4 +807,11 @@ errorName 119 = "ENAVAIL"
 errorName 120 = "EISNAM"
 errorName 121 = "EREMOTEIO"
 errorName 123 = "ENOMEDIUM"
+errorName 124 = "EMEDIUMTYPE"
+errorName 126 = "ENOKEY"
+errorName 127 = "EKEYEXPIRED"
+errorName 128 = "EKEYREVOKED"
+errorName 129 = "EKEYREJECTED"
+errorName 132 = "ERFKILL"
+errorName 133 = "EHWPOISON"
 errorName (EN _) = "EUNKNOWN"

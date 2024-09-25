@@ -25,7 +25,6 @@ jobs:
           - macos-latest
         lib:
           - posix
-          - linux
     name: Compile ${{ matrix.lib }} C Libs for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
