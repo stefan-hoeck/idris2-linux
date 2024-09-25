@@ -144,6 +144,9 @@ set_itimerspec_it_value: AnyPtr -> AnyPtr -> PrimIO ()
 %foreign "C:li_itimerspec, posix-idris"
 prim__itimerspec : TimeT -> NsecT -> TimeT -> NsecT -> PrimIO AnyPtr
 
+||| Note: Also this is POSIX compliant, it is not available on
+||| MacOS (Darwin). Idris programs making use of this might fail on
+||| Darwin during code generation.
 export
 record Itimerspec where
   constructor ITS

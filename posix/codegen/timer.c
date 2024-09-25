@@ -37,13 +37,15 @@ int main() {
   printf("itimerval_size : Bits32\n");
   printf("itimerval_size = %zd\n", sizeof(struct itimerval));
 
+#ifndef __APPLE__
   printf("\npublic export %%inline\n");
   printf("itimerspec_size : Bits32\n");
   printf("itimerspec_size = %zd\n", sizeof(struct itimerspec));
+#endif
 
   printf("\npublic export %%inline\n");
   printf("CLOCKS_PER_SEC : ClockT\n");
-  printf("CLOCKS_PER_SEC = %lld\n", CLOCKS_PER_SEC);
+  printf("CLOCKS_PER_SEC = %lld\n", (long long)CLOCKS_PER_SEC);
 
   exit(0);
 }

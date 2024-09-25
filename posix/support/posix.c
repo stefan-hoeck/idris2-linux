@@ -488,6 +488,7 @@ struct itimerval *li_itimerval(time_t int_sec, suseconds_t int_usec, time_t sec,
   return res;
 }
 
+#ifndef __APPLE__
 struct itimerspec *li_itimerspec(time_t int_sec, int64_t int_nsec, time_t sec,
                                  int64_t nsec) {
   struct itimerspec *res = malloc(sizeof(struct itimerspec));
@@ -497,6 +498,7 @@ struct itimerspec *li_itimerspec(time_t int_sec, int64_t int_nsec, time_t sec,
   res->it_interval.tv_nsec = int_nsec;
   return res;
 }
+#endif
 
 int li_setitimer(int which, const struct itimerval *new,
                  struct itimerval *old) {
@@ -639,6 +641,7 @@ void set_itimerval_it_value(struct itimerval *v, struct timeval *val) {
 
 // itimerspec
 
+#ifndef __APPLE__
 struct timespec *get_itimerspec_it_interval(struct itimerspec *v) {
   return &v->it_interval;
 }
@@ -654,3 +657,4 @@ void set_itimerspec_it_interval(struct itimerspec *v, struct timespec *val) {
 void set_itimerspec_it_value(struct itimerspec *v, struct timespec *val) {
   v->it_value = *val;
 }
+#endif
