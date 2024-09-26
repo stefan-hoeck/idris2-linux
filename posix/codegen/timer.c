@@ -37,9 +37,13 @@ int main() {
   printf("itimerval_size : Bits32\n");
   printf("itimerval_size = %zd\n", sizeof(struct itimerval));
 
-#ifndef __APPLE__
   printf("\npublic export %%inline\n");
   printf("itimerspec_size : Bits32\n");
+#ifdef __APPLE__
+  // This isn't intended to be functional on darwin, just support compilation
+  // of the Idris counterpart.
+  printf("itimerspec_size = 0\n");
+#else
   printf("itimerspec_size = %zd\n", sizeof(struct itimerspec));
 #endif
 
