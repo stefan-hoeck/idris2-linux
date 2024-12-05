@@ -41,7 +41,7 @@ prim__pread : (file : Bits32) -> Buffer -> (max : Bits32) -> OffT -> PrimIO Ssiz
 %foreign "C:li_write, posix-idris"
 prim__write : (file : Bits32) -> Buffer -> (off,max : Bits32) -> PrimIO SsizeT
 
-%foreign "C:li_write, posix-idris"
+%foreign "C__collect_safe:li_write, posix-idris"
 prim__writeptr : (file : Bits32) -> AnyPtr -> (off,max : Bits32) -> PrimIO SsizeT
 
 %foreign "C:li_pwrite, posix-idris"

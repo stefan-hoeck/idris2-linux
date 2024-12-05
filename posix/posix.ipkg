@@ -41,6 +41,8 @@ modules = System.Callback
 
         , System.Posix.Limits
 
+        , System.SysV.IPC
+
 sourcedir = "src"
 
 prebuild = "bash gencode.sh"

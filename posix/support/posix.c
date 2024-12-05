@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
@@ -149,6 +151,22 @@ int li_pipe(int fs[2]) {
 
 int li_mkfifo(const char *pth, mode_t mode) {
   int res = mkfifo(pth, mode);
+  CHECKRES
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// System V IPC
+////////////////////////////////////////////////////////////////////////////////
+
+key_t li_ipc_private() { return IPC_PRIVATE; }
+
+int li_ftok(const char *pth, uint8_t id) {
+  int res = ftok(pth, id);
+  CHECKRES
+}
+
+int li_msgget(key_t key, int flgs) {
+  int res = msgget(key, flgs);
   CHECKRES
 }
 
