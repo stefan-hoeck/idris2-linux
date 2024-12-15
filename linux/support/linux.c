@@ -5,12 +5,12 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
-#include <pthread.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
 #include <sys/signalfd.h>
@@ -71,12 +71,12 @@ int li_eventfd(unsigned int initval, int flags) {
   CHECKRES
 }
 
-ssize_t li_eventfd_write (int efd, uint64_t val) {
+ssize_t li_eventfd_write(int efd, uint64_t val) {
   int res = write(efd, &val, 8);
   CHECKRES
 }
 
-int64_t li_eventfd_read (int efd) {
+int64_t li_eventfd_read(int efd) {
   uint64_t val;
   int res = read(efd, &val, 8);
   if (res == -1) {
@@ -173,7 +173,6 @@ int li_pipe2(int fs[2], uint32_t flags) {
   int res = pipe2(fs, flags);
   CHECKRES
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // pthreads
