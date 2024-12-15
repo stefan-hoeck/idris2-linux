@@ -10,7 +10,7 @@ else
 	LDFLAGS += -fuse-ld=gold
 endif
 
-gens := inotify_gen signalfd_gen timerfd_gen eventfd_gen
+gens := inotify_gen signalfd_gen timerfd_gen eventfd_gen epoll_gen
 
 .PHONY: all
 all: $(gens)

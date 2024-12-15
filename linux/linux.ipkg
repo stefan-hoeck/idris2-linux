@@ -6,7 +6,10 @@ brief   = "System utilities for using Idris2 on GNU/Linux"
 depends = base >= 0.7.0
         , posix
 
-modules = System.Linux.Eventfd
+modules = System.Linux.Epoll
+        , System.Linux.Epoll.Flags
+
+        , System.Linux.Eventfd
         , System.Linux.Eventfd.Flags
 
         , System.Linux.Inotify
