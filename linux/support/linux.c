@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/eventfd.h>
 #include <sys/inotify.h>
 #include <sys/signalfd.h>
 #include <sys/stat.h>
@@ -60,6 +61,30 @@ uint32_t li_inotify_mask(struct inotify_event *ev) { return ev->mask; }
 uint32_t li_inotify_cookie(struct inotify_event *ev) { return ev->cookie; }
 
 uint32_t li_inotify_len(struct inotify_event *ev) { return ev->len; }
+
+////////////////////////////////////////////////////////////////////////////////
+// eventfd
+////////////////////////////////////////////////////////////////////////////////
+
+int li_eventfd(unsigned int initval, int flags) {
+  int res = eventfd(initval, flags);
+  CHECKRES
+}
+
+ssize_t li_eventfd_write (int efd, uint64_t val) {
+  int res = write(efd, &val, 8);
+  CHECKRES
+}
+
+int64_t li_eventfd_read (int efd) {
+  uint64_t val;
+  int res = read(efd, &val, 8);
+  if (res == -1) {
+    return -errno;
+  } else {
+    return val;
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // signalfd
