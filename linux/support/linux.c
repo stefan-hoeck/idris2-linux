@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
 #include <sys/signalfd.h>
@@ -61,6 +62,32 @@ uint32_t li_inotify_mask(struct inotify_event *ev) { return ev->mask; }
 uint32_t li_inotify_cookie(struct inotify_event *ev) { return ev->cookie; }
 
 uint32_t li_inotify_len(struct inotify_event *ev) { return ev->len; }
+
+////////////////////////////////////////////////////////////////////////////////
+// epoll
+////////////////////////////////////////////////////////////////////////////////
+
+int li_epoll_create(int flags) {
+  int res = epoll_create1(flags);
+  CHECKRES
+}
+
+int li_epoll_ctl(int epfd, int op, int fd, uint32_t events) {
+  struct epoll_event ev;
+  ev.data.fd = fd;
+  ev.events = events;
+  int res = epoll_ctl(epfd, op, fd, &ev);
+  CHECKRES
+}
+
+int li_epoll_wait(int epfd, struct epoll_event *evlist, int max, int timeout) {
+  int res = epoll_wait(epfd, evlist, max, timeout);
+  CHECKRES
+}
+
+int get_epoll_event_events(struct epoll_event *ev) { return ev->events; }
+
+int get_epoll_event_fd(struct epoll_event *ev) { return ev->data.fd; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // eventfd

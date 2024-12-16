@@ -205,6 +205,12 @@ Semigroup EpollFlags where
 
 public export
 Monoid EpollFlags where neutral = F 0
+
+public export
+data EpollOp = Add | Del | Mod
+
+%runElab derive "EpollOp" [Show,Eq,Ord]
+
 EOT
 
 codegen/epoll_gen >>src/System/Linux/Epoll/Flags.idr

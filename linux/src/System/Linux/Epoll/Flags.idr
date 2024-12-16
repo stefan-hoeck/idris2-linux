@@ -44,6 +44,18 @@ public export
 Monoid EpollFlags where neutral = F 0
 
 public export
+data EpollOp = Add | Del | Mod
+
+%runElab derive "EpollOp" [Show,Eq,Ord]
+
+
+public export
+opCode : EpollOp -> Bits32
+opCode Add = 1
+opCode Del = 2
+opCode Mod = 3
+
+public export
 EPOLLIN : Event
 EPOLLIN = 1
 
@@ -68,17 +80,25 @@ EPOLLHUP : Event
 EPOLLHUP = 16
 
 public export
-EPOLLET : EpollFlags
+EPOLLET : Event
 EPOLLET = 2147483648
 
 public export
-EPOLLONESHOT : EpollFlags
+EPOLLONESHOT : Event
 EPOLLONESHOT = 1073741824
 
 public export
-EPOLLWAKEUP : EpollFlags
+EPOLLWAKEUP : Event
 EPOLLWAKEUP = 536870912
 
 public export
-EPOLLEXCLUSIVE : EpollFlags
+EPOLLEXCLUSIVE : Event
 EPOLLEXCLUSIVE = 268435456
+
+public export
+EPOLL_CLOEXEC : EpollFlags
+EPOLL_CLOEXEC = 524288
+
+public export %inline
+epoll_event_size : Bits32
+epoll_event_size = 12
