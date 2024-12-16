@@ -77,9 +77,12 @@ epollWait :
   -> Epollfd
   -> CArrayIO n EpollEvent
   -> Int32
-  -> io ()
+  -> io (k ** CArrayIO k EpollEvent)
 epollWait (EFD efd) arr timeout =
-  toUnit $ prim__epoll_wait efd (unsafeUnwrap arr) (cast n) timeout
+  let p := unsafeUnwrap arr
+   in do
+     num <- toVal cast $ prim__epoll_wait efd p (cast n) timeout
+     pure (num ** unsafeWrap p)
 
 export %inline
 events : HasIO io => EpollEvent -> io Event

@@ -36,6 +36,8 @@ import Example.Ch44.ChunkPipe
 import Example.Ch44.PipeSync
 import Example.Ch44.FifoServer
 
+import Example.Ch63.EpollExample
+
 import Example.Util.File
 import Example.Util.Opts
 import Example.Util.Pthreads
@@ -119,6 +121,7 @@ prog = do
     "pipe_sync"               :: t => pipeSync t
     "fifo_server"             :: t => fifoServer t
     "fifo_client"             :: t => fifoClient t
+    "epoll_example"           :: t => epollExample t
     _                              =>
       use [mkmutex MUTEX_NORMAL, mkcond] $ \[mu,co] => do
         pid  <- getpid
