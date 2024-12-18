@@ -50,18 +50,27 @@ parameters {auto has : Has Errno es}
     go k es
 
     where
+      covering readStdin : Prog es ()
+      readStdin = do
+        onErrno EAGAIN (stdoutLn "Stdin temporarily exhausted") $ do
+          bs <- read Stdin 4
+          stdoutLn "got \{show bs.size} bytes from stdin"
+          readStdin
+
       go : (k : Nat) -> CArrayIO m EpollEvent -> (0 p : LTE k m) => Prog es ()
-      go 0     arr = pure ()
+      go 0     arr = loop
       go (S k) arr = do
         ee <- runIO (getNat arr k)
         f  <- fd ee
         case f == fileDesc tfd of
-          False => stdoutLn "Got SIGINT. Terminating now."
+          False => case f == fileDesc Stdin of
+            False => stdoutLn "Got SIGINT. Terminating now."
+            True  => readStdin >> go k arr
           True  => do
             now <- liftIO (clockTime Monotonic)
             x   <- readTimerfd tfd
             stdoutLn "\{prettyClock now start}: \{show x} tick(s)"
-            loop
+            go k arr
 
 readPair : Has ArgErr es => String -> Prog es (TimeT, NsecT)
 readPair s =
@@ -96,8 +105,10 @@ app t =
       , malloc EpollEvent 2
       ] $ \[efd,tfd,sfd,it,events] => do
              settime' tfd 0 it
-             epollCtl efd Add tfd EPOLLIN
-             epollCtl efd Add sfd EPOLLIN
+             addFlags Stdin O_NONBLOCK
+             epollCtl efd Add tfd   EPOLLIN
+             epollCtl efd Add sfd   EPOLLIN
+             epollCtl efd Add Stdin (EPOLLIN <+> EPOLLET)
              start <- liftIO (clockTime Monotonic)
              loop efd tfd sfd events start
 

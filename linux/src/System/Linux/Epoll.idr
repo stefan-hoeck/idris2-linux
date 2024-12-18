@@ -16,7 +16,7 @@ prim__epoll_create : Bits32 -> PrimIO CInt
 %foreign "C:li_epoll_ctl, linux-idris"
 prim__epoll_ctl : Bits32 -> Bits32 -> Bits32 -> Bits32 -> PrimIO CInt
 
-%foreign "C:li_epoll_wait, linux-idris"
+%foreign "C__collect_safe:li_epoll_wait, linux-idris"
 prim__epoll_wait : Bits32 -> AnyPtr -> Bits32 -> Int32 -> PrimIO CInt
 
 %foreign "C:get_epoll_event_events, linux-idris"
