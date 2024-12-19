@@ -3,10 +3,20 @@ type = "local"
 path = "posix"
 ipkg = "posix.ipkg"
 
+[custom.all.posix-async]
+type = "local"
+path = "posix-async"
+ipkg = "posix-async.ipkg"
+
 [custom.all.linux]
 type = "local"
 path = "linux"
 ipkg = "linux.ipkg"
+
+[custom.all.linux-async]
+type = "local"
+path = "linux-async"
+ipkg = "linux-async.ipkg"
 
 [custom.all.linux-examples]
 type = "local"
@@ -47,3 +57,9 @@ type   = "github"
 url    = "https://github.com/stefan-hoeck/idris2-bytestring"
 commit = "latest:main"
 ipkg   = "bytestring.ipkg"
+
+[custom.all.async]
+type   = "git"
+url    = "https://github.com/stefan-hoeck/idris2-async"
+commit = "latest:main"
+ipkg   = "async.ipkg"

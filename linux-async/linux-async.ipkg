@@ -1,0 +1,13 @@
+package linux-async
+version = 0.1.0
+authors = "stefan-hoeck"
+brief   = "The Linux Programming Interface in Async"
+
+depends = base >= 0.7.0
+        , posix
+        , linux
+        , async
+
+modules = System.Linux.Async
+
+sourcedir = "src"
