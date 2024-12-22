@@ -13,6 +13,20 @@ through the chapters, the todo-list below will continuously grow.
 In the `examples` subproject you can find many of the example applications
 and exercises from the book implemented as a single command-line application.
 
+## Content
+
+In this library, I try to take a non-opinionated approach to programming
+with system calls: All functions are provided in `PrimIO` so that users
+can get the maximum in terms of performance without the potential
+overhead when using an `IO` monad with error handling.
+
+However, I try to provide a few opinionated convenience wrappers, in
+particular for working with `structs` since these can be quite a
+pain to work with. In these cases, we do some explicit allocating
+and freeing of memory in the backend, which is not the most
+efficient way to do things in a tight loop. Therefore, when performance
+really matters, try to allocate once and reuse the allocated pointer.
+
 ## Chapter Overview
 
 ### Chapter 4
