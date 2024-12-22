@@ -16,10 +16,18 @@ import Derive.Prelude
 %default total
 %language ElabReflection
 
+||| Defines how a signal set affects the currently block signals
 public export
 data How : Type where
+  ||| The set of blocked signals is the union of the current set
+  ||| and the `SigsetT` argument.
   SIG_BLOCK   : How
+
+  ||| The signals from the `SigsetT` argument are remove from the
+  ||| set of blocked signals.
   SIG_UNBLOCK : How
+
+  ||| The set of blocked signals is replaced with the `SigsetT` argument.
   SIG_SETMASK : How
 
 %runElab derive "How" [Show,Eq,Ord]

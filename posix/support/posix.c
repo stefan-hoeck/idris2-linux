@@ -510,12 +510,14 @@ int li_setitimer(int which, const struct itimerval *new,
   CHECKRES
 }
 
-int li_setitimer1(int which, const struct itimerval *new) {
-  return li_setitimer(which, new, NULL);
-}
-
-int li_getitimer(int which, struct itimerval *old) {
-  int res = getitimer(which, old);
+int li_setitimer1(int which, time_t int_sec, suseconds_t int_usec, time_t sec,
+                  suseconds_t usec) {
+  struct itimerval it;
+  it.it_value.tv_sec = sec;
+  it.it_value.tv_usec = usec;
+  it.it_interval.tv_sec = int_sec;
+  it.it_interval.tv_usec = int_usec;
+  int res = li_setitimer(which, &it, NULL);
   CHECKRES
 }
 
@@ -524,8 +526,12 @@ int li_nanosleep(const struct timespec *req, struct timespec *rem) {
   CHECKRES
 }
 
-int li_nanosleep1(const struct timespec *req) {
-  return li_nanosleep(req, NULL);
+int li_nanosleep1(time_t sec, uint32_t nsec) {
+  struct timespec ts;
+  ts.tv_sec = sec;
+  ts.tv_nsec = nsec;
+  int res = li_nanosleep(&ts, NULL);
+  CHECKRES
 }
 
 int li_clock_gettime(clockid_t id, struct timespec *ref) {

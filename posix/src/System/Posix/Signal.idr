@@ -1,6 +1,8 @@
 module System.Posix.Signal
 
 import Data.C.Ptr
+import Data.Finite
+import Derive.Prelude
 
 import public Data.C.Integer
 import public Data.C.Struct
@@ -8,6 +10,7 @@ import public System.Posix.Errno
 import public System.Posix.Signal.Types
 
 %default total
+%language ElabReflection
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -45,9 +48,6 @@ prim__siggetprocmask : PrimIO AnyPtr
 
 %foreign "C:li_sigpending, posix-idris"
 prim__sigpending : PrimIO AnyPtr
-
-%foreign "C:abort, posix-idris"
-prim__abort : PrimIO ()
 
 %foreign "C:li_sigqueue, posix-idris"
 prim__sigqueue : PidT -> Bits32 -> CInt -> PrimIO CInt
@@ -104,37 +104,34 @@ Struct SigsetT where
 |||
 ||| This must be freed with `freeSigset`.
 export %inline
-emptySigset : HasIO io => io SigsetT
-emptySigset =
-  primIO $ \w => let MkIORes p w := prim__emptysigset w in MkIORes (S p) w
+emptySigset : PrimIO SigsetT
+emptySigset = primMap S prim__emptysigset
 
 ||| Allocates a `sigset_t` with all signals set.
 |||
 ||| This must be freed with `freeSigset`.
 export %inline
-fullSigset : HasIO io => io SigsetT
-fullSigset =
-  primIO $ \w => let MkIORes p w := prim__fullsigset w in MkIORes (S p) w
+fullSigset : PrimIO SigsetT
+fullSigset = primMap S prim__fullsigset
 
 ||| Adds a signal to a `sigset_t`
 export %inline
-sigaddset : HasIO io => SigsetT -> Signal -> io ()
-sigaddset (S p) s = primIO $ prim__sigaddset p s.sig
+sigaddset : SigsetT -> Signal -> PrimIO ()
+sigaddset (S p) s = prim__sigaddset p s.sig
 
 ||| Removes a signal from a `sigset_t`
 export %inline
-sigdelset : HasIO io => SigsetT -> Signal -> io ()
-sigdelset (S p) s = primIO $ prim__sigdelset p s.sig
+sigdelset : SigsetT -> Signal -> PrimIO ()
+sigdelset (S p) s = prim__sigdelset p s.sig
 
 ||| Tests if a signal is a member of a `sigset_t`.
 export %inline
-sigismember : HasIO io => SigsetT -> Signal -> io Bool
-sigismember (S p) s =
-  primIO $ \w =>
-    let MkIORes r w := prim__sigismember p s.sig w
-     in case r of
-          0 => MkIORes False w
-          _ => MkIORes True w
+sigismember : SigsetT -> Signal -> PrimIO Bool
+sigismember (S p) s w =
+  let MkIORes r w := prim__sigismember p s.sig w
+   in case r of
+        0 => MkIORes False w
+        _ => MkIORes True w
 
 --------------------------------------------------------------------------------
 -- API
@@ -142,19 +139,19 @@ sigismember (S p) s =
 
 ||| Sends a signal to a running process or a group of processes.
 export %inline
-kill : ErrIO io => PidT -> Signal -> io ()
+kill : PidT -> Signal -> PrimIO (Either Errno ())
 kill p s = toUnit $ prim__kill p s.sig
 
 ||| Sends a signal to the calling thread.
 export %inline
-raise : HasIO io => Signal -> io ()
-raise s = primIO $ prim__raise s.sig
+raise : Signal -> PrimIO ()
+raise s = prim__raise s.sig
 
 ||| Sends a realtime signal plus data word to a running process.
 |||
 ||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
 export %inline
-sigqueue : ErrIO io => PidT -> Signal -> (word : CInt) -> io ()
+sigqueue : PidT -> Signal -> (word : CInt) -> PrimIO (Either Errno ())
 sigqueue p s word = toUnit $ prim__sigqueue p s.sig word
 
 ||| Adjust the process signal mask according to the given `How`
@@ -163,59 +160,27 @@ sigqueue p s word = toUnit $ prim__sigqueue p s.sig word
 ||| Note: This allocates a new `sigset_t` pointer and returns the
 |||       previously set signal mask. Client code is responsible to
 |||       free the memory for this once it is no longer used.
-|||       See also `sigprocmask'` for a version that does not return
+|||       See also `sigprocmask` for a version that does not return
 |||       the previous signal mask.
 export %inline
-sigprocmask : HasIO io => How -> SigsetT -> io SigsetT
-sigprocmask h (S p) =
-  primIO $ \w =>
-    let MkIORes p2 w := prim__sigprocmask (howCode h) p w
-     in MkIORes (S p2) w
-
-||| Like `sigprocmask` but does not allocate a pointer for the
-||| previous `sigset_t`.
-export %inline
-sigprocmask' : HasIO io => How -> SigsetT -> io ()
-sigprocmask' h (S p) = primIO $ prim__sigprocmask1 (howCode h) p
-
-||| Returns the current signal mask of the process.
-|||
-||| Note: This allocates a new `sigset_t` pointer and returns the
-|||       previously set signal mask. Client code is responsible to
-|||       free the memory for this once it is no longer used.
-export %inline
-siggetprocmask : HasIO io => io SigsetT
-siggetprocmask =
-  primIO $ \w =>
-    let MkIORes p w := prim__siggetprocmask w
-     in MkIORes (S p) w
-
-||| Returns the set of currently pending signals.
-|||
-||| Note: This allocates a new `sigset_t` pointer and returns the
-|||       previously set signal mask. Client code is responsible to
-|||       free the memory for this once it is no longer used.
-export %inline
-sigpending : HasIO io => io SigsetT
-sigpending =
-  primIO $ \w =>
-    let MkIORes p w := prim__sigpending w
-     in MkIORes (S p) w
+sigprocmask_ : How -> SigsetT -> PrimIO SigsetT
+sigprocmask_ h (S p) w =
+  let MkIORes p2 w := prim__sigprocmask (howCode h) p w
+   in MkIORes (S p2) w
 
 ||| Terminates the application by raising `SIGABRT` and dumps core.
 |||
 ||| While `SIGABRT` can be handled with a signal handler, `abort` is
 ||| still guaranteed successfully terminate the process.
-export %inline
-abort : HasIO io => io ()
-abort = primIO prim__abort
+export %foreign "C:abort, posix-idris"
+abort : PrimIO ()
 
 ||| Suspends the current thread until a non-blocked signal is encountered.
 export %inline
-pause : ErrIO io => io ()
-pause = do
-  r <- fromNeg <$> primIO prim__pause
-  if r == EINTR then pure () else error r
+pause : PrimIO (Either Errno ())
+pause w =
+  let MkIORes r w := primMap fromNeg prim__pause w
+   in MkIORes (if r == EINTR then Right () else Left r) w
 
 --------------------------------------------------------------------------------
 -- Synchronous Signal Handling
@@ -235,62 +200,138 @@ export %inline
 SizeOf SiginfoT where
   sizeof_ = siginfo_t_size
 
-export %inline
-signal : HasIO io => SiginfoT -> io Signal
-signal s = primMap S $ get_siginfo_t_si_signo s.ptr
+public export
+record Siginfo where
+  constructor SI
+  signal : Signal
+  code   : CInt
+  pid    : PidT
+  uid    : UidT
+  status : CInt
+  value  : CInt
 
-export %inline
-code : HasIO io => SiginfoT -> io CInt
-code s = primIO $ get_siginfo_t_si_code s.ptr
+%runElab derive "Siginfo" [Show,Eq]
 
-export %inline
-pid : HasIO io => SiginfoT -> io PidT
-pid s = primIO $ get_siginfo_t_si_pid s.ptr
-
-export %inline
-uid : HasIO io => SiginfoT -> io UidT
-uid s = primIO $ get_siginfo_t_si_uid s.ptr
-
-export %inline
-status : HasIO io => SiginfoT -> io CInt
-status s = primIO $ get_siginfo_t_si_status s.ptr
-
-export %inline
-value : HasIO io => SiginfoT -> io CInt
-value s = primIO $ get_siginfo_t_si_value s.ptr
+export
+siginfo : SiginfoT -> PrimIO Siginfo
+siginfo (ST p) w =
+  let MkIORes sig w := get_siginfo_t_si_signo p w
+      MkIORes cod w := get_siginfo_t_si_code p w
+      MkIORes pid w := get_siginfo_t_si_pid p w
+      MkIORes uid w := get_siginfo_t_si_uid p w
+      MkIORes stt w := get_siginfo_t_si_status p w
+      MkIORes val w := get_siginfo_t_si_value p w
+   in MkIORes (SI (S sig) cod pid uid stt val) w
 
 ||| Atomically blocks the signals in `set`, then
 ||| pauses the thread (see `pause`) and restores the signal set
 ||| afterwards.
 export %inline
-sigsuspend : ErrIO io => (set : SigsetT) -> io ()
-sigsuspend (S s) = do
-  r <- fromNeg <$> primIO (prim__sigsuspend s)
-  if r == EINTR then pure () else error r
+sigsuspend_ : (set : SigsetT) -> PrimIO (Either Errno ())
+sigsuspend_ (S s) w =
+  let MkIORes r w := primMap fromNeg (prim__sigsuspend s) w
+   in MkIORes (if r == EINTR then Right () else Left r) w
 
 ||| Synchronously awaits one of the signals in `set`.
 |||
 ||| Note: Usually, the signals in `set` should first be blocked via
 |||       `sigprocmask`.
 export %inline
-sigwaitinfo : ErrIO io => (set : SigsetT) -> (info : SiginfoT) -> io ()
-sigwaitinfo (S s) (ST i) = toUnit $ prim__sigwaitinfo s i
+sigwaitinfo_ : (set : SigsetT) -> (info : SiginfoT) -> PrimIO (Either Errno ())
+sigwaitinfo_ (S s) (ST i) = toUnit $ prim__sigwaitinfo s i
 
 ||| Synchronously awaits one of the signals in `set`.
 |||
 ||| This is like `sigwaitinfo` but with a simpler API.
 export %inline
-sigwait : ErrIO io => (set : SigsetT) -> io Signal
-sigwait (S s) = toVal (S . cast) $ prim__sigwait s
+sigwait_ : (set : SigsetT) -> PrimIO (Either Errno Signal)
+sigwait_ (S s) = toVal (S . cast) $ prim__sigwait s
 
 ||| Like `sigwaitinfo` but times out with `EAGAIN` after `sec` seconds and
 ||| `nsec` nanoseconds.
 export %inline
 sigtimedwait :
-     {auto has : ErrIO io}
-  -> (set  : SigsetT)
+     (set  : SigsetT)
   -> (info : SiginfoT)
   -> (sec  : TimeT)
   -> (nsec : NsecT)
-  -> io ()
+  -> PrimIO (Either Errno ())
 sigtimedwait (S s) (ST i) sec nsec = toUnit $ prim__sigtimedwait s i sec nsec
+
+--------------------------------------------------------------------------------
+-- Convenience API
+--------------------------------------------------------------------------------
+
+export
+Finite Signal where
+  values =
+    map Signal.Types.S $
+      [1..8] ++ [10..15] ++ [17..27] ++ [29,31] ++ [sig SIGRTMIN .. sig SIGRTMAX]
+
+||| Extracts the set signals from a `SigsetT`.
+export %inline
+getSignals : SigsetT -> PrimIO (List Signal)
+getSignals set = filterM [<] (sigismember set) values
+
+export
+withSignals : List Signal -> (SigsetT -> PrimIO a) -> PrimIO a
+withSignals ss f w =
+  let MkIORes sigs w := emptySigset w
+      MkIORes _    w := primTraverse_ (sigaddset sigs) ss w
+      MkIORes res  w := f sigs w
+      MkIORes _    w := toPrim (freeStruct sigs) w
+   in MkIORes res w
+
+export
+withoutSignals : List Signal -> (SigsetT -> PrimIO a) -> PrimIO a
+withoutSignals ss f w =
+  let MkIORes sigs w := fullSigset w
+      MkIORes _    w := primTraverse_ (sigdelset sigs) ss w
+      MkIORes res  w := f sigs w
+      MkIORes _    w := toPrim (freeStruct sigs) w
+   in MkIORes res w
+
+||| Like `sigprocmask_` but does not allocate a pointer for the
+||| previous `sigset_t`.
+export %inline
+sigprocmask : How -> List Signal -> PrimIO ()
+sigprocmask h ss =
+  withSignals ss $ \(S p) => prim__sigprocmask1 (howCode h) p
+
+||| Returns the current signal mask of the process.
+export %inline
+siggetprocmask : PrimIO (List Signal)
+siggetprocmask w =
+  let MkIORes p  w := prim__siggetprocmask w
+      MkIORes ss w := getSignals (S p) w
+      MkIORes _  w := toPrim (freeStruct $ S p) w
+   in MkIORes ss w
+
+||| Returns the set of currently pending signals.
+export %inline
+sigpending : PrimIO (List Signal)
+sigpending w =
+  let MkIORes p  w := prim__sigpending w
+      MkIORes ss w := getSignals (S p) w
+      MkIORes _  w := toPrim (freeStruct $ S p) w
+   in MkIORes ss w
+
+||| Convenience alias for `sigsuspend_`
+export %inline
+sigsuspend : List Signal -> PrimIO (Either Errno ())
+sigsuspend ss = withSignals ss sigsuspend_
+
+||| Convenience alias for `sigwait_`.
+export %inline
+sigwait : List Signal -> PrimIO (Either Errno Signal)
+sigwait ss = withSignals ss sigwait_
+
+||| Convenience alias for `sigwaitinfo_`.
+export
+sigwaitinfo : List Signal -> PrimIO (Either Errno Siginfo)
+sigwaitinfo ss =
+  withSignals ss $ \set => withStruct SiginfoT $ \si,w =>
+    let MkIORes (Right _) w := sigwaitinfo_ set si w
+          | MkIORes (Left x) w => MkIORes (Left x) w
+        MkIORes res       w := siginfo si w
+     in MkIORes (Right res) w

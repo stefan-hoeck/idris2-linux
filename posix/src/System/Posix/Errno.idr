@@ -1,6 +1,7 @@
 module System.Posix.Errno
 
 import Data.C.Integer
+import Data.C.Ptr
 import Data.Finite
 import Data.Maybe
 import Data.SortedMap
@@ -79,3 +80,29 @@ toRes wrap act w =
 export %inline
 toVal : (CInt -> a) -> PrimIO CInt -> PrimIO (Either Errno a)
 toVal f = primMap (\r => if r < 0 then Left (fromNeg r) else Right (f r))
+
+--------------------------------------------------------------------------------
+-- General PrimIO Utilities
+--------------------------------------------------------------------------------
+
+export %inline
+withStruct : (0 a : Type) -> Struct a => SizeOf a => (a -> PrimIO b) -> PrimIO b
+withStruct a f w =
+  let MkIORes str w := toPrim (allocStruct a) w
+      MkIORes res w := f str w
+      MkIORes _   w := toPrim (freeStruct str) w
+   in MkIORes res w
+
+export
+primTraverse_ : (a -> PrimIO ()) -> List a -> PrimIO ()
+primTraverse_ f []        w = MkIORes () w
+primTraverse_ f (x :: xs) w =
+  let MkIORes _ w := f x w
+   in primTraverse_ f xs w
+
+export
+filterM : SnocList a -> (a -> PrimIO Bool) -> List a -> PrimIO (List a)
+filterM sa f []     w = MkIORes (sa <>> []) w
+filterM sa f (h::t) w =
+  let MkIORes True w := f h w | MkIORes _ w => filterM sa f t w
+   in filterM (sa :< h) f t w
