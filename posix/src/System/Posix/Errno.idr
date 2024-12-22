@@ -86,12 +86,21 @@ toVal f = primMap (\r => if r < 0 then Left (fromNeg r) else Right (f r))
 --------------------------------------------------------------------------------
 
 export %inline
+primStruct : (0 a : Type) -> Struct a => SizeOf a => PrimIO a
+primStruct a = toPrim (allocStruct a)
+
+export %inline
+freeingStruct : Struct a => a -> b -> PrimIO b
+freeingStruct v vb w =
+  let MkIORes _ w := toPrim (freeStruct v) w
+   in MkIORes vb w
+
+export %inline
 withStruct : (0 a : Type) -> Struct a => SizeOf a => (a -> PrimIO b) -> PrimIO b
 withStruct a f w =
-  let MkIORes str w := toPrim (allocStruct a) w
+  let MkIORes str w := primStruct a w
       MkIORes res w := f str w
-      MkIORes _   w := toPrim (freeStruct str) w
-   in MkIORes res w
+   in freeingStruct str res w
 
 export
 primTraverse_ : (a -> PrimIO ()) -> List a -> PrimIO ()

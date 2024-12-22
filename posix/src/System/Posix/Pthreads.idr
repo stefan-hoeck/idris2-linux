@@ -60,9 +60,6 @@ prim__pthread_cond_timedwait : AnyPtr -> AnyPtr -> AnyPtr -> PrimIO Bits32
 %foreign "C:pthread_cancel, posix-idris"
 prim__pthread_cancel : AnyPtr -> PrimIO Bits32
 
-%foreign "C:pthread_testcancel, posix-idris"
-prim__pthread_testcancel : PrimIO ()
-
 %foreign "C:li_pthread_setcanceltype, posix-idris"
 prim__pthread_setcanceltype : Bits8 -> PrimIO Bits8
 
@@ -97,12 +94,12 @@ unwrapPthreadT = ptr
 
 ||| Returns the thread ID of the current thread.
 export %inline
-pthreadSelf : HasIO io => io PthreadT
+pthreadSelf : PrimIO PthreadT
 pthreadSelf = primMap P $ prim__pthread_self
 
 ||| Blocks the current thread and waits for the given thread to terminate.
 export %inline
-pthreadJoin : ErrIO io => PthreadT -> io ()
+pthreadJoin : PthreadT -> PrimIO (Either Errno ())
 pthreadJoin p = posToUnit $ prim__pthread_join p.ptr
 
 export %inline
@@ -146,41 +143,46 @@ SizeOf MutexT where sizeof_ = mutex_t_size
 |||
 ||| This must be freed with `destroyMutex`.
 export
-mkmutex : ErrIO io => MutexType -> io MutexT
-mkmutex t = do
-  m <- allocStruct MutexT
-  x <- primIO $ prim__pthread_mutex_init m.ptr (mutexCode t)
-  case x of
-    0 => pure m
-    x => freeStruct m >> error (EN x)
+mkmutex : MutexType -> PrimIO (Either Errno MutexT)
+mkmutex t w =
+  let MkIORes m w := primStruct MutexT w
+      MkIORes x w := prim__pthread_mutex_init m.ptr (mutexCode t) w
+   in case x of
+        0 => MkIORes (Right m) w
+        x => freeingStruct m (Left $ EN x) w
 
 ||| Destroys a mutex and frees the memory allocated for it.
 export %inline
-destroyMutex : HasIO io => MutexT -> io ()
-destroyMutex m = primIO $ prim__pthread_mutex_destroy m.ptr
+destroyMutex : MutexT -> PrimIO ()
+destroyMutex m = prim__pthread_mutex_destroy m.ptr
 
 ||| Tries to lock the given mutex, blocking the calling thread
 ||| in case it is already locked.
 export %inline
-lockMutex : ErrIO io => MutexT -> io ()
+lockMutex : MutexT -> PrimIO (Either Errno ())
 lockMutex p = posToUnit $ prim__pthread_mutex_lock p.ptr
 
-export %inline
-timedlockMutex : ErrIO io => MutexT -> Timespec -> io ()
-timedlockMutex p t = posToUnit $ prim__pthread_mutex_timedlock p.ptr (unwrap t)
+||| Like `lockMutex` but returns a boolean with `False` indicating
+||| that the lock timed out
+export
+timedlockMutex : MutexT -> Clock Monotonic -> PrimIO (Either Errno Bool)
+timedlockMutex p cl =
+  notErr ETIMEDOUT $ withTimespec cl $ \ts =>
+    posToUnit (prim__pthread_mutex_timedlock p.ptr (unwrap ts))
 
-||| Like `lockMutex` but fails with `EBUSY` in case the mutex is
+||| Like `lockMutex` but returns `False` in case the mutex is
 ||| already locked.
-export %inline
-trylockMutex : ErrIO io => MutexT -> io ()
-trylockMutex p = posToUnit $ prim__pthread_mutex_trylock p.ptr
+export
+trylockMutex : MutexT -> PrimIO (Either Errno Bool)
+trylockMutex p =
+  notErr EBUSY $ posToUnit (prim__pthread_mutex_trylock p.ptr)
 
 ||| Unlocks the given mutex.
 |||
 ||| This is an error if the calling thread is not the one holding
 ||| the mutex's lock.
 export %inline
-unlockMutex : ErrIO io => MutexT -> io ()
+unlockMutex : MutexT -> PrimIO (Either Errno ())
 unlockMutex p = posToUnit $ prim__pthread_mutex_unlock p.ptr
 
 --------------------------------------------------------------------------------
@@ -209,18 +211,18 @@ SizeOf CondT where sizeof_ = cond_t_size
 |||
 ||| This must be freed with `destroyCond`.
 export
-mkcond : ErrIO io => io CondT
-mkcond = do
-  m <- allocStruct CondT
-  x <- primIO $ prim__pthread_cond_init m.ptr
-  case x of
-    0 => pure m
-    x => freeStruct m >> error (EN x)
+mkcond : PrimIO (Either Errno CondT)
+mkcond w =
+  let MkIORes m w := primStruct CondT w
+      MkIORes x w := prim__pthread_cond_init m.ptr w
+   in case x of
+        0 => MkIORes (Right m) w
+        x => freeingStruct m (Left $ EN x) w
 
 ||| Destroys a condition variable and frees the memory allocated for it.
 export %inline
-destroyCond : HasIO io => CondT -> io ()
-destroyCond m = primIO $ prim__pthread_cond_destroy m.ptr
+destroyCond : CondT -> PrimIO ()
+destroyCond m = prim__pthread_cond_destroy m.ptr
 
 ||| Signals the given `pthread_cond_t`.
 |||
@@ -228,14 +230,14 @@ destroyCond m = primIO $ prim__pthread_cond_destroy m.ptr
 ||| which of them will be signalled. We are only guaranteed that at least
 ||| of them will be woken up.
 export %inline
-condSignal : ErrIO io => CondT -> io ()
+condSignal : CondT -> PrimIO (Either Errno ())
 condSignal p = posToUnit $ prim__pthread_cond_signal p.ptr
 
 ||| Broadcasts the given `pthread_cond_t`.
 |||
 ||| This will wake up all threads waiting on the given condition.
 export %inline
-condBroadcast : ErrIO io => CondT -> io ()
+condBroadcast : CondT -> PrimIO (Either Errno ())
 condBroadcast p = posToUnit $ prim__pthread_cond_broadcast p.ptr
 
 ||| Blocks the given thread and waits for the given condition to
@@ -245,15 +247,15 @@ condBroadcast p = posToUnit $ prim__pthread_cond_broadcast p.ptr
 ||| lock is automatically released upon calling `condWait`, and when
 ||| the thread is woken up, the mutex will automatically be locked again.
 export %inline
-condWait : ErrIO io => CondT -> MutexT -> io ()
+condWait : CondT -> MutexT -> PrimIO (Either Errno ())
 condWait p m = posToUnit $ prim__pthread_cond_wait p.ptr m.ptr
 
-||| Like `condWait` but will return with `ETIMEDOUT` after the given
-||| time interval expires.
+||| Like `condWait` but will return `False` in case the operation timed out.
 export %inline
-condTimedwait : ErrIO io => CondT -> MutexT -> Timespec -> io ()
-condTimedwait p m t =
-  posToUnit $ prim__pthread_cond_timedwait p.ptr m.ptr (unwrap t)
+condTimedwait : CondT -> MutexT -> Clock Monotonic -> PrimIO (Either Errno Bool)
+condTimedwait p m cl =
+  notErr ETIMEDOUT $ withTimespec cl $ \ts =>
+    posToUnit (prim__pthread_cond_timedwait p.ptr m.ptr (unwrap ts))
 
 --------------------------------------------------------------------------------
 -- Thread Cancelation
@@ -269,23 +271,22 @@ toSt b =
 
 ||| Sends a cancelation request to the given thread.
 export %inline
-pthreadCancel : ErrIO io => PthreadT -> io ()
+pthreadCancel : PthreadT -> PrimIO (Either Errno ())
 pthreadCancel t = posToUnit $ prim__pthread_cancel t.ptr
 
 ||| Tests for thread cancelation in the absence of other cancelation
 ||| points.
-export %inline
-pthreadTestCancel : HasIO io => io ()
-pthreadTestCancel = primIO prim__pthread_testcancel
+export %foreign "C:pthread_testcancel, posix-idris"
+pthreadTestCancel : PrimIO ()
 
 ||| Sets the current thread's cancel type returning the previous cancel type.
 export %inline
-setCancelType : HasIO io => CancelType -> io CancelType
+setCancelType : CancelType -> PrimIO CancelType
 setCancelType t = primMap toTpe $ prim__pthread_setcanceltype (cancelType t)
 
 ||| Sets the current thread's cancel state returning the previous cancel state.
 export %inline
-setCancelState : HasIO io => CancelState -> io CancelState
+setCancelState : CancelState -> PrimIO CancelState
 setCancelState t = primMap toSt $ prim__pthread_setcancelstate (cancelState t)
 
 --------------------------------------------------------------------------------
@@ -301,17 +302,10 @@ setCancelState t = primMap toSt $ prim__pthread_setcancelstate (cancelState t)
 |||       See also `pthreadSigmask'` for a version that does not return
 |||       the previous signal mask.
 export %inline
-pthreadSigmask : HasIO io => How -> SigsetT -> io SigsetT
-pthreadSigmask h p =
-  primIO $ \w =>
-    let MkIORes p2 w := prim__pthread_sigmask (howCode h) (unwrap p) w
-     in MkIORes (wrap p2) w
-
-||| Like `sigprocmask` but does not allocate a pointer for the
-||| previous `sigset_t`.
-export %inline
-pthreadSigmask' : HasIO io => How -> SigsetT -> io ()
-pthreadSigmask' h p = primIO $ prim__pthread_sigmask1 (howCode h) (unwrap p)
+pthreadSigmask_ : How -> SigsetT -> PrimIO SigsetT
+pthreadSigmask_ h p w =
+  let MkIORes p2 w := prim__pthread_sigmask (howCode h) (unwrap p) w
+   in MkIORes (wrap p2) w
 
 ||| Returns the current signal mask of the thread.
 |||
@@ -319,13 +313,23 @@ pthreadSigmask' h p = primIO $ prim__pthread_sigmask1 (howCode h) (unwrap p)
 |||       previously set signal mask. Client code is responsible to
 |||       free the memory for this once it is no longer used.
 export %inline
-pthreadSiggetmask : HasIO io => io SigsetT
-pthreadSiggetmask =
-  primIO $ \w =>
-    let MkIORes p w := prim__pthread_siggetmask w
-     in MkIORes (wrap p) w
+pthreadSiggetmask : PrimIO SigsetT
+pthreadSiggetmask w =
+  let MkIORes p w := prim__pthread_siggetmask w
+   in MkIORes (wrap p) w
 
 ||| Sends the given signal to the given thread.
 export %inline
-pthreadKill : ErrIO io => PthreadT -> Signal -> io ()
+pthreadKill : PthreadT -> Signal -> PrimIO (Either Errno ())
 pthreadKill t s = posToUnit $ prim__pthread_kill t.ptr s.sig
+
+--------------------------------------------------------------------------------
+-- Convenience API
+--------------------------------------------------------------------------------
+
+||| Like `pthreadSigmask_` but does not allocate a pointer for the
+||| previous `sigset_t`.
+export %inline
+pthreadSigmask : How -> List Signal -> PrimIO ()
+pthreadSigmask h ss =
+  withSignals ss $ \p => prim__pthread_sigmask1 (howCode h) (unwrap p)

@@ -3,8 +3,9 @@ module System.Posix.Time
 import Data.C.Ptr
 
 import public Data.C.Integer
-import public System.Posix.Time.Types
 import public System.Clock
+import public System.Posix.Errno
+import public System.Posix.Time.Types
 
 %default total
 
@@ -66,3 +67,24 @@ toClock ts w =
   let MkIORes x0 w := sec ts w
       MkIORes x1 w := nsec ts w
    in MkIORes (MkClock (cast x0) (cast x1)) w
+
+export
+withTimespec : Clock t -> (STimespec -> PrimIO a) -> PrimIO a
+withTimespec cl f =
+  withStruct STimespec $ \ts,w =>
+    let MkIORes _ w := setSec ts (cast $ seconds cl) w
+        MkIORes _ w := setNsec ts (cast $ nanoseconds cl) w
+        MkIORes r w := f ts w
+     in freeingStruct ts r w
+
+export
+notErr : Errno -> PrimIO (Either Errno ()) -> PrimIO (Either Errno Bool)
+notErr err f w =
+  let MkIORes r w := f w
+   in case r of
+        Right () => MkIORes (Right True) w
+        Left x   =>
+          if x == err
+             then MkIORes (Right False) w
+             else MkIORes (Left x) w
+
