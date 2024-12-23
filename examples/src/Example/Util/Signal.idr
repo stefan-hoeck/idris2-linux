@@ -17,10 +17,10 @@ Finite Signal where
 export
 Interpolation Signal where interpolate = show . sig
 
-export
-pendingSignals : Has Errno es => Prog es (List Signal)
-pendingSignals = do
-  s  <- sigpending
-  ss <- filterM (sigismember s) values
-  freeStruct s
-  pure ss
+-- export
+-- pendingSignals : Has Errno es => Prog es (List Signal)
+-- pendingSignals = do
+--   s  <- sigpending
+--   ss <- filterM (sigismember s) values
+--   freeStruct s
+--   pure ss

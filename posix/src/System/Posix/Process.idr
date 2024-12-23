@@ -12,22 +12,22 @@ import public System.Posix.Process.Flags
 -- FFI
 --------------------------------------------------------------------------------
 
-%foreign "C:getpid, posix-idris"
+export %foreign "C:getpid, posix-idris"
 prim__getpid : PrimIO PidT
 
-%foreign "C:getppid, posix-idris"
+export %foreign "C:getppid, posix-idris"
 prim__getppid : PrimIO PidT
 
-%foreign "C:getuid, posix-idris"
+export %foreign "C:getuid, posix-idris"
 prim__getuid : PrimIO UidT
 
-%foreign "C:geteuid, posix-idris"
+export %foreign "C:geteuid, posix-idris"
 prim__geteuid : PrimIO UidT
 
-%foreign "C:getgid, posix-idris"
+export %foreign "C:getgid, posix-idris"
 prim__getgid : PrimIO GidT
 
-%foreign "C:getegid, posix-idris"
+export %foreign "C:getegid, posix-idris"
 prim__getegid : PrimIO GidT
 
 %foreign "C:li_setuid, posix-idris"
@@ -126,22 +126,22 @@ getegid = primIO prim__getegid
 
 ||| Tries to set the real user ID of the current process
 export %inline
-setuid : ErrIO io => UidT -> io ()
+setuid : UidT -> PrimIO (Either Errno ())
 setuid uid = toUnit $ prim__setuid uid
 
 ||| Tries to set the effective user ID of the current process
 export %inline
-seteuid : ErrIO io => UidT -> io ()
+seteuid : UidT -> PrimIO (Either Errno ())
 seteuid uid = toUnit $ prim__seteuid uid
 
 ||| Tries to set the real group ID of the current process
 export %inline
-setgid : ErrIO io => GidT -> io ()
+setgid : GidT -> PrimIO (Either Errno ())
 setgid gid = toUnit $ prim__setgid gid
 
 ||| Tries to set the effective group ID of the current process
 export %inline
-setegid : ErrIO io => GidT -> io ()
+setegid : GidT -> PrimIO (Either Errno ())
 setegid gid = toUnit $ prim__setegid gid
 
 ||| Process status returned by a call to `wait` or `waitpid`.
@@ -169,7 +169,7 @@ SetPtr ProcStatus where
 ||| the functions returns `0` for the child process and
 ||| the child's process ID for the parent.
 export %inline
-fork : ErrIO io => io PidT
+fork : PrimIO (Either Errno PidT)
 fork = toPidT Process.prim__fork
 
 ||| Loads a new program into this process's memory.
@@ -181,24 +181,23 @@ fork = toPidT Process.prim__fork
 ||| This only returns in case of an error.
 export %inline
 execve :
-     {auto has : ErrIO io}
-  -> String
+     String
   -> (args : CArrayIO m (Maybe String))
   -> (env  : CArrayIO n (Maybe String))
-  -> io ()
+  -> PrimIO (Either Errno ())
 execve s a e = toUnit $ prim__execve s (unsafeUnwrap a) (unsafeUnwrap e)
 
 ||| Convenience alias of `execve` that uses Idris lists for passing
 ||| the arguments list and environment.
 export
-execle : ErrIO io => String -> List String -> List (String,String) -> io ()
-execle s a e = do
-  args <- fromListIO (map Just a ++ [Nothing])
-  env  <- fromListIO (map envpair e ++ [Nothing])
-  res  <- execve s args env
-  free args
-  free env
-  pure res
+execle : String -> List String -> List (String,String) -> PrimIO (Either Errno ())
+execle s a e w =
+  let MkIORes args w := toPrim (fromListIO (map Just a ++ [Nothing])) w
+      MkIORes env  w := toPrim (fromListIO (map envpair e ++ [Nothing])) w
+      MkIORes res  w := execve s args env w
+      MkIORes _    w := toPrim (free args) w
+      MkIORes _    w := toPrim (free env) w
+   in MkIORes res w
 
   where
     envpair : (String,String) -> Maybe String
@@ -206,24 +205,24 @@ execle s a e = do
 
 ||| Like `execve` but uses the environment of the current process.
 export %inline
-execv : ErrIO io => String -> CArrayIO m (Maybe String) -> io ()
+execv : String -> CArrayIO m (Maybe String) -> PrimIO (Either Errno ())
 execv s a = toUnit $ prim__execv s (unsafeUnwrap a)
 
 ||| Like `execv` but allows us to just use a filename
 ||| and resolve in using the `$PATH` variable.
 export %inline
-execvp : ErrIO io => String -> CArrayIO m (Maybe String) -> io ()
+execvp : String -> CArrayIO m (Maybe String) -> PrimIO (Either Errno ())
 execvp s a = toUnit $ prim__execvp s (unsafeUnwrap a)
 
 ||| Convenience alias for `execvp` that uses an Idris list for
 ||| the list of arguments.
 export
-execlp : ErrIO io => String -> List String -> io ()
-execlp s a = do
-  args <- fromListIO (map Just a ++ [Nothing])
-  res  <- execvp s args
-  free args
-  pure res
+execlp : String -> List String -> PrimIO (Either Errno ())
+execlp s a w =
+  let MkIORes args w := toPrim (fromListIO (map Just a ++ [Nothing])) w
+      MkIORes res  w := execvp s args w
+      MkIORes _    w := toPrim (free args) w
+   in MkIORes res w
 
 ||| Runs the given shell command in a child process.
 |||
@@ -231,7 +230,7 @@ execlp s a = do
 ||| `system` call in C, which allows us to use the same mechanism
 ||| as with `wait` to get the returned exit status.
 export %inline
-system : ErrIO io => (cmd : String) -> io ProcStatus
+system : (cmd : String) -> PrimIO (Either Errno ProcStatus)
 system cmd = toVal PS $ prim__system cmd
 
 ||| Waits for one of the child processes of this process to
@@ -241,7 +240,7 @@ system cmd = toVal PS $ prim__system cmd
 ||| that terminated. In addition, the termination status of the child
 ||| is written into the given pointer.
 export %inline
-wait : ErrIO io => IOBox ProcStatus -> io PidT
+wait : IOBox ProcStatus -> PrimIO (Either Errno PidT)
 wait s = toPidT $ prim__wait (unsafeUnwrap s)
 
 ||| Waits for the given child processes of to terminate.
@@ -250,14 +249,14 @@ wait s = toPidT $ prim__wait (unsafeUnwrap s)
 ||| In addition, it is possible to be notified about child processes that have
 ||| been terminated by a signal.
 export %inline
-waitpid : ErrIO io => PidT -> Box ProcStatus -> WaitFlags -> io PidT
+waitpid : PidT -> Box ProcStatus -> WaitFlags -> PrimIO (Either Errno PidT)
 waitpid chld s (F f) = toPidT $ prim__waitpid chld (unsafeUnwrap s) f
 
 ||| More powerful version of `waitpid` supporting additional flags and
 ||| waiting on groups of children. Wait results are stored in the
 ||| provided `SiginfoT` pointer.
 export %inline
-waitid : ErrIO io => IdType -> PidT -> SiginfoT -> WaitFlags -> io ()
+waitid : IdType -> PidT -> SiginfoT -> WaitFlags -> PrimIO (Either Errno ())
 waitid t chld s (F f) =
   toUnit $ prim__waitid (idtypeCode t) chld (unwrap s) f
 
