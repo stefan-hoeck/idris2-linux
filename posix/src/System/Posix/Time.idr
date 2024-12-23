@@ -77,14 +77,3 @@ withTimespec cl f =
         MkIORes r w := f ts w
      in freeingStruct ts r w
 
-export
-notErr : Errno -> PrimIO (Either Errno ()) -> PrimIO (Either Errno Bool)
-notErr err f w =
-  let MkIORes r w := f w
-   in case r of
-        Right () => MkIORes (Right True) w
-        Left x   =>
-          if x == err
-             then MkIORes (Right False) w
-             else MkIORes (Left x) w
-

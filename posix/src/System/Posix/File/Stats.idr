@@ -6,8 +6,10 @@ import System.Posix.Errno
 import System.Posix.File
 import System.Posix.File.Type
 import System.Posix.Time
+import System.Clock
 
 %default total
+%language ElabReflection
 
 --------------------------------------------------------------------------------
 -- StatvFS
@@ -47,63 +49,59 @@ get_statvfs_f_flag: AnyPtr -> PrimIO ULong
 get_statvfs_f_namemax: AnyPtr -> PrimIO ULong
 
 export
-record Statvfs where
-  constructor SF
+record SStatvfs where
+  constructor SSF
   ptr : AnyPtr
 
 export %inline
-Struct Statvfs where
-  wrap   = SF
+Struct SStatvfs where
+  wrap   = SSF
   unwrap = ptr
 
 export %inline
-SizeOf Statvfs where
+SizeOf SStatvfs where
   sizeof_ = statvfs_size
 
-namespace Statvfs
-  export %inline
-  blockSize : HasIO io => Statvfs -> io ULong
-  blockSize s = primIO $ get_statvfs_f_bsize s.ptr
+public export
+record Statvfs where
+  constructor SF
+  blockSize            : ULong
+  fundamentalBlockSize : ULong
+  blocks               : FsBlkCntT
+  freeBlocks           : FsBlkCntT
+  availableBlocks      : FsBlkCntT
+  files                : FsFilCntT
+  freeFiles            : FsFilCntT
+  availableFiles       : FsFilCntT
+  fsID                 : ULong
+  flags                : ULong
+  namemax              : ULong
 
-  export %inline
-  fundamentalBlockSize : HasIO io => Statvfs -> io ULong
-  fundamentalBlockSize s = primIO $ get_statvfs_f_frsize s.ptr
+%runElab derive "Statvfs" [Show,Eq]
 
-  export %inline
-  blocks : HasIO io => Statvfs -> io FsBlkCntT
-  blocks s = primIO $ get_statvfs_f_blocks s.ptr
+export
+toStatvfs : SStatvfs -> PrimIO Statvfs
+toStatvfs (SSF p) w =
+  let MkIORes bs  w :=  get_statvfs_f_bsize p w
+      MkIORes fbs w :=  get_statvfs_f_frsize p w
+      MkIORes bls w :=  get_statvfs_f_blocks p w
+      MkIORes frs w :=  get_statvfs_f_bfree p w
+      MkIORes abs w :=  get_statvfs_f_bavail p w
+      MkIORes fis w :=  get_statvfs_f_files p w
+      MkIORes ffs w :=  get_statvfs_f_ffree p w
+      MkIORes afs w :=  get_statvfs_f_favail p w
+      MkIORes fid w :=  get_statvfs_f_fsid p w
+      MkIORes flg w :=  get_statvfs_f_flag p w
+      MkIORes max w :=  get_statvfs_f_namemax p w
+   in MkIORes (SF bs fbs bls frs abs fis ffs afs fid flg max) w
 
-  export %inline
-  freeBlocks : HasIO io => Statvfs -> io FsBlkCntT
-  freeBlocks s = primIO $ get_statvfs_f_bfree s.ptr
-
-  export %inline
-  availableBlocks : HasIO io => Statvfs -> io FsBlkCntT
-  availableBlocks s = primIO $ get_statvfs_f_bavail s.ptr
-
-  export %inline
-  files : HasIO io => Statvfs -> io FsFilCntT
-  files s = primIO $ get_statvfs_f_files s.ptr
-
-  export %inline
-  freeFiles : HasIO io => Statvfs -> io FsFilCntT
-  freeFiles s = primIO $ get_statvfs_f_ffree s.ptr
-
-  export %inline
-  availableFiles : HasIO io => Statvfs -> io FsFilCntT
-  availableFiles s = primIO $ get_statvfs_f_favail s.ptr
-
-  export %inline
-  fsID : HasIO io => Statvfs -> io ULong
-  fsID s = primIO $ get_statvfs_f_fsid s.ptr
-
-  export %inline
-  flags : HasIO io => Statvfs -> io ULong
-  flags s = primIO $ get_statvfs_f_flag s.ptr
-
-  export %inline
-  namemax : HasIO io => Statvfs -> io ULong
-  namemax s = primIO $ get_statvfs_f_namemax s.ptr
+%inline
+withStatvfs : (AnyPtr -> PrimIO CInt) -> PrimIO (Either Errno Statvfs)
+withStatvfs act =
+  withStruct SStatvfs $ \s,w =>
+    let MkIORes (Right ()) w := toUnit (act $ unwrap s) w
+          | MkIORes (Left x) w => MkIORes (Left x) w
+     in primMap Right (toStatvfs s) w
 
 --------------------------------------------------------------------------------
 -- FileStats
@@ -149,71 +147,68 @@ get_stat_st_mtim: AnyPtr -> PrimIO AnyPtr
 get_stat_st_ctim: AnyPtr -> PrimIO AnyPtr
 
 export
-record FileStats where
-  constructor FS
+record SFileStats where
+  constructor SFS
   ptr : AnyPtr
 
 export %inline
-Struct FileStats where
-  wrap   = FS
+Struct SFileStats where
+  wrap   = SFS
   unwrap = ptr
 
 export %inline
-SizeOf FileStats where
+SizeOf SFileStats where
   sizeof_ = stat_size
 
-namespace FileStats
-  export %inline
-  dev : HasIO io => FileStats -> io DevT
-  dev s = primIO $ get_stat_st_dev s.ptr
+public export
+record FileStats where
+  constructor FS
+  dev : DevT
+  ino : InoT
+  mode : ModeT
+  nlink : NlinkT
+  uid : UidT
+  gid : GidT
+  rdev : DevT
+  size : SizeT
+  blksize : BlkSizeT
+  blocks : BlkCntT
+  atime : Clock UTC
+  mtime : Clock UTC
+  ctime : Clock UTC
 
-  export %inline
-  ino : HasIO io => FileStats -> io InoT
-  ino s = primIO $ get_stat_st_ino s.ptr
+%runElab derive "FileStats" [Show,Eq]
 
-  export %inline
-  mode : HasIO io => FileStats -> io ModeT
-  mode s = primIO $ get_stat_st_mode s.ptr
+utc : PrimIO AnyPtr -> PrimIO (Clock UTC)
+utc act w =
+  let MkIORes p w := act w
+   in toClock (wrap p) w
 
-  export %inline
-  nlink : HasIO io => FileStats -> io NlinkT
-  nlink s = primIO $ get_stat_st_nlink s.ptr
+export
+fileStats : SFileStats -> PrimIO FileStats
+fileStats (SFS p) w =
+  let MkIORes dev  w :=  get_stat_st_dev p w
+      MkIORes ino  w :=  get_stat_st_ino p w
+      MkIORes mode w :=  get_stat_st_mode p w
+      MkIORes lnk  w :=  get_stat_st_nlink p w
+      MkIORes uid  w :=  get_stat_st_uid p w
+      MkIORes gid  w :=  get_stat_st_gid p w
+      MkIORes rdv  w :=  get_stat_st_rdev p w
+      MkIORes siz  w :=  get_stat_st_size p w
+      MkIORes bsz  w :=  get_stat_st_blksize p w
+      MkIORes bls  w :=  get_stat_st_blocks p w
+      MkIORes ati  w :=  utc (get_stat_st_atim p) w
+      MkIORes mti  w :=  utc (get_stat_st_mtim p) w
+      MkIORes cti  w :=  utc (get_stat_st_ctim p) w
+   in MkIORes (FS dev ino mode lnk uid gid rdv siz bsz bls ati mti cti) w
 
-  export %inline
-  uid : HasIO io => FileStats -> io UidT
-  uid s = primIO $ get_stat_st_uid s.ptr
-
-  export %inline
-  gid : HasIO io => FileStats -> io GidT
-  gid s = primIO $ get_stat_st_gid s.ptr
-
-  export %inline
-  rdev : HasIO io => FileStats -> io DevT
-  rdev s = primIO $ get_stat_st_rdev s.ptr
-
-  export %inline
-  size : HasIO io => FileStats -> io SizeT
-  size s = primIO $ get_stat_st_size s.ptr
-
-  export %inline
-  blksize : HasIO io => FileStats -> io BlkSizeT
-  blksize s = primIO $ get_stat_st_blksize s.ptr
-
-  export %inline
-  blocks : HasIO io => FileStats -> io BlkCntT
-  blocks s = primIO $ get_stat_st_blocks s.ptr
-
-  export %inline
-  atime : HasIO io => FileStats -> io AnyPtr
-  atime s = primIO $ get_stat_st_atim s.ptr
-
-  export %inline
-  mtime : HasIO io => FileStats -> io AnyPtr
-  mtime s = primIO $ get_stat_st_mtim s.ptr
-
-  export %inline
-  ctime : HasIO io => FileStats -> io AnyPtr
-  ctime s = primIO $ get_stat_st_ctim s.ptr
+%inline
+withFileStats : (AnyPtr -> PrimIO CInt) -> PrimIO (Either Errno FileStats)
+withFileStats act =
+  withStruct SFileStats $ \s,w =>
+    let MkIORes (Right ()) w := toUnit (act $ unwrap s) w
+          | MkIORes (Left x) w => MkIORes (Left x) w
+     in primMap Right (fileStats s) w
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -239,21 +234,21 @@ prim__fstat : Bits32 -> AnyPtr -> PrimIO CInt
 --------------------------------------------------------------------------------
 
 export %inline
-statvfs : ErrIO io => String -> Statvfs -> io ()
-statvfs s p = toUnit $ prim__statvfs s p.ptr
+statvfs : String -> PrimIO (Either Errno Statvfs)
+statvfs s = withStatvfs (prim__statvfs s)
 
 export %inline
-fstatvfs : ErrIO io => FileDesc a => a -> Statvfs -> io ()
-fstatvfs fd p = toUnit $ prim__fstatvfs (fileDesc fd) p.ptr
+fstatvfs : FileDesc a => a -> PrimIO (Either Errno Statvfs)
+fstatvfs fd = withStatvfs (prim__fstatvfs (fileDesc fd))
 
 export %inline
-stat : ErrIO io => String -> FileStats -> io ()
-stat s p = toUnit $ prim__stat s p.ptr
+stat : String -> PrimIO (Either Errno FileStats)
+stat s = withFileStats (prim__stat s)
 
 export %inline
-lstat : ErrIO io => String -> FileStats -> io ()
-lstat s p = toUnit $ prim__lstat s p.ptr
+lstat : String -> PrimIO (Either Errno FileStats)
+lstat s = withFileStats (prim__lstat s)
 
 export
-fstat : ErrIO io => FileDesc a => a -> FileStats -> io ()
-fstat fd p = toUnit $ prim__fstat (fileDesc fd) p.ptr
+fstat : FileDesc a => a -> PrimIO (Either Errno FileStats)
+fstat fd = withFileStats (prim__fstat (fileDesc fd))

@@ -115,3 +115,14 @@ filterM sa f []     w = MkIORes (sa <>> []) w
 filterM sa f (h::t) w =
   let MkIORes True w := f h w | MkIORes _ w => filterM sa f t w
    in filterM (sa :< h) f t w
+
+export
+notErr : Errno -> PrimIO (Either Errno ()) -> PrimIO (Either Errno Bool)
+notErr err f w =
+  let MkIORes r w := f w
+   in case r of
+        Right () => MkIORes (Right True) w
+        Left x   =>
+          if x == err
+             then MkIORes (Right False) w
+             else MkIORes (Left x) w
