@@ -227,8 +227,8 @@ itimerspec si ni sv nv = do
 public export
 record Timerspec where
   constructor TS
-  interval : Clock Monotonic
-  value    : Clock Monotonic
+  interval : Clock Duration
+  value    : Clock Duration
 
 %runElab derive "Timerspec" [Show,Eq]
 
@@ -240,6 +240,14 @@ timerspec its w =
       MkIORes sval w := Itimerspec.value its w
       MkIORes val  w := toClock sval w
    in MkIORes (TS iv val) w
+
+export %inline
+(.secs) : Clock t -> TimeT
+(.secs) = cast . seconds
+
+export %inline
+(.nsecs) : Clock t -> TimeT
+(.nsecs) = cast . nanoseconds
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -377,8 +385,8 @@ export
 getTimer : Which -> PrimIO Timerval
 getTimer wh =
   withStruct Itimerval $ \str,w =>
-  let MkIORes _ w := getitimer wh str w
-   in timerval str w
+    let MkIORes _ w := getitimer wh str w
+     in timerval str w
 
 ||| Returns the current time for the given clock.
 export
@@ -402,5 +410,4 @@ getResolution c =
 ||| remaining duration in case of a signal interrupt.
 export %inline
 nanosleep' : (dur : Clock Monotonic) -> PrimIO (Either Errno ())
-nanosleep' cl =
-  toUnit $ prim__nanosleep1 (cast $ seconds cl) (cast $ nanoseconds cl)
+nanosleep' cl = toUnit $ prim__nanosleep1 cl.secs cl.nsecs

@@ -186,9 +186,35 @@ parameters {auto fid : FileDesc a}
   readPtr ptr n = toSize $ prim__readptr (fileDesc fd) ptr n
 
   ||| Reads at most `n * sizeof a` bytes into a preallocated array.
-  export %inline
-  readArr : {n : _} -> SizeOf b => CArrayIO n b -> PrimIO (Either Errno Bits32)
-  readArr p = readPtr (unsafeUnwrap p) (cast n * sizeof b)
+  export
+  readArr :
+       {n : _}
+    -> {auto sof : SizeOf b}
+    -> CArrayIO n b
+    -> PrimIO (Either Errno (k ** CArrayIO k b))
+  readArr p w =
+    let ptr                  := unsafeUnwrap p
+        sz                   := sizeof b
+        MkIORes (Right bs) w := readPtr ptr (cast n * sz) w
+          | MkIORes (Left x) w => MkIORes (Left x) w
+        k                    := cast (bs `div` sz)
+     in MkIORes (Right (k ** unsafeWrap ptr)) w
+
+  ||| Reads at most `n * sizeof a` bytes into a preallocated array and
+  ||| converts it to a list of values.
+  export
+  readVals :
+       {n : _}
+    -> {auto sof : SizeOf b}
+    -> {auto der : Deref b}
+    -> CArrayIO n b
+    -> (b -> PrimIO c)
+    -> PrimIO (Either Errno $ List c)
+  readVals p f w =
+    let MkIORes (Right (k ** arr)) w := readArr p w
+          | MkIORes (Left x) w => MkIORes (Left x) w
+        MkIORes vs w           := values [] arr f k w
+     in MkIORes (Right vs) w
 
   ||| Reads at most `n` bytes from a file into a buffer.
   export %inline

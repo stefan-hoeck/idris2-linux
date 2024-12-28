@@ -18,10 +18,10 @@ prim__timerfd_create : Bits8 -> Bits32 -> PrimIO CInt
 prim__timerfd_settime : Bits32 -> Bits32 -> AnyPtr -> AnyPtr -> PrimIO CInt
 
 %foreign "C:li_timerfd_settime1, linux-idris"
-prim__timerfd_settime1 : Bits32 -> Bits32 -> AnyPtr -> PrimIO CInt
+prim__timerfd_settime1 : Bits32 -> Bits32 -> TimeT -> NsecT -> TimeT -> NsecT -> PrimIO CInt
 
 %foreign "C:li_timerfd_gettime, linux-idris"
-prim__timerfd_gettime : Bits32 -> AnyPtr -> PrimIO CInt
+prim__timerfd_gettime : Bits32 -> AnyPtr -> PrimIO ()
 
 %foreign "C:li_timerfd_read, linux-idris"
 prim__timerfd_read : Bits32 -> PrimIO Int64
@@ -52,7 +52,7 @@ Cast Timerfd Fd where cast = MkFd . fd
 ||| * In general, use `readTimerfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `timerfd`.
 export %inline
-timerfd : ErrIO io => ClockId -> TimerfdFlags -> io Timerfd
+timerfd : ClockId -> TimerfdFlags -> PrimIO (Either Errno Timerfd)
 timerfd c (F f) = toVal (TFD . cast) $ prim__timerfd_create (clockCode c) f
 
 ||| Sets the time of a `timerfd`.
@@ -61,20 +61,15 @@ timerfd c (F f) = toVal (TFD . cast) $ prim__timerfd_create (clockCode c) f
 ||| Use the `TFD_TIMER_ABSTIME` flag if the time should be interpreted as
 ||| an absolute wall clock time.
 export %inline
-settime : ErrIO io => Timerfd -> Bits32 -> (new,old : Itimerspec) -> io ()
-settime t f new old =
+setitime : Timerfd -> Bits32 -> (new,old : Itimerspec) -> PrimIO (Either Errno ())
+setitime t f new old =
   toUnit $ prim__timerfd_settime t.fd f (unwrap new) (unwrap old)
-
-||| Like `settime` but without storing the currently set `itimerspec`.
-export %inline
-settime' : ErrIO io => Timerfd -> Bits32 -> (new : Itimerspec) -> io ()
-settime' t f new = toUnit $ prim__timerfd_settime1 t.fd f (unwrap new)
 
 ||| Reads the currently set `itimerspec` of a `timerfd` and uses the given
 ||| pointer to place the data.
 export %inline
-gettime : ErrIO io => Timerfd -> (old : Itimerspec) -> io ()
-gettime t old = toUnit $ prim__timerfd_gettime t.fd (unwrap old)
+getitime : Timerfd -> (old : Itimerspec) -> PrimIO ()
+getitime t old = prim__timerfd_gettime t.fd (unwrap old)
 
 ||| Reads data from a `timerfd`.
 |||
@@ -84,7 +79,25 @@ gettime t old = toUnit $ prim__timerfd_gettime t.fd (unwrap old)
 ||| The value returned is the number of times the timer expired since
 ||| the last read.
 export %inline
-readTimerfd : ErrIO io => Timerfd -> io Bits64
-readTimerfd t = do
-  r <- primIO $ prim__timerfd_read t.fd
-  if r < 0 then error (fromNeg r) else pure (cast r)
+readTimerfd : Timerfd -> PrimIO (Either Errno Bits64)
+readTimerfd t w =
+  let MkIORes r w := prim__timerfd_read t.fd w
+   in MkIORes (if r < 0 then Left  $ fromNeg r else Right (cast r)) w
+
+--------------------------------------------------------------------------------
+-- Convenience API
+--------------------------------------------------------------------------------
+
+||| Like `setitime` but without storing the currently set `itimerspec`.
+export %inline
+setTime : Timerfd -> Bits32 -> Timerspec -> PrimIO (Either Errno ())
+setTime t f (TS i v) =
+  toUnit $ prim__timerfd_settime1 t.fd f i.secs i.nsecs v.secs v.nsecs
+
+||| Convenience alias for `getitime`.
+export %inline
+getTime : Timerfd -> PrimIO Timerspec
+getTime fd =
+  withStruct Itimerspec $ \str,w =>
+    let MkIORes _ w := getitime fd str w
+     in timerspec str w

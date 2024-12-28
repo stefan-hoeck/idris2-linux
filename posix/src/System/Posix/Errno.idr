@@ -102,6 +102,14 @@ withStruct a f w =
       MkIORes res w := f str w
    in freeingStruct str res w
 
+export %inline
+withPtr :  Bits32 -> (AnyPtr -> PrimIO b) -> PrimIO b
+withPtr sz f w =
+  let ptr           := prim__malloc sz
+      MkIORes res w := f ptr w
+      MkIORes _   w := prim__free ptr w
+   in MkIORes res w
+
 export
 primTraverse_ : (a -> PrimIO ()) -> List a -> PrimIO ()
 primTraverse_ f []        w = MkIORes () w
@@ -126,3 +134,19 @@ notErr err f w =
           if x == err
              then MkIORes (Right False) w
              else MkIORes (Left x) w
+
+export
+values :
+     {auto der : Deref b}
+  -> {auto sof : SizeOf b}
+  -> List c
+  -> CArrayIO n b
+  -> (b -> PrimIO c)
+  -> (k : Nat)
+  -> {auto 0 prf : LTE k n}
+  -> PrimIO (List c)
+values cs arr f 0     w = MkIORes cs w
+values cs arr f (S k) w =
+  let MkIORes vb w := primRun (getNat arr k) w
+      MkIORes vc w := f vb w
+   in values (vc::cs) arr f k w

@@ -517,8 +517,7 @@ int li_setitimer1(int which, time_t int_sec, suseconds_t int_usec, time_t sec,
   it.it_value.tv_usec = usec;
   it.it_interval.tv_sec = int_sec;
   it.it_interval.tv_usec = int_usec;
-  int res = li_setitimer(which, &it, NULL);
-  CHECKRES
+  return li_setitimer(which, &it, NULL);
 }
 
 int li_nanosleep(const struct timespec *req, struct timespec *rem) {
@@ -530,8 +529,7 @@ int li_nanosleep1(time_t sec, uint32_t nsec) {
   struct timespec ts;
   ts.tv_sec = sec;
   ts.tv_nsec = nsec;
-  int res = li_nanosleep(&ts, NULL);
-  CHECKRES
+  return li_nanosleep(&ts, NULL);
 }
 
 int li_clock_gettime(clockid_t id, struct timespec *ref) {

@@ -41,18 +41,17 @@ Cast Epollfd Fd where cast = MkFd . fd
 
 ||| Opens a new `epoll` file descriptor.
 export %inline
-epollCreate : ErrIO io => EpollFlags -> io Epollfd
+epollCreate : EpollFlags -> PrimIO (Either Errno Epollfd)
 epollCreate (F f) = toVal (EFD . cast) $ prim__epoll_create f
 
 export %inline
 epollCtl :
-     {auto eoi : ErrIO io}
-  -> {auto ifd : FileDesc f}
+     {auto ifd : FileDesc f}
   -> Epollfd
   -> EpollOp
   -> (fd : f)
   -> Event
-  -> io ()
+  -> PrimIO (Either Errno ())
 epollCtl (EFD efd) op fd (E ev) =
   toUnit $ prim__epoll_ctl efd (opCode op) (fileDesc fd) ev
 
@@ -70,27 +69,26 @@ Struct EpollEvent where
 export %inline
 SizeOf EpollEvent where sizeof_ = epoll_event_size
 
-export %inline
-epollWait :
-     {auto eoi : ErrIO io}
-  -> {n : _}
-  -> Epollfd
-  -> CArrayIO n EpollEvent
-  -> Int32
-  -> io (k ** CArrayIO k EpollEvent)
-epollWait (EFD efd) arr timeout =
-  let p := unsafeUnwrap arr
-   in do
-     num <- toVal cast $ prim__epoll_wait efd p (cast n) timeout
-     pure (num ** unsafeWrap p)
-
-export %inline
-events : HasIO io => EpollEvent -> io Event
-events (E p) =
-  primIO $ \w =>
-    let MkIORes n w := prim__get_epoll_event_events p w
-     in MkIORes (E n) w
-
-export %inline
-fd : HasIO io => EpollEvent -> io Bits32
-fd (E p) = primIO $ prim__get_epoll_event_fd p
+-- export %inline
+-- epollWait :
+--      {n : _}
+--   -> Epollfd
+--   -> CArrayIO n EpollEvent
+--   -> Int32
+--   -> PrimIO (Either Errno (k ** CArrayIO k EpollEvent))
+-- epollWait (EFD efd) arr timeout =
+--   let p := unsafeUnwrap arr
+--    in do
+--      num <- toVal cast $ prim__epoll_wait efd p (cast n) timeout
+--      pure (num ** unsafeWrap p)
+--
+-- export %inline
+-- events : HasIO io => EpollEvent -> io Event
+-- events (E p) =
+--   primIO $ \w =>
+--     let MkIORes n w := prim__get_epoll_event_events p w
+--      in MkIORes (E n) w
+--
+-- export %inline
+-- fd : HasIO io => EpollEvent -> io Bits32
+-- fd (E p) = primIO $ prim__get_epoll_event_fd p

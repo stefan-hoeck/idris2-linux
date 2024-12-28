@@ -78,16 +78,16 @@ record InotifyRes where
 
 ||| Opens a new `inotify` file descriptor.
 export %inline
-inotifyInit : ErrIO io => InotifyFlags -> io Inotify
+inotifyInit : InotifyFlags -> PrimIO (Either Errno Inotify)
 inotifyInit (IF f) = toVal (I . cast) $ prim__inotify_init1 f
 
 ||| Watches a file for the given events.
 export %inline
-inotifyAddWatch : ErrIO io => Inotify -> String -> InotifyMask -> io Watch
+inotifyAddWatch : Inotify -> String -> InotifyMask -> PrimIO (Either Errno Watch)
 inotifyAddWatch (I f) s (IM m) = toVal (W . cast) $ prim__inotify_add_watch f s m
 
 export %inline
-inotifyRm : ErrIO io => Inotify -> Watch -> io ()
+inotifyRm : Inotify -> Watch -> PrimIO (Either Errno ())
 inotifyRm (I f) (W w) = toUnit $ prim__inotify_rm f w
 
 results : SnocList InotifyRes -> AnyPtr -> AnyPtr -> Bits32 -> List InotifyRes
@@ -96,10 +96,12 @@ results : SnocList InotifyRes -> AnyPtr -> AnyPtr -> Bits32 -> List InotifyRes
 |||
 ||| This will block the
 export
-inotifyRead : ErrIO io => (buf : Bits32) -> Inotify -> io (List InotifyRes)
+inotifyRead : (buf : Bits32) -> Inotify -> PrimIO (Either Errno (List InotifyRes))
 inotifyRead buf i =
-  withPtr (cast buf) $ \p => readPtr i p buf >>= \x =>
-    pure (results [<] p p x)
+  withPtr (cast buf) $ \p,w =>
+    let MkIORes (Right x) w := readPtr i p buf w
+          | MkIORes (Left x) w => MkIORes (Left x) w
+     in MkIORes (Right $ results [<] p p x) w
 
 --------------------------------------------------------------------------------
 -- Extracting Results

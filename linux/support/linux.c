@@ -171,8 +171,14 @@ int li_timerfd_settime(int fd, int flags, struct itimerspec *new,
   CHECKRES
 }
 
-int li_timerfd_settime1(int fd, int flags, struct itimerspec *new) {
-  return li_timerfd_settime(fd, flags, new, NULL);
+int li_timerfd_settime1(int fd, int flags, time_t int_sec, uint32_t int_nsec,
+                        time_t sec, uint32_t nsec) {
+  struct itimerspec it;
+  it.it_value.tv_sec = sec;
+  it.it_value.tv_nsec = nsec;
+  it.it_interval.tv_sec = int_sec;
+  it.it_interval.tv_nsec = int_nsec;
+  return li_timerfd_settime(fd, flags, &it, NULL);
 }
 
 int li_timerfd_gettime(int fd, struct itimerspec *old) {

@@ -45,12 +45,12 @@ Cast Eventfd Fd where cast = MkFd . fd
 |||   from `System.Posix.File` to read from an `eventfd`.
 ||| * Likewise, use `writeEventfd` instead of `System.Posix.File.write`
 export %inline
-eventfd : ErrIO io => (init : Bits64) -> EventfdFlags -> io Eventfd
+eventfd : (init : Bits64) -> EventfdFlags -> PrimIO (Either Errno Eventfd)
 eventfd init (F f) = toVal (EFD . cast) $ prim__eventfd init f
 
 ||| Writes a value to the given event file descriptor.
 export %inline
-writeEventfd : ErrIO io => Eventfd -> Bits64 -> io ()
+writeEventfd : Eventfd -> Bits64 -> PrimIO (Either Errno ())
 writeEventfd t val = toUnit $ prim__eventfd_write t.fd val
 
 ||| Reads the current value from an event file descriptor.
@@ -60,5 +60,5 @@ writeEventfd t val = toUnit $ prim__eventfd_write t.fd val
 ||| if no value is ready. If opened with the `EFD_SEMAPHORE` flag, this will
 ||| return 1 if a value is ready and reduce the value by 1.
 export %inline
-readEventfd : ErrIO io => Eventfd -> io Bits64
+readEventfd : Eventfd -> PrimIO (Either Errno Bits64)
 readEventfd t = toVal cast $ prim__eventfd_read t.fd
