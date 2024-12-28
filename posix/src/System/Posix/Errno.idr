@@ -11,19 +11,19 @@ import public System.Posix.Errno.Type
 -- Interface
 --------------------------------------------------------------------------------
 
+public export
+data ERes : Type -> Type where
+  R : (v : t)   -> (1 w : %World) -> ERes t
+  E : (x : Errno) -> (1 w : %World) -> ERes t
+
+public export
+0 EPrim : Type -> Type
+EPrim t = (1 w : %World) -> ERes t
+
 ||| An interface for dealing with system errors in `IO`
 public export
 interface HasIO io => ErrIO io where
-  error : Errno -> io a
-
-||| Wraps a `PrimIO` with the potential of failure in an `IO` type with
-||| error handling.
-export %inline
-errIO : ErrIO io => PrimIO (Either Errno a) -> io a
-errIO run =
-  primIO run >>= \case
-    Left err => error err
-    Right v  => pure v
+  eprim : EPrim t -> io a
 
 ||| Prints the error text and name of a system error.
 export %inline
@@ -52,34 +52,47 @@ primMap f act w =
    in MkIORes (f v) w
 
 export %inline
-toSize : PrimIO SsizeT -> PrimIO (Either Errno Bits32)
-toSize = primMap (\r => if r < 0 then Left (fromNeg r) else Right (cast r))
+eprimMap : (a -> b) -> EPrim a -> EPrim b
+eprimMap f act w =
+  let R v w := act w | E x w => E x w
+   in R (f v) w
 
 export %inline
-toUnit : PrimIO CInt -> PrimIO (Either Errno ())
-toUnit = primMap (\r => if r < 0 then Left (fromNeg r) else Right ())
+toVal : (CInt -> a) -> PrimIO CInt -> EPrim a
+toVal f act w =
+  let MkIORes r w := act w
+   in if r < 0 then E (fromNeg r) w else R (f r) w
 
 export %inline
-toPidT : PrimIO PidT -> PrimIO (Either Errno PidT)
-toPidT = primMap (\r => if r < 0 then Left (fromNeg r) else Right r)
+toSize : PrimIO SsizeT -> EPrim Bits32
+toSize act w =
+  let MkIORes r w := act w
+   in if r < 0 then E (fromNeg r) w else R (cast r) w
 
 export %inline
-posToUnit : PrimIO Bits32 -> PrimIO (Either Errno ())
-posToUnit =
-  primMap $ \case
-    0 => Right ()
-    x => Left (EN x)
+toUnit : PrimIO CInt -> EPrim ()
+toUnit act w =
+  let MkIORes r w := act w
+   in if r < 0 then E (fromNeg r) w else R () w
 
 export %inline
-toRes : PrimIO a -> PrimIO CInt -> PrimIO (Either Errno a)
+toPidT : PrimIO PidT -> EPrim PidT
+toPidT act w =
+  let MkIORes r w := act w
+   in if r < 0 then E (fromNeg r) w else R r w
+
+export %inline
+posToUnit : PrimIO Bits32 -> EPrim ()
+posToUnit act w =
+  let MkIORes 0 w := act w | MkIORes x w => E (EN x) w
+   in R () w
+
+export %inline
+toRes : PrimIO a -> PrimIO CInt -> EPrim a
 toRes wrap act w =
-  let MkIORes (Right _) w := toUnit act w
-        | MkIORes (Left err) w => MkIORes (Left err) w
-   in primMap Right wrap w
-
-export %inline
-toVal : (CInt -> a) -> PrimIO CInt -> PrimIO (Either Errno a)
-toVal f = primMap (\r => if r < 0 then Left (fromNeg r) else Right (f r))
+  let R _ w       := toUnit act w | E x w => E x w
+      MkIORes r w := wrap w
+   in R r w
 
 --------------------------------------------------------------------------------
 -- General PrimIO Utilities
@@ -90,25 +103,34 @@ primStruct : (0 a : Type) -> Struct a => SizeOf a => PrimIO a
 primStruct a = toPrim (allocStruct a)
 
 export %inline
-freeingStruct : Struct a => a -> b -> PrimIO b
-freeingStruct v vb w =
-  let MkIORes _ w := toPrim (freeStruct v) w
-   in MkIORes vb w
+freeFail : Struct a => a -> Errno -> EPrim b
+freeFail v x w =
+  let MkIORes _ w := prim__free (unwrap v) w
+   in E x w
 
 export %inline
-withStruct : (0 a : Type) -> Struct a => SizeOf a => (a -> PrimIO b) -> PrimIO b
+freeSucc : Struct a => a -> b -> EPrim b
+freeSucc str v w =
+  let MkIORes _ w := prim__free (unwrap str) w
+   in R v w
+
+export %inline
+withStruct : (0 a : Type) -> Struct a => SizeOf a => (a -> EPrim b) -> EPrim b
 withStruct a f w =
   let MkIORes str w := primStruct a w
-      MkIORes res w := f str w
-   in freeingStruct str res w
+      R v w := f str w | E x w => freeFail str x w
+   in freeSucc str v w
 
 export %inline
-withPtr :  Bits32 -> (AnyPtr -> PrimIO b) -> PrimIO b
+withPtr :  Bits32 -> (AnyPtr -> EPrim b) -> EPrim b
 withPtr sz f w =
-  let ptr           := prim__malloc sz
-      MkIORes res w := f ptr w
-      MkIORes _   w := prim__free ptr w
-   in MkIORes res w
+  let ptr         := prim__malloc sz
+      R v w       := f ptr w
+        | E x w =>
+            let MkIORes _ w := prim__free ptr w
+             in E x w
+      MkIORes _ w := prim__free ptr w
+   in R v w
 
 export
 primTraverse_ : (a -> PrimIO ()) -> List a -> PrimIO ()
@@ -125,15 +147,13 @@ filterM sa f (h::t) w =
    in filterM (sa :< h) f t w
 
 export
-notErr : Errno -> PrimIO (Either Errno ()) -> PrimIO (Either Errno Bool)
+notErr : Errno -> EPrim () -> EPrim Bool
 notErr err f w =
-  let MkIORes r w := f w
-   in case r of
-        Right () => MkIORes (Right True) w
-        Left x   =>
-          if x == err
-             then MkIORes (Right False) w
-             else MkIORes (Left x) w
+  case f w of
+    R () w => R True w
+    E x  w => case x == err of
+      True  => R False w
+      False => E x w
 
 export
 values :

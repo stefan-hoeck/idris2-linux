@@ -10,31 +10,40 @@ depends = base >= 0.7.0
         , finite
 
 modules = System.Posix.Dir
+        , System.Posix.Dir.Prim
 
         , System.Posix.Errno
         , System.Posix.Errno.Type
 
         , System.Posix.File
         , System.Posix.File.Flags
+        , System.Posix.File.Prim
         , System.Posix.File.Stats
         , System.Posix.File.Type
         , System.Posix.File.Whence
 
         , System.Posix.Pipe
+        , System.Posix.Pipe.Prim
 
         , System.Posix.Process
         , System.Posix.Process.Flags
+        , System.Posix.Process.Prim
 
         , System.Posix.Pthreads
+        , System.Posix.Pthreads.Prim
+        , System.Posix.Pthreads.Struct
         , System.Posix.Pthreads.Types
 
         , System.Posix.Signal
+        , System.Posix.Signal.Prim
+        , System.Posix.Signal.Struct
         , System.Posix.Signal.Types
 
         , System.Posix.Time
         , System.Posix.Time.Types
 
         , System.Posix.Timer
+        , System.Posix.Timer.Prim
         , System.Posix.Timer.Types
 
         , System.Posix.Limits
