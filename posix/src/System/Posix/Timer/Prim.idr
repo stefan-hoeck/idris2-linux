@@ -132,9 +132,6 @@ IClock : ClockId -> Type
 IClock = Clock . ClockTpe
 
 ||| Like `setitimer` but does not store the old timer in a pointer.
-|||
-||| TODO: We could avoid the possibility for failure by checking that
-|||       the `SusecondsT` values are within bounds: [0 ... 999_999]
 export %inline
 setTimer : Which -> Timerval -> EPrim ()
 setTimer w (TRV (TV si ui) (TV sv uv)) =

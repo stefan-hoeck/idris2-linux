@@ -94,6 +94,13 @@ toRes wrap act w =
       MkIORes r w := wrap w
    in R r w
 
+export %inline
+ignore : EPrim a -> PrimIO ()
+ignore act w =
+  case act w of
+    R _ w => MkIORes () w
+    E _ w => MkIORes () w
+
 --------------------------------------------------------------------------------
 -- General PrimIO Utilities
 --------------------------------------------------------------------------------
