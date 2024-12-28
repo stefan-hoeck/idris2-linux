@@ -28,6 +28,7 @@ modules = System.Posix.Dir
         , System.Posix.Process
         , System.Posix.Process.Flags
         , System.Posix.Process.Prim
+        , System.Posix.Process.ProcStatus
 
         , System.Posix.Pthreads
         , System.Posix.Pthreads.Prim
