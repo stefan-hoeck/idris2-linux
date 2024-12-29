@@ -2,8 +2,6 @@ module System.Posix.File.Prim
 
 import Data.Bits
 
-import Derive.Prelude
-
 import public Data.Buffer
 import public Data.Buffer.Core
 import public Data.ByteString
@@ -12,12 +10,11 @@ import public Data.ByteVect
 import public Data.C.Ptr
 
 import public System.Posix.Errno
+import public System.Posix.File.FileDesc
 import public System.Posix.File.Flags
 import public System.Posix.File.Whence
 
 %default total
-%language ElabReflection
-%hide Language.Reflection.TTImp.Mode
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -91,56 +88,6 @@ prim__remove : String -> PrimIO CInt
 
 %foreign "C:li_readlink, posix-idris"
 prim__readlink : (file : String) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
-
---------------------------------------------------------------------------------
--- FileDesc
---------------------------------------------------------------------------------
-
-||| A wrapper around a file descriptor.
-public export
-record Fd where
-  constructor MkFd
-  fd : Bits32
-
-%name Fd fd
-
-%runElab derive "Fd" [Show,Eq,Ord]
-
-public export
-0 FileDesc : Type -> Type
-FileDesc a = Cast a Fd
-
-export %inline
-Cast Bits32 Fd where cast = MkFd
-
-export %inline
-fileDesc : FileDesc a => a -> Bits32
-fileDesc = fd . cast
-
-public export %inline
-SizeOf Fd where
-  sizeof_ = sizeof Bits32
-
-export %inline
-Deref Fd where
-  deref p = MkFd <$> deref p
-
-export %inline
-SetPtr Fd where
-  setPtr p = setPtr p . fd
-
-||| Standard input and output file descriptors
-public export
-data StdIO : Type where
-  Stdin  : StdIO
-  Stdout : StdIO
-  Stderr : StdIO
-
-%runElab derive "StdIO" [Show,Eq,Ord]
-
-export %inline
-Cast StdIO Fd where
-  cast = MkFd . cast . conIndexStdIO
 
 --------------------------------------------------------------------------------
 -- Utilities

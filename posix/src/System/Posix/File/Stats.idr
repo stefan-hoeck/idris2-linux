@@ -2,11 +2,11 @@ module System.Posix.File.Stats
 
 import Data.C.Ptr
 import Derive.Prelude
+import System.Clock
 import System.Posix.Errno
-import System.Posix.File
+import System.Posix.File.FileDesc
 import System.Posix.File.Type
 import System.Posix.Time
-import System.Clock
 
 %default total
 %language ElabReflection
@@ -96,12 +96,12 @@ toStatvfs (SSF p) w =
    in MkIORes (SF bs fbs bls frs abs fis ffs afs fid flg max) w
 
 %inline
-withStatvfs : (AnyPtr -> PrimIO CInt) -> PrimIO (Either Errno Statvfs)
+withStatvfs : (AnyPtr -> PrimIO CInt) -> EPrim Statvfs
 withStatvfs act =
   withStruct SStatvfs $ \s,w =>
-    let MkIORes (Right ()) w := toUnit (act $ unwrap s) w
-          | MkIORes (Left x) w => MkIORes (Left x) w
-     in primMap Right (toStatvfs s) w
+    let R _ w       := toUnit (act $ unwrap s) w | E x w => E x w
+        MkIORes r w := toStatvfs s  w
+     in R r w
 
 --------------------------------------------------------------------------------
 -- FileStats
@@ -203,12 +203,12 @@ fileStats (SFS p) w =
    in MkIORes (FS dev ino mode lnk uid gid rdv siz bsz bls ati mti cti) w
 
 %inline
-withFileStats : (AnyPtr -> PrimIO CInt) -> PrimIO (Either Errno FileStats)
+withFileStats : (AnyPtr -> PrimIO CInt) -> EPrim FileStats
 withFileStats act =
   withStruct SFileStats $ \s,w =>
-    let MkIORes (Right ()) w := toUnit (act $ unwrap s) w
-          | MkIORes (Left x) w => MkIORes (Left x) w
-     in primMap Right (fileStats s) w
+    let R _ w       := toUnit (act $ unwrap s) w | E x w => E x w
+        MkIORes r w := fileStats s w
+     in R r w
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -234,21 +234,21 @@ prim__fstat : Bits32 -> AnyPtr -> PrimIO CInt
 --------------------------------------------------------------------------------
 
 export %inline
-statvfs : String -> PrimIO (Either Errno Statvfs)
+statvfs : String -> EPrim Statvfs
 statvfs s = withStatvfs (prim__statvfs s)
 
 export %inline
-fstatvfs : FileDesc a => a -> PrimIO (Either Errno Statvfs)
+fstatvfs : FileDesc a => a -> EPrim Statvfs
 fstatvfs fd = withStatvfs (prim__fstatvfs (fileDesc fd))
 
 export %inline
-stat : String -> PrimIO (Either Errno FileStats)
+stat : String -> EPrim FileStats
 stat s = withFileStats (prim__stat s)
 
 export %inline
-lstat : String -> PrimIO (Either Errno FileStats)
+lstat : String -> EPrim FileStats
 lstat s = withFileStats (prim__lstat s)
 
 export
-fstat : FileDesc a => a -> PrimIO (Either Errno FileStats)
+fstat : FileDesc a => a -> EPrim FileStats
 fstat fd = withFileStats (prim__fstat (fileDesc fd))

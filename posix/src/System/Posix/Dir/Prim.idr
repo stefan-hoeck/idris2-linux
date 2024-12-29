@@ -1,11 +1,12 @@
-module System.Posix.Dir
+module System.Posix.Dir.Prim
 
 import Data.Buffer
 import public Data.Buffer.Core
 import public Data.ByteString
 import public Data.C.Integer
+import public System.Posix.Dir.Dir
 import public System.Posix.Errno
-import public System.Posix.File
+import public System.Posix.File.Prim
 
 %default total
 
@@ -50,64 +51,59 @@ prim__chroot : String -> PrimIO CInt
 -- API
 --------------------------------------------------------------------------------
 
-export
-record Dir where
-  constructor MkDir
-  ptr : AnyPtr
-
 ||| Creates a new directory.
 |||
 ||| This fails if the directory exists already. It also fails, if the
 ||| parent directory does not exist.
 export %inline
-mkdir : (pth : String) -> Mode -> PrimIO (Either Errno ())
+mkdir : (pth : String) -> Mode -> EPrim ()
 mkdir f (M m) = toUnit $ prim__mkdir f m
 
 ||| Opens a directory.
 export
-opendir : String -> PrimIO (Either Errno Dir)
+opendir : String -> EPrim Dir
 opendir s w =
   let MkIORes p w := prim__calloc_dir w
-   in toRes (MkIORes $ MkDir p) (prim__opendir s p) w
+   in toVal (const $ wrapdir p) (prim__opendir s p) w
 
 ||| Opens a directory from a file descriptor.
 export
-fdopendir : FileDesc a => a -> PrimIO (Either Errno Dir)
+fdopendir : FileDesc a => a -> EPrim Dir
 fdopendir fd w =
   let MkIORes p w := prim__calloc_dir w
-   in toRes (MkIORes $ MkDir p) (prim__fdopendir (fileDesc fd) p) w
+   in toRes (MkIORes $ wrapdir p) (prim__fdopendir (fileDesc fd) p) w
 
-||| Closes a directory.
+||| Rewinds a directory.
 export
 rewinddir : Dir -> PrimIO ()
-rewinddir (MkDir p) = prim__rewinddir p
+rewinddir p = prim__rewinddir (dirptr p)
 
 ||| Closes a directory.
 export
-closedir : Dir -> PrimIO (Either Errno ())
-closedir (MkDir p) = toUnit $ prim__closedir p
+closedir : Dir -> EPrim ()
+closedir p = toUnit $ prim__closedir (dirptr p)
 
 ||| Reads the next entry from a directory.
 export
-readdir : Dir -> PrimIO (Either Errno (Maybe ByteString))
-readdir (MkDir p) w =
-  let MkIORes bs w := toBytes 256 (\b,_ => prim__readdir p b) w
+readdir : Dir -> EPrim (Maybe ByteString)
+readdir p w =
+  let dp     := dirptr p
+      R bs w := toBytes 256 (\b,_ => prim__readdir dp b) w | E x w => E x w
    in case bs of
-        Right (BS 0 _) => MkIORes (Right Nothing) w
-        Right bs       => MkIORes (Right $ Just bs) w
-        Left x         => MkIORes (Left x) w
+        BS 0 _ => R Nothing w
+        bs     => R (Just bs) w
 
 ||| Returns the current working directory.
 export %inline
-getcwd : PrimIO (Either Errno ByteString)
+getcwd : EPrim ByteString
 getcwd = toBytes 4096 (prim__getcwd)
 
 ||| Changes the current working directory
 export
-chdir : String -> PrimIO (Either Errno ())
+chdir : String -> EPrim ()
 chdir p = toUnit $ prim__chdir p
 
 ||| Changes the current working directory
 export
-chroot : String -> PrimIO (Either Errno ())
+chroot : String -> EPrim ()
 chroot p = toUnit $ prim__chroot p

@@ -11,6 +11,7 @@ import public Data.ByteVect
 import public Data.C.Ptr
 
 import public System.Posix.Errno
+import public System.Posix.File.FileDesc
 import public System.Posix.File.Flags
 import public System.Posix.File.Whence
 
