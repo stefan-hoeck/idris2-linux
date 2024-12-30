@@ -1,13 +1,24 @@
-module System.Linux.Eventfd
+module System.Linux.Eventfd.Prim
 
-import System.Linux.Eventfd.Prim as P
-
-import public Data.C.Ptr
+import Data.C.Ptr
 import public System.Linux.Eventfd.Eventfd
 import public System.Linux.Eventfd.Flags
-import public System.Posix.File
+import public System.Posix.File.Prim
 
 %default total
+
+--------------------------------------------------------------------------------
+-- FFI
+--------------------------------------------------------------------------------
+
+%foreign "C:li_eventfd, linux-idris"
+prim__eventfd : Bits64 -> Bits32 -> PrimIO CInt
+
+%foreign "C:li_eventfd_write, linux-idris"
+prim__eventfd_write : Bits32 -> Bits64 -> PrimIO CInt
+
+%foreign "C:li_eventfd_read, linux-idris"
+prim__eventfd_read : Bits32 -> PrimIO CInt
 
 --------------------------------------------------------------------------------
 -- API
@@ -23,13 +34,13 @@ import public System.Posix.File
 |||   from `System.Posix.File` to read from an `eventfd`.
 ||| * Likewise, use `writeEventfd` instead of `System.Posix.File.write`
 export %inline
-eventfd : ErrIO io => (init : Bits64) -> EventfdFlags -> io Eventfd
-eventfd init = eprim . P.eventfd init
+eventfd : (init : Bits64) -> EventfdFlags -> EPrim Eventfd
+eventfd init (F f) = toVal cast $ prim__eventfd init f
 
 ||| Writes a value to the given event file descriptor.
 export %inline
-writeEventfd : ErrIO io => Eventfd -> Bits64 -> io ()
-writeEventfd fd = eprim . P.writeEventfd fd
+writeEventfd : Eventfd -> Bits64 -> EPrim ()
+writeEventfd t val = toUnit $ prim__eventfd_write (fileDesc t) val
 
 ||| Reads the current value from an event file descriptor.
 |||
@@ -38,5 +49,5 @@ writeEventfd fd = eprim . P.writeEventfd fd
 ||| if no value is ready. If opened with the `EFD_SEMAPHORE` flag, this will
 ||| return 1 if a value is ready and reduce the value by 1.
 export %inline
-readEventfd : ErrIO io => Eventfd -> io Bits64
-readEventfd = eprim . P.readEventfd
+readEventfd : Eventfd -> EPrim Bits64
+readEventfd t = toVal cast $ prim__eventfd_read (fileDesc t)

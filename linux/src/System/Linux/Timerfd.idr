@@ -1,47 +1,15 @@
 module System.Linux.Timerfd
 
+import System.Linux.Timerfd.Prim as P
+
+
 import public Data.C.Ptr
 import public System.Linux.Timerfd.Flags
+import public System.Linux.Timerfd.Timerfd
 import public System.Posix.File
 import public System.Posix.Timer
 
 %default total
-
---------------------------------------------------------------------------------
--- FFI
---------------------------------------------------------------------------------
-
-%foreign "C:li_timerfd_create, linux-idris"
-prim__timerfd_create : Bits8 -> Bits32 -> PrimIO CInt
-
-%foreign "C:li_timerfd_settime, linux-idris"
-prim__timerfd_settime : Bits32 -> Bits32 -> AnyPtr -> AnyPtr -> PrimIO CInt
-
-%foreign "C:li_timerfd_settime1, linux-idris"
-prim__timerfd_settime1 : Bits32 -> Bits32 -> TimeT -> NsecT -> TimeT -> NsecT -> PrimIO CInt
-
-%foreign "C:li_timerfd_gettime, linux-idris"
-prim__timerfd_gettime : Bits32 -> AnyPtr -> PrimIO ()
-
-%foreign "C:li_timerfd_read, linux-idris"
-prim__timerfd_read : Bits32 -> PrimIO Int64
-
---------------------------------------------------------------------------------
--- API
---------------------------------------------------------------------------------
-
-||| A file descriptor for signal handling.
-|||
-||| This can be used for synchronous signal handling using
-||| (blocking) `readSignalfd` directly, or for asynchronous signal handling
-||| using `epoll`.
-export
-record Timerfd where
-  constructor TFD
-  fd : Bits32
-
-export %inline
-Cast Timerfd Fd where cast = MkFd . fd
 
 ||| Opens a new `timerfd` file descriptor for observing the given clock.
 |||
@@ -52,8 +20,8 @@ Cast Timerfd Fd where cast = MkFd . fd
 ||| * In general, use `readTimerfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `timerfd`.
 export %inline
-timerfd : ClockId -> TimerfdFlags -> PrimIO (Either Errno Timerfd)
-timerfd c (F f) = toVal (TFD . cast) $ prim__timerfd_create (clockCode c) f
+timerfd : ErrIO io => ClockId -> TimerfdFlags -> io Timerfd
+timerfd c = eprim . P.timerfd c
 
 ||| Sets the time of a `timerfd`.
 |||
@@ -61,15 +29,14 @@ timerfd c (F f) = toVal (TFD . cast) $ prim__timerfd_create (clockCode c) f
 ||| Use the `TFD_TIMER_ABSTIME` flag if the time should be interpreted as
 ||| an absolute wall clock time.
 export %inline
-setitime : Timerfd -> Bits32 -> (new,old : Itimerspec) -> PrimIO (Either Errno ())
-setitime t f new old =
-  toUnit $ prim__timerfd_settime t.fd f (unwrap new) (unwrap old)
+setitime : ErrIO io => Timerfd -> Bits32 -> (new,old : Itimerspec) -> io ()
+setitime t f new = eprim . P.setitime t f new
 
 ||| Reads the currently set `itimerspec` of a `timerfd` and uses the given
 ||| pointer to place the data.
 export %inline
-getitime : Timerfd -> (old : Itimerspec) -> PrimIO ()
-getitime t old = prim__timerfd_gettime t.fd (unwrap old)
+getitime : HasIO io => Timerfd -> (old : Itimerspec) -> io ()
+getitime t = primIO . P.getitime t
 
 ||| Reads data from a `timerfd`.
 |||
@@ -79,10 +46,8 @@ getitime t old = prim__timerfd_gettime t.fd (unwrap old)
 ||| The value returned is the number of times the timer expired since
 ||| the last read.
 export %inline
-readTimerfd : Timerfd -> PrimIO (Either Errno Bits64)
-readTimerfd t w =
-  let MkIORes r w := prim__timerfd_read t.fd w
-   in MkIORes (if r < 0 then Left  $ fromNeg r else Right (cast r)) w
+readTimerfd : ErrIO io => Timerfd -> io Bits64
+readTimerfd = eprim . P.readTimerfd
 
 --------------------------------------------------------------------------------
 -- Convenience API
@@ -90,14 +55,10 @@ readTimerfd t w =
 
 ||| Like `setitime` but without storing the currently set `itimerspec`.
 export %inline
-setTime : Timerfd -> Bits32 -> Timerspec -> PrimIO (Either Errno ())
-setTime t f (TS i v) =
-  toUnit $ prim__timerfd_settime1 t.fd f i.secs i.nsecs v.secs v.nsecs
+setTime : ErrIO io => Timerfd -> Bits32 -> Timerspec -> io ()
+setTime t f = eprim . P.setTime t f
 
 ||| Convenience alias for `getitime`.
 export %inline
-getTime : Timerfd -> PrimIO Timerspec
-getTime fd =
-  withStruct Itimerspec $ \str,w =>
-    let MkIORes _ w := getitime fd str w
-     in timerspec str w
+getTime : ErrIO io => Timerfd -> io Timerspec
+getTime = eprim . P.getTime

@@ -10,12 +10,14 @@ depends = base >= 0.7.0
         , finite
 
 modules = System.Posix.Dir
+        , System.Posix.Dir.Dir
         , System.Posix.Dir.Prim
 
         , System.Posix.Errno
         , System.Posix.Errno.Type
 
         , System.Posix.File
+        , System.Posix.File.FileDesc
         , System.Posix.File.Flags
         , System.Posix.File.Prim
         , System.Posix.File.Stats

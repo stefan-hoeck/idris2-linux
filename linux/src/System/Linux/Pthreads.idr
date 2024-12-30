@@ -1,18 +1,16 @@
 module System.Linux.Pthreads
 
+import System.Linux.Pthreads.Prim as P
+
 import Data.C.Ptr
 import System.Posix.Signal
 import public System.Posix.Pthreads
 
 %default total
 
-%foreign "C:li_pthread_sigqueue, posix-idris"
-prim__pthread_sigqueue : AnyPtr -> Bits32 -> CInt -> PrimIO Bits32
-
 ||| Sends a realtime signal plus data word to a thread.
 |||
 ||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
 export %inline
-pthreadSigqueue : PthreadT -> Signal -> (word : CInt) -> PrimIO (Either Errno ())
-pthreadSigqueue p s word =
-  posToUnit $ prim__pthread_sigqueue (unwrapPthreadT p) s.sig word
+pthreadSigqueue : ErrIO io => PthreadT -> Signal -> (word : CInt) -> io ()
+pthreadSigqueue p s = eprim . P.pthreadSigqueue p s

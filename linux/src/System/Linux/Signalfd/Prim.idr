@@ -1,18 +1,20 @@
-module System.Linux.Signalfd
+module System.Linux.Signalfd.Prim
 
-import System.Linux.Signalfd.Prim as P
+import System.Posix.File.Prim
+import System.Posix.Signal.Prim
 
 import public Data.C.Ptr
 import public System.Linux.Signalfd.Flags
 import public System.Linux.Signalfd.Struct
-import public System.Posix.File
-import public System.Posix.Signal
 
 %default total
 
 --------------------------------------------------------------------------------
--- API
+-- FFI
 --------------------------------------------------------------------------------
+
+%foreign "C:li_signalfd, linux-idris"
+prim__signalfd : AnyPtr -> Bits32 -> PrimIO CInt
 
 ||| Opens a new `signalfd` file descriptor for observing the
 ||| signals specified in the given `SigsetT`.
@@ -25,8 +27,8 @@ import public System.Posix.Signal
 ||| * In general, use `readSignalfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `signalfd`.
 export %inline
-signalfd_ : ErrIO io => (set : SigsetT) -> SignalfdFlags -> io Signalfd
-signalfd_ set = eprim . P.signalfd_ set
+signalfd_ : (set : SigsetT) -> SignalfdFlags -> EPrim Signalfd
+signalfd_ set (F f) = toVal cast $ prim__signalfd (unwrap set) f
 
 --------------------------------------------------------------------------------
 -- Convenience API
@@ -34,18 +36,14 @@ signalfd_ set = eprim . P.signalfd_ set
 
 ||| Convenience alias for `signalfd_`.
 export %inline
-signalfd : ErrIO io => List Signal -> SignalfdFlags -> io Signalfd
-signalfd ss = eprim . P.signalfd ss
+signalfd : List Signal -> SignalfdFlags -> EPrim Signalfd
+signalfd ss fs = withSignals ss $ \set => signalfd_ set fs
 
 ||| Reads data from a `signalfd` into a pre-allocated array.
-|||
-||| Note: This will overwrite the data stored in `arr` and the
-|||       result is a wrapper around the same pointer.
-export
+export %inline
 readSignalfd :
      {n : _}
-  -> {auto eio : ErrIO io}
   -> Signalfd
-  -> (arr : CArrayIO n SSiginfo)
-  -> io (List Siginfo)
-readSignalfd fd = eprim . P.readSignalfd fd
+  -> CArrayIO n SSiginfo
+  -> EPrim (List Siginfo)
+readSignalfd fd arr = readVals fd arr siginfo

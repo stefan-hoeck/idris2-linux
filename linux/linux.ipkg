@@ -8,22 +8,34 @@ depends = base >= 0.7.0
 
 modules = System.Linux.Epoll
         , System.Linux.Epoll.Flags
+        , System.Linux.Epoll.Prim
+        , System.Linux.Epoll.Struct
 
         , System.Linux.Eventfd
+        , System.Linux.Eventfd.Eventfd
         , System.Linux.Eventfd.Flags
+        , System.Linux.Eventfd.Prim
 
         , System.Linux.Inotify
         , System.Linux.Inotify.Flags
+        , System.Linux.Inotify.Inotify
+        , System.Linux.Inotify.Prim
 
         , System.Linux.Pipe
+        , System.Linux.Pipe.Prim
 
         , System.Linux.Pthreads
+        , System.Linux.Pthreads.Prim
 
         , System.Linux.Signalfd
         , System.Linux.Signalfd.Flags
+        , System.Linux.Signalfd.Prim
+        , System.Linux.Signalfd.Struct
 
         , System.Linux.Timerfd
         , System.Linux.Timerfd.Flags
+        , System.Linux.Timerfd.Prim
+        , System.Linux.Timerfd.Timerfd
 
         , System.Linux.User.Passwd
 
