@@ -35,6 +35,14 @@ int main() {
   printf("\npublic export\n");
   printf("SIGRTMAX : Signal\n");
   printf("SIGRTMAX = %d\n", SIGRTMAX);
+#else
+  printf("\npublic export\n");
+  printf("SIGRTMIN : Signal\n");
+  printf("SIGRTMIN = 0\n");
+
+  printf("\npublic export\n");
+  printf("SIGRTMAX : Signal\n");
+  printf("SIGRTMAX = 0\n");
 #endif
 
   print_signal("SIGHUP", SIGHUP);

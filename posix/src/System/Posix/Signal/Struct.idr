@@ -9,11 +9,14 @@ import System.Posix.Signal.Types
 %default total
 %language ElabReflection
 
-export
+signals : List Signal
+signals =
+  map Signal.Types.S $
+    if SIGRTMAX > 31 then [1..sig SIGRTMAX] else [1..31]
+
+export %inline
 Finite Signal where
-  values =
-    map Signal.Types.S $
-      [1..8] ++ [10..15] ++ [17..27] ++ [29,31] ++ [sig SIGRTMIN .. sig SIGRTMAX]
+  values = signals
 
 --------------------------------------------------------------------------------
 -- FFI
