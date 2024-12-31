@@ -11,9 +11,11 @@ import IO.Async.Internal.Token
 import public IO.Async
 import public IO.Async.Loop
 import public IO.Async.Loop.Poller
+import public IO.Async.Loop.TimerH
 
 import System
 import System.Linux.Epoll
+import System.Linux.Timerfd
 import System.Posix.Signal
 
 %default total
@@ -163,6 +165,7 @@ app n sigs act = do
 -- Interfaces
 --------------------------------------------------------------------------------
 
+-- TODO: Handle errors
 export %inline
 addHandle :
      {auto fd : FileDesc a}
@@ -173,10 +176,26 @@ addHandle :
   -> PrimIO (PrimIO ())
 addHandle s = addHandle s.poller
 
--- export %inline
--- TimerH WorkST where
---   primWaitTill s = primWaitTill s.poller
---
--- export
--- SignalH WorkST where
---   primOnSignals s = primOnSignals s.poller
+%inline
+actAndClose : Bits32 -> PrimIO () -> Event -> PrimIO ()
+actAndClose tfd act e w =
+  let MkIORes _ w := act w
+      MkIORes _ w := prim__close tfd w
+   in MkIORes () w
+
+
+-- Timers
+
+-- TODO: Handle errors
+addTimer : WorkST -> Clock Monotonic -> PrimIO () -> PrimIO (PrimIO ())
+addTimer s clock act w =
+  let MkIORes fd w := prim__timerfd_create 1 0 w
+      tfd          := cast {to = Bits32} fd
+      secs         := cast {to = TimeT} (seconds clock)
+      nsecs        := cast {to = NsecT} (nanoseconds clock)
+      MkIORes _  w := prim__timerfd_settime1 tfd 0 0 0 secs nsecs w
+   in addHandle s tfd EPOLLIN (actAndClose tfd act) w
+
+export
+addSignal : WorkST -> List Signal -> (Signal -> PrimIO ()) -> PrimIO (PrimIO ())
+addSignal s ss act w = ?foooo
