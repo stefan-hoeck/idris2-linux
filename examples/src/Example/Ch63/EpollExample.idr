@@ -78,9 +78,11 @@ readSpec : Has ArgErr es => String -> Prog es Timerspec
 readSpec s =
   case forget $ split (':' ==) s of
     [x]   => do
+      fd    <- timerfd CLOCK_MONOTONIC 0
       (s,n) <- readPair x
       pure $ TS (duration 0 0) (duration s n)
     [x,y] => do
+      fd    <- timerfd CLOCK_MONOTONIC 0
       (s,n)   <- readPair x
       (si,ni) <- readPair y
       pure $ TS (duration si ni) (duration s n)

@@ -13,9 +13,8 @@ import public System.Posix.Timer
 
 ||| Opens a new `timerfd` file descriptor for observing the given clock.
 |||
-|||
 ||| Notes:
-||| * A `signalfd` should be closed using `close` just like other file
+||| * A `timerfd` should be closed using `close` just like other file
 |||   descriptors.
 ||| * In general, use `readTimerfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `timerfd`.
