@@ -4,10 +4,12 @@ authors = "stefan-hoeck"
 brief   = "The Linux Programming Interface in Async"
 
 depends = base >= 0.7.0
-        , posix
+        , posix-async
         , linux
-        , async
 
-modules = System.Linux.Async
+modules = IO.Async.Loop.Epoll
+        , IO.Async.Loop.Poller
+
+        , System.Linux.Async
 
 sourcedir = "src"

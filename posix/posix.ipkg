@@ -14,6 +14,7 @@ modules = System.Posix.Dir
         , System.Posix.Dir.Prim
 
         , System.Posix.Errno
+        , System.Posix.Errno.IO
         , System.Posix.Errno.Type
 
         , System.Posix.File
