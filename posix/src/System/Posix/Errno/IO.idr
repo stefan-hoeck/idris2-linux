@@ -11,8 +11,17 @@ import System
 
 %default total
 
+fromEprim : EPrim a -> IO (Either Errno a)
+fromEprim f =
+  fromPrim $ \w => case f w of
+    R v w => MkIORes (Right v) w
+    E x w => MkIORes (Left x) w
+
 export %inline
 ErrIO IO where
-  error e = die "\{errorText e} (\{errorName e})"
+  eprim act =
+    fromEprim act >>= \case
+      Left e  => die "\{errorText e} (\{errorName e})"
+      Right v => pure v
 
 

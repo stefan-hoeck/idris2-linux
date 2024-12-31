@@ -60,7 +60,7 @@ readPair s =
     [x,y] => [| MkPair (readOptIO OTime x) (readOptIO ONsecT y) |]
     _     => fail (WrongArgs usage)
 
-readSpec : Has ArgErr es => String -> Prog es Timerspec
+readSpec : Has Errno es => Has ArgErr es => String -> Prog es Timerspec
 readSpec s =
   case forget $ split (':' ==) s of
     [x]   => do
