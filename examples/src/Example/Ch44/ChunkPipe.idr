@@ -45,8 +45,8 @@ parameters {auto he : Has Errno es}
       strm buf =
         onErrno EAGAIN (stdoutLn "read: currently no data" >> strm buf) $
           readRaw i buf sz >>= \case
-            0 => stdoutLn "End of input."
-            n => stdoutLn "\{show n} bytes read" >> strm buf
+            (0 ** _) => stdoutLn "End of input."
+            (n ** _) => stdoutLn "\{show n} bytes read" >> strm buf
 
   covering
   chld : Bits32 -> Bits32 -> Vect 2 Fd -> Prog es ()

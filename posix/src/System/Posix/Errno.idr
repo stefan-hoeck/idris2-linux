@@ -23,7 +23,7 @@ EPrim t = (1 w : %World) -> ERes t
 ||| An interface for dealing with system errors in `IO`
 public export
 interface HasIO io => ErrIO io where
-  eprim : EPrim t -> io a
+  eprim : EPrim a -> io a
 
 ||| Prints the error text and name of a system error.
 export %inline
@@ -127,6 +127,14 @@ withStruct a f w =
   let MkIORes str w := primStruct a w
       R v w := f str w | E x w => freeFail str x w
    in freeSucc str v w
+
+export %inline
+withBox : (0 a : Type) -> SizeOf a => Deref a => (IOBox a -> EPrim b) -> EPrim b
+withBox a f w =
+  let MkIORes box w := toPrim (malloc a 1) w
+      R r w := f box w | E x w => let MkIORes _ w := toPrim (free box) w in E x w
+      MkIORes _   w := toPrim (free box) w
+   in R r w
 
 export %inline
 withPtr :  Bits32 -> (AnyPtr -> EPrim b) -> EPrim b

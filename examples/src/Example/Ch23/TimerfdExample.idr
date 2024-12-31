@@ -60,24 +60,25 @@ readPair s =
     [x,y] => [| MkPair (readOptIO OTime x) (readOptIO ONsecT y) |]
     _     => fail (WrongArgs usage)
 
-readSpec : Has ArgErr es => String -> Prog es Itimerspec
+readSpec : Has ArgErr es => String -> Prog es Timerspec
 readSpec s =
   case forget $ split (':' ==) s of
     [x]   => do
       (s,n) <- readPair x
-      itimerspec 0 0 s n
+      pure $ TS (duration 0 0) (duration s n)
     [x,y] => do
       (s,n)   <- readPair x
       (si,ni) <- readPair y
-      itimerspec si ni s n
+      pure $ TS (duration si ni) (duration s n)
     _     => fail (WrongArgs usage)
 
 covering
 app : Has Errno es => Has ArgErr es => (t,exp : String) -> Prog es ()
 app t exps = do
   exp  <- readOptIO ONat exps
-  use [timerfd CLOCK_MONOTONIC 0, readSpec t] $ \[fd,it] => do
-  settime' fd 0 it
+  use [timerfd CLOCK_MONOTONIC 0] $ \[fd] => do
+  ts <- readSpec t
+  setTime fd 0 ts
   start <- liftIO (clockTime Monotonic)
   loop exp fd start exp
 

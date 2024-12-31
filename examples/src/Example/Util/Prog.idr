@@ -15,7 +15,10 @@ Prog es a = EitherT (HSum es) IO a
 
 export %inline
 Has Errno es => ErrIO (EitherT (HSum es) IO) where
-  error = throwError . inject
+  eprim act =
+    MkEitherT $ fromPrim $ \w => case act w of
+      R r w => MkIORes (Right r) w
+      E x w => MkIORes (Left $ inject x) w
 
 --------------------------------------------------------------------------------
 -- Lifting computations

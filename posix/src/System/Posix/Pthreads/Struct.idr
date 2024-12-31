@@ -32,3 +32,24 @@ Eq PthreadT where
 export %inline
 Show PthreadT where
   show (P p) = show (believe_me {b = Bits64} p)
+
+||| Wrapper around a `pthread_mutex_t` pointer.
+|||
+||| Noted: While this provides additional flexibility over the type of mutex
+||| we use (see `mkmutex`) and how we acquire a lock on a mutex, it is less
+||| convenient to use than the garbage-collected version from
+||| `System.Concurrency`.
+public export
+record MutexT where
+  constructor M
+  ptr : AnyPtr
+
+||| Wrapper around a `pthread_cond_t` pointer.
+|||
+||| Noted: While this provides additional flexibility over the type of condition
+||| we use (see `mkcond`) convenient to use than the garbage-collected version from
+||| `System.Concurrency`.
+public export
+record CondT where
+  constructor C
+  ptr : AnyPtr

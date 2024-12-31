@@ -160,7 +160,7 @@ execlp s a w =
 ||| as with `wait` to get the returned exit status.
 export %inline
 system : (cmd : String) -> EPrim ProcStatus
-system cmd = toVal PS $ prim__system cmd
+system cmd = toVal procStatus $ prim__system cmd
 
 ||| Waits for one of the child processes of this process to
 ||| terminate.
@@ -169,8 +169,8 @@ system cmd = toVal PS $ prim__system cmd
 ||| that terminated. In addition, the termination status of the child
 ||| is written into the given pointer.
 export %inline
-wait : IOBox ProcStatus -> EPrim PidT
-wait s = toPidT $ prim__wait (unsafeUnwrap s)
+wait_ : IOBox CInt -> EPrim PidT
+wait_ s = toPidT $ prim__wait (unsafeUnwrap s)
 
 ||| Waits for the given child processes of to terminate.
 |||
@@ -178,13 +178,44 @@ wait s = toPidT $ prim__wait (unsafeUnwrap s)
 ||| In addition, it is possible to be notified about child processes that have
 ||| been terminated by a signal.
 export %inline
-waitpid : PidT -> Box ProcStatus -> WaitFlags -> EPrim PidT
-waitpid chld s (F f) = toPidT $ prim__waitpid chld (unsafeUnwrap s) f
+waitpid_ : PidT -> IOBox CInt -> WaitFlags -> EPrim PidT
+waitpid_ chld s (F f) = toPidT $ prim__waitpid chld (unsafeUnwrap s) f
 
 ||| More powerful version of `waitpid` supporting additional flags and
 ||| waiting on groups of children. Wait results are stored in the
 ||| provided `SiginfoT` pointer.
 export %inline
-waitid : IdType -> PidT -> SiginfoT -> WaitFlags -> EPrim ()
-waitid t chld s (F f) =
+waitid_ : IdType -> PidT -> SiginfoT -> WaitFlags -> EPrim ()
+waitid_ t chld s (F f) =
   toUnit $ prim__waitid (idtypeCode t) chld (unwrap s) f
+
+--------------------------------------------------------------------------------
+-- Convenience API
+--------------------------------------------------------------------------------
+
+||| Convenience version of `wait_`.
+export %inline
+wait : EPrim (PidT, ProcStatus)
+wait =
+  withBox CInt $ \box,w =>
+    let R r w := wait_ box w | E x r => E x r
+        MkIORes c w := primRun (unbox box) w
+     in R (r, procStatus c) w
+
+||| Convenience version of `waitpid_`.
+export %inline
+waitpid : PidT -> WaitFlags -> EPrim (PidT, ProcStatus)
+waitpid pid flags =
+  withBox CInt $ \box,w =>
+    let R r w := waitpid_ pid box flags w | E x r => E x r
+        MkIORes c w := primRun (unbox box) w
+     in R (r, procStatus c) w
+
+||| Convenience version of `waitid_`.
+export %inline
+waitid : IdType -> PidT -> WaitFlags -> EPrim Siginfo
+waitid t pid fs =
+  withStruct SiginfoT $ \ss,w =>
+    let R _ w := waitid_ t pid ss fs w | E x w => E x w
+        MkIORes si w := siginfo ss w
+     in R si w

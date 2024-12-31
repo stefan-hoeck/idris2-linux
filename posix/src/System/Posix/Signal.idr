@@ -81,4 +81,4 @@ sigwait ss = eprim (P.sigwait ss)
 |||       `sigprocmask`.
 export
 sigwaitinfo : ErrIO io => List Signal -> io Siginfo
-sigwaitinfo ss = eprim (P.sigwait ss)
+sigwaitinfo ss = eprim (P.sigwaitinfo ss)

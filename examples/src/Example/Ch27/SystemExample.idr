@@ -20,16 +20,8 @@ usage =
   """
 
 printStatus : ErrIO io => ProcStatus -> io ()
-printStatus s =
-  let x    := cast {to = Bits64} s.status
-      hx   := hex 4 x
-      stat := shiftR x 8
-      sig  := x .&. 0xff
-   in do
-     stdoutLn "system() returned: \{hx} (\{show stat}, \{show sig})"
-     case exited s && exitstatus s == 127 of
-       True  => stdoutLn "(Probably) could not invoke shell"
-       False => stdoutLn $ prettyStatus "" s
+printStatus (Exited 127) = stdoutLn "(Probably) could not invoke shell"
+printStatus s            = stdoutLn $ prettyStatus "" s
 
 covering
 loop : Has Errno es => Prog es ()

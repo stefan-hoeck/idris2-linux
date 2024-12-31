@@ -21,9 +21,6 @@ usage =
 
 parameters {auto has : Has Errno es}
            {auto haa : Has ArgErr es}
-           (ss       : SigsetT)
-           (si       : SiginfoT)
-           (status   : IOBox ProcStatus)
 
   child : PidT -> IORef Nat -> Prog es ()
   child prnt x = do
@@ -36,7 +33,7 @@ parameters {auto has : Has Errno es}
     stdoutLn "[ child ] now signalling parent"
     kill prnt SIGUSR1
     stdoutLn "[ child ] awaiting parent to do its work"
-    sigwaitinfo ss si
+    si <- sigwaitinfo [SIGUSR1]
     stdoutLn "[ child ] got informed by parent"
     exitWith (ExitFailure 10)
 
@@ -48,28 +45,25 @@ parameters {auto has : Has Errno es}
     v <- readIORef x
     stdoutLn "[ parent ] mutable ref is at \{show v} now"
     stdoutLn "[ parent ] awaiting child to do its work"
-    sigwaitinfo ss si
+    si <- sigwaitinfo [SIGUSR1]
     stdoutLn "[ parent ] got informed by child"
     stdoutLn "[ parent ] now signalling child"
     kill p SIGUSR1
     stdoutLn "[ parent ] waiting for child to finish"
-    chld <- wait status
-    st   <- runIO (unbox status)
-    stdoutLn "[ parent ] child \{show chld} exited with status \{show $ exitstatus st}"
+    (chld,st) <- wait
+    stdoutLn "[ parent ] child \{show chld} exited with status \{show st}"
 
   forkTest : Prog es ()
   forkTest = do
-    sigaddset ss SIGUSR1
-    sigprocmask' SIG_SETMASK ss
+    sigprocmask SIG_SETMASK [SIGUSR1]
     prnt <- getpid
     ref <- newIORef (S 110)
     fork >>= \case
       0 => child prnt ref
       p => parent p ref
 
-export
-forkExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
-forkExample ["--help"]  = stdoutLn usage
-forkExample []          =
-  use [emptySigset, allocStruct _, malloc _ _] $ \[x,y,z] => forkTest x y z
-forkExample args        = fail (WrongArgs usage)
+  export
+  forkExample : List String -> Prog es ()
+  forkExample ["--help"]  = stdoutLn usage
+  forkExample []          = forkTest
+  forkExample args        = fail (WrongArgs usage)

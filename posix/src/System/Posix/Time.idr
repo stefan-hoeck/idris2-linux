@@ -321,3 +321,7 @@ namespace Timerspec
         MkIORes sval w := Itimerspec.value its w
         MkIORes val  w := toClock sval w
      in MkIORes (TS iv val) w
+
+  export
+  duration : TimeT -> NsecT -> Clock Duration
+  duration s ns = makeDuration (cast s) (cast ns)

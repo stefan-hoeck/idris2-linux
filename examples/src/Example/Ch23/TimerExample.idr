@@ -34,9 +34,6 @@ timeval s u =
 
 parameters {auto has : Has Errno es}
            {auto haa : Has ArgErr es}
-           (it       : Itimerval)
-           (ss       : SigsetT)
-           (si       : SiginfoT)
            (calls    : IORef Nat)
            (start    : Clock Monotonic)
 
@@ -51,13 +48,7 @@ parameters {auto has : Has Errno es}
     stdout "\{pre} \{prettyClock $ timeDifference now start}"
 
     when includeTimer $ do
-      getitimer ITIMER_REAL it
-      iv  <- interval it
-      val <- value it
-      is  <- sec iv
-      iu  <- usec iv
-      s   <- sec val
-      u   <- usec val
+      TRV (TV is iu) (TV s u) <- getTimer ITIMER_REAL
       stdout "\{timeval s u}\{timeval is iu}"
 
     stdout "\n"
@@ -70,10 +61,10 @@ parameters {auto has : Has Errno es}
     case (((now - cl) * 10) `div` CLOCKS_PER_SEC) < 5 of
       False => pure (S k)
       True  =>
-        use1 sigpending (flip sigismember SIGALRM) >>= \case
+        sigpending >>= \ss => case SIGALRM `elem` ss of
           False => inner (S k) cl
           True  => do
-            sigwaitinfo ss si
+            _ <- sigwaitinfo ss
             displayTimes "ALARM:" True
             inner k cl
 
@@ -93,15 +84,13 @@ app s u is iu = do
   u  <- readOptIO OUTime u
   is <- readOptIO OTime  is
   iu <- readOptIO OUTime iu
-  use [emptySigset, itimerval is iu s u, allocStruct SiginfoT] $ \[ss,it,si] => do
-    sigaddset ss SIGALRM
-    sigprocmask' SIG_BLOCK ss
-    setitimer' ITIMER_REAL it
-    cl <- clock
-    start <- liftIO (clockTime Monotonic)
-    calls <- newIORef Z
-    displayTimes it ss si calls start "START:" False
-    outer it ss si calls start (if is == 0 && iu == 0 then 1 else 3) cl
+  sigprocmask SIG_BLOCK [SIGALRM]
+  setTimer ITIMER_REAL (TRV (TV is iu) (TV s u))
+  cl <- clock
+  start <- liftIO (clockTime Monotonic)
+  calls <- newIORef Z
+  displayTimes calls start "START:" False
+  outer calls start (if is == 0 && iu == 0 then 1 else 3) cl
 
 export covering
 timerExample : Has Errno es => Has ArgErr es => List String -> Prog es ()

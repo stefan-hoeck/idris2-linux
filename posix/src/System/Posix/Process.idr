@@ -7,6 +7,7 @@ import System.Posix.Process.Prim as P
 import public Data.C.Ptr
 import public System.Posix.Errno
 import public System.Posix.Process.Flags
+import public System.Posix.Process.ProcStatus
 
 %default total
 
@@ -127,11 +128,10 @@ parameters {auto eoi : ErrIO io}
   ||| terminate.
   |||
   ||| On success, this returns the process ID of the child process
-  ||| that terminated. In addition, the termination status of the child
-  ||| is written into the given pointer.
+  ||| that terminated plus its termination status.
   export %inline
-  wait : IOBox ProcStatus -> io PidT
-  wait = eprim . P.wait
+  wait : io (PidT, ProcStatus)
+  wait = eprim P.wait
 
   ||| Waits for the given child processes of to terminate.
   |||
@@ -139,12 +139,12 @@ parameters {auto eoi : ErrIO io}
   ||| In addition, it is possible to be notified about child processes that have
   ||| been terminated by a signal.
   export %inline
-  waitpid : PidT -> Box ProcStatus -> WaitFlags -> io PidT
-  waitpid chld s = eprim . P.waitpid chld s
+  waitpid : PidT -> WaitFlags -> io (PidT, ProcStatus)
+  waitpid chld = eprim . P.waitpid chld
 
   ||| More powerful version of `waitpid` supporting additional flags and
-  ||| waiting on groups of children. Wait results are stored in the
-  ||| provided `SiginfoT` pointer.
+  ||| waiting on groups of children. Wait results are stored in a `Siginfo`
+  ||| record.
   export %inline
-  waitid : IdType -> PidT -> SiginfoT -> WaitFlags -> io ()
-  waitid t chld s = eprim . P.waitid t chld s
+  waitid : IdType -> PidT -> WaitFlags -> io Siginfo
+  waitid t chld = eprim . P.waitid t chld

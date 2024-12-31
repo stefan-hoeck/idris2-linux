@@ -166,7 +166,7 @@ parameters {auto fid : FileDesc a}
   readRaw : Buffer -> (n : Bits32) -> EPrim (k ** IOBuffer k)
   readRaw buf n w =
     let R sz w := toSize (prim__read (fileDesc fd) buf n) w | E x w => E x w
-     in R (cast sz ** unsafeWrapBuffer buf) w
+     in R (cast sz ** unsafeMBuffer buf) w
 
   ||| Reads at most `n` bytes from a file into a bytestring.
   export
@@ -232,7 +232,11 @@ parameters {auto fid : FileDesc a}
 
   export %inline
   write : {n : _} -> IBuffer n -> EPrim Bits32
-  write ibuf = writeBytes (fromIBuffer ibuf)
+  write ibuf = writeRaw (unsafeGetBuffer ibuf) 0 (cast n)
+
+  export %inline
+  writeIO : {n : _} -> IOBuffer n -> EPrim Bits32
+  writeIO mbuf = writeRaw (unsafeFromMBuffer mbuf) 0 (cast n)
 
   export %inline
   writeStr : String -> EPrim Bits32

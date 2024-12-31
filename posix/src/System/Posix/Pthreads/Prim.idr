@@ -94,17 +94,6 @@ pthreadJoin p = posToUnit $ prim__pthread_join p.ptr
 -- MutexT
 --------------------------------------------------------------------------------
 
-||| Wrapper around a `pthread_mutex_t` pointer.
-|||
-||| Noted: While this provides additional flexibility over the type of mutex
-||| we use (see `mkmutex`) and how we acquire a lock on a mutex, it is less
-||| convenient to use than the garbage-collected version from
-||| `System.Concurrency`.
-export
-record MutexT where
-  constructor M
-  ptr : AnyPtr
-
 %inline
 Struct MutexT where
   unwrap = ptr
@@ -162,16 +151,6 @@ unlockMutex p = posToUnit $ prim__pthread_mutex_unlock (unwrap p)
 --------------------------------------------------------------------------------
 -- CondT
 --------------------------------------------------------------------------------
-
-||| Wrapper around a `pthread_cond_t` pointer.
-|||
-||| Noted: While this provides additional flexibility over the type of condition
-||| we use (see `mkcond`) convenient to use than the garbage-collected version from
-||| `System.Concurrency`.
-export
-record CondT where
-  constructor C
-  ptr : AnyPtr
 
 %inline
 Struct CondT where

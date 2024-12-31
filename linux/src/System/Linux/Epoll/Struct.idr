@@ -54,6 +54,6 @@ record EpollEvent where
 export
 epollEvent : SEpollEvent -> PrimIO EpollEvent
 epollEvent (SE p) w =
-  let MkIORes ev w := prim__get_epoll_event_fd p w
-      MkIORes fd w := prim__get_epoll_event_events p w
+  let MkIORes fd w := prim__get_epoll_event_fd p w
+      MkIORes ev w := prim__get_epoll_event_events p w
    in MkIORes (E (E ev) (cast fd)) w

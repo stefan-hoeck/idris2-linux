@@ -27,7 +27,7 @@ parameters {auto hf : Has Errno es}
 
   covering
   copyRaw : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es ()
-  copyRaw buf i o = streamRaw i buf (writeRawAll o 0)
+  copyRaw buf i o = streamRaw i buf (writeRawAll o)
 
   covering
   copy : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es ()

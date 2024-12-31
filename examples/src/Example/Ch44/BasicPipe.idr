@@ -27,7 +27,7 @@ parameters {auto he : Has Errno es}
   prnt pid [i,o] = do
     close o
     stdoutLn "Spawned child \{show pid}"
-    streamRaw i 0x1000 (writeRawAll Stdout 0)
+    streamRaw i 0x1000 (writeRawAll Stdout)
     close i
 
   covering

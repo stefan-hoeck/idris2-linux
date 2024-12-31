@@ -23,12 +23,8 @@ tryLT m n with (m < n) proof eq
 parameters {auto has : Has Errno es}
 
   export %inline
-  fopen : String -> Flags -> Mode -> Prog es Fd
-  fopen pth fs m = openFile pth fs m
-
-  export %inline
   withFile : String -> Flags -> Mode -> (Fd -> Prog es a) -> Prog es a
-  withFile pth fs m = use1 (fopen pth fs m)
+  withFile pth fs m = use1 (openFile pth fs m)
 
   export
   writeVect :
@@ -69,7 +65,7 @@ parameters {auto has : Has Errno es}
 
   export
   readFile : String -> Bits32 -> Prog es ByteString
-  readFile pth buf = withFile pth O_RDONLY 0 (flip read buf)
+  readFile pth buf = withFile pth O_RDONLY 0 $ \fd => read fd buf
 
   export
   readStr : String -> Bits32 -> Prog es String
@@ -86,10 +82,12 @@ parameters {auto has : Has Errno es}
   writeAllStr fd = writeAll fd . fromString
 
   export covering
-  writeRawAll : FileDesc a => a -> Bits32 -> Buffer -> Bits32 -> Prog es ()
-  writeRawAll fd o buf 0 = pure ()
-  writeRawAll fd o buf n =
-    writeRaw fd buf o n >>= \w => writeRawAll fd (o+w) buf (n-w)
+  writeRawAll : FileDesc a => a -> {k : _} -> IOBuffer k -> Prog es ()
+  writeRawAll fd buf = go 0 (cast k)
+    where
+      go : Bits32 -> Bits32 -> Prog es ()
+      go o 0 = pure ()
+      go o n = writeRaw fd (unsafeFromMBuffer buf) o n >>= \w => go (o+w) (n-w)
 
   export covering
   stream :
@@ -108,7 +106,7 @@ parameters {auto has : Has Errno es}
        {auto fid : FileDesc a}
     -> (fd : a)
     -> (buffer : Bits32)
-    -> (Buffer -> Bits32 -> Prog es ())
+    -> ({k : Nat} -> IOBuffer k -> Prog es ())
     -> Prog es ()
   streamRaw fd sz run = do
     buf <- primIO (prim__newBuf sz)
@@ -118,8 +116,8 @@ parameters {auto has : Has Errno es}
       go : Buffer -> Prog es ()
       go buf =
         readRaw fd buf sz >>= \case
-          0 => pure ()
-          n => run buf n >> go buf
+          (0 ** _) => pure ()
+          (k ** b) => run b >> go buf
 
   export
   readVect :
@@ -132,8 +130,8 @@ parameters {auto has : Has Errno es}
     -> Prog es (Vect n a)
   readVect fd n =
     use1 (malloc a n) $ \p => do
-      bs <- readArr fd p
-      if bs < cast n * sizeof a
+      (bs ** _) <- readArr fd p
+      if bs < n
         then fail EINVAL
         else runIO $ withIArray p toVect
 

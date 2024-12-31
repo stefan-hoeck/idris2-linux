@@ -30,24 +30,19 @@ prettyClock now start =
       nss := padLeft 2 '0' (show ns)
    in padLeft 7 ' ' "\{show $ seconds cl}.\{nss}"
 
--- tot : Nat -> Nat -> Bits64 -> String
--- tot exp rem now =
---   let s := padLeft 4 ' ' $ show ((exp `minus` rem) + cast now)
---    in "total: \{s}"
---
 parameters {auto has : Has Errno es}
            {auto haa : Has ArgErr es}
            (efd      : Epollfd)
            (tfd      : Timerfd)
            (sfd      : Signalfd)
-           (events   : CArrayIO 2 EpollEvent)
+           (events   : CArrayIO 2 SEpollEvent)
            (start    : Clock Monotonic)
 
   covering
   loop : Prog es ()
   loop = do
-    (k ** es) <- epollWait efd events (-1)
-    go k es
+    es <- epollWaitVals efd events (-1)
+    go es
 
     where
       covering readStdin : Prog es ()
@@ -57,20 +52,20 @@ parameters {auto has : Has Errno es}
           stdoutLn "got \{show bs.size} bytes from stdin"
           readStdin
 
-      go : (k : Nat) -> CArrayIO m EpollEvent -> (0 p : LTE k m) => Prog es ()
-      go 0     arr = loop
-      go (S k) arr = do
-        ee <- runIO (getNat arr k)
-        f  <- fd ee
-        case f == fileDesc tfd of
-          False => case f == fileDesc Stdin of
-            False => stdoutLn "Got SIGINT. Terminating now."
-            True  => readStdin >> go k arr
+      go : List EpollEvent -> Prog es ()
+      go []     = loop
+      go (E ev fd ::t) = do
+        case fd == cast tfd of
+          False => case fd == cast sfd of
+            True  => stdoutLn "Got SIGINT. Terminating now."
+            False => case fd == cast Stdin of
+              True => readStdin >> go t
+              False => stdoutLn "Unknown file descriptor: \{show fd}" >> go t
           True  => do
             now <- liftIO (clockTime Monotonic)
             x   <- readTimerfd tfd
             stdoutLn "\{prettyClock now start}: \{show x} tick(s)"
-            go k arr
+            go t
 
 readPair : Has ArgErr es => String -> Prog es (TimeT, NsecT)
 readPair s =
@@ -79,38 +74,36 @@ readPair s =
     [x,y] => [| MkPair (readOptIO OTime x) (readOptIO ONsecT y) |]
     _     => fail (WrongArgs usage)
 
-readSpec : Has ArgErr es => String -> Prog es Itimerspec
+readSpec : Has ArgErr es => String -> Prog es Timerspec
 readSpec s =
   case forget $ split (':' ==) s of
     [x]   => do
       (s,n) <- readPair x
-      itimerspec 0 0 s n
+      pure $ TS (duration 0 0) (duration s n)
     [x,y] => do
       (s,n)   <- readPair x
       (si,ni) <- readPair y
-      itimerspec si ni s n
+      pure $ TS (duration si ni) (duration s n)
     _     => fail (WrongArgs usage)
 
 covering
 app : Has Errno es => Has ArgErr es => (t : String) -> Prog es ()
-app t =
-  use1 emptySigset $ \fs => do
-    sigaddset fs SIGINT
-    sigprocmask' SIG_SETMASK fs
-    use
-      [ epollCreate 0
-      , timerfd CLOCK_MONOTONIC 0
-      , signalfd fs 0
-      , readSpec t
-      , malloc EpollEvent 2
-      ] $ \[efd,tfd,sfd,it,events] => do
-             settime' tfd 0 it
-             addFlags Stdin O_NONBLOCK
-             epollCtl efd Add tfd   EPOLLIN
-             epollCtl efd Add sfd   EPOLLIN
-             epollCtl efd Add Stdin (EPOLLIN <+> EPOLLET)
-             start <- liftIO (clockTime Monotonic)
-             loop efd tfd sfd events start
+app t = do
+  sigprocmask SIG_SETMASK [SIGINT]
+  ts <- readSpec t
+  use
+    [ epollCreate 0
+    , timerfd CLOCK_MONOTONIC 0
+    , signalfd [SIGINT] 0
+    , malloc SEpollEvent 2
+    ] $ \[efd,tfd,sfd,events] => do
+           setTime tfd 0 ts
+           addFlags Stdin O_NONBLOCK
+           epollCtl efd Add tfd   EPOLLIN
+           epollCtl efd Add sfd   EPOLLIN
+           epollCtl efd Add Stdin (EPOLLIN <+> EPOLLET)
+           start <- liftIO (clockTime Monotonic)
+           loop efd tfd sfd events start
 
 export covering
 epollExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
