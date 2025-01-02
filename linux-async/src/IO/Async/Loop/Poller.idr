@@ -8,9 +8,11 @@ import Data.Array
 import Data.C.Ptr
 
 import System.Linux.Eventfd
-import System.Linux.Epoll
+import System.Linux.Eventfd.Prim
+import System.Linux.Epoll.Prim
+import System.Linux.Epoll as E
+import System.Posix.File.Prim
 import System.Posix.Errno.IO
-import System.Posix.File
 import System.Posix.Limits
 
 %default total
@@ -28,9 +30,11 @@ record PollerST where
   lock     : Mutex
   maxFiles : Nat
   handles  : IOArray maxFiles FileHandle
-  events   : CArrayIO maxFiles EpollEvent
+  events   : CArrayIO maxFiles SEpollEvent
   alive    : Ref Alive
   epoll    : Epollfd
+  event    : Eventfd
+  queue    : Ref (SnocList $ PrimIO ())
 
 getHandle : PollerST -> Bits32 -> PrimIO FileHandle
 getHandle s f =
@@ -44,11 +48,15 @@ setHandle s f fh =
     Just v  => primRun (set s.handles v fh)
     Nothing => MkIORes ()
 
+prim : EPrim a -> PrimIO ()
+prim act w =
+  case act w of
+    R _ w => MkIORes () w
+    E x w => stderrLn "Error: \{errorText x} (\{errorName x})" w
+
 %inline
 ctl  : PollerST -> EpollOp -> Bits32 -> Event -> PrimIO ()
-ctl s op fd (E ev) w =
-  let MkIORes _  w := prim__epoll_ctl (fileDesc s.epoll) (opCode op) fd ev w
-   in MkIORes () w
+ctl s op fd ev = prim $ epollCtl s.epoll op fd ev
 
 removeHandle : PollerST -> Bits32 -> PrimIO ()
 removeHandle s b = ctl s Del b 0
@@ -66,28 +74,33 @@ handle s file ev fh w =
       MkIORes _ w := ctl s Add fd ev w
    in MkIORes (removeHandle s fd) w
 
-act :
-     PollerST
-  -> (k : Nat)
-  -> {auto 0 p : LTE k n}
-  -> CArrayIO n EpollEvent
-  -> PrimIO ()
-act s 0     arr w = MkIORes () w
-act s (S k) arr w =
-  let MkIORes ee w := primRun (getNat arr k) w
-      MkIORes fd w := prim__get_epoll_event_fd (unwrap ee) w
-      MkIORes ev w := prim__get_epoll_event_events (unwrap ee) w
-      MkIORes h  w := getHandle s fd w
-      MkIORes _  w := h (E ev) w
-   in act s k arr w
+act : PollerST -> List EpollEvent -> PrimIO ()
+act s []             w = MkIORes () w
+act s (E ev fd :: t) w =
+  let MkIORes h  w := getHandle s fd.fd w
+      MkIORes _  w := h ev w
+   in act s t w
+
+state : PollerST -> PrimIO (Alive, List (PrimIO ()))
+state s =
+  withMutex s.lock $ \w =>
+    let MkIORes al w := readRef s.alive w
+        MkIORes sa w := readRef s.queue w
+        MkIORes _  w := writeRef s.queue [<] w
+     in MkIORes (al, sa <>> []) w
+
+runAll : List (PrimIO ()) -> PrimIO ()
+runAll []        w = MkIORes () w
+runAll (x :: xs) w =
+  let MkIORes _ w := x w
+   in runAll xs w
 
 covering
 poll : PollerST -> PrimIO ()
 poll s w =
-  let MkIORes Run       w := withMutex s.lock (readRef s.alive) w
-        | MkIORes _ w => MkIORes () w
-      MkIORes (k ** es) w := toPrim (epollWait s.epoll s.events (-1)) w
-      MkIORes _         w := act s k es w
+  let MkIORes (Run,as) w := state s w | MkIORes _ w => MkIORes () w
+      R es w := epollWaitVals s.epoll s.events (-1) w | E x w => poll s w
+      MkIORes _        w := act s es w
    in poll s w
 
 --------------------------------------------------------------------------------
@@ -103,7 +116,9 @@ record Poller where
 ||| Stops the `Poller` by setting its `Alive` flag to `Stop`.
 export
 stop : Poller -> IO ()
-stop p = fromPrim $ withMutex p.st.lock $ writeRef p.st.alive Stop
+stop p = do
+  fromPrim $ withMutex p.st.lock $ writeRef p.st.alive Stop
+  writeEventfd p.st.event 1
 
 ||| Creates an asynchronous scheduler for timed tasks.
 |||
@@ -118,9 +133,12 @@ mkPoller = do
   efd     <- epollCreate 0
   lock    <- fromPrim mkMutex
   alive   <- fromPrim (newRef Run)
+  queue   <- fromPrim (newRef [<])
   handles <- newIOArray mfs (const primDummy)
-  events  <- malloc EpollEvent mfs
-  let pst := PST lock mfs handles events alive efd
+  events  <- malloc SEpollEvent mfs
+  event   <- eventfd 0 0
+  let pst := PST lock mfs handles events alive efd event queue
+  primIO $ setHandle pst (fileDesc event) (\_ => prim $ Prim.readEventfd event)
   id <- fork $ fromPrim $ poll pst
   pure (P id pst)
 

@@ -14,7 +14,10 @@ import System.Posix.File
 
 export %inline
 Has Errno es => ErrIO (Async e es) where
-  error = throw
+  eprim act =
+    sync $ fromPrim $ \w => case act w of
+      R r w => MkIORes (Right r) w
+      E x w => MkIORes (Left $ inject x) w
 
 export %inline
 Resource (CArrayIO n a) where
