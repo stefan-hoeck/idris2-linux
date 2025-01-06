@@ -42,6 +42,9 @@ Struct SEpollEvent where
 export %inline
 SizeOf SEpollEvent where sizeof_ = epoll_event_size
 
+export
+InIO SEpollEvent
+
 ||| Wrapper around a pointer of an `epoll_event` value.
 public export
 record EpollEvent where
@@ -52,8 +55,8 @@ record EpollEvent where
 %runElab derive "EpollEvent" [Show,Eq]
 
 export
-epollEvent : SEpollEvent -> PrimIO EpollEvent
-epollEvent (SE p) w =
-  let MkIORes fd w := prim__get_epoll_event_fd p w
-      MkIORes ev w := prim__get_epoll_event_events p w
-   in MkIORes (E (E ev) (cast fd)) w
+epollEvent : SEpollEvent -> F1 [World] EpollEvent
+epollEvent (SE p) t =
+  let fd # t := ffi (prim__get_epoll_event_fd p) t
+      ev # t := ffi (prim__get_epoll_event_events p) t
+   in E (E ev) (cast fd) # t

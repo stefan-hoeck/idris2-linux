@@ -68,9 +68,9 @@ getitime t old = prim__timerfd_gettime (fileDesc t) (unwrap old)
 ||| the last read.
 export %inline
 readTimerfd : Timerfd -> EPrim Bits64
-readTimerfd t w =
-  let MkIORes r w := prim__timerfd_read (fileDesc t) w
-   in if r < 0 then E (fromNeg r) w else R (cast r) w
+readTimerfd fd t =
+  let r # t := ffi (prim__timerfd_read (fileDesc fd)) t
+   in if r < 0 then E (fromNeg r) t else R (cast r) t
 
 --------------------------------------------------------------------------------
 -- Convenience API
@@ -86,7 +86,7 @@ setTime t f (TS i v) =
 export %inline
 getTime : Timerfd -> EPrim Timerspec
 getTime fd =
-  withStruct Itimerspec $ \str,w =>
-    let MkIORes _  w := getitime fd str w
-        MkIORes ts w := timerspec str w
-     in R ts w
+  withStruct Itimerspec $ \str,t =>
+    let _  # t := toF1 (getitime fd str) t
+        ts # t := timerspec str t
+     in R ts t

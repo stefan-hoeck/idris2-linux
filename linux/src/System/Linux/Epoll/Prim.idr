@@ -49,10 +49,10 @@ epollWait :
   -> CArrayIO n SEpollEvent
   -> Int32
   -> EPrim (k ** CArrayIO k SEpollEvent)
-epollWait efd arr timeout w =
-  let p := unsafeUnwrap arr
-      MkIORes r w := prim__epoll_wait (fileDesc efd) p (cast n) timeout w
-   in if r < 0 then E (fromNeg r) w else R (cast r ** unsafeWrap p) w
+epollWait efd arr timeout t =
+  let p     := unsafeUnwrap arr
+      r # t := ffi (prim__epoll_wait (fileDesc efd) p (cast n) timeout) t
+   in if r < 0 then E (fromNeg r) t else R (cast r ** unsafeWrap p) t
 
 export
 epollWaitVals :
@@ -61,7 +61,7 @@ epollWaitVals :
   -> CArrayIO n SEpollEvent
   -> Int32
   -> EPrim (List EpollEvent)
-epollWaitVals efd arr timeout w =
-  let R (k ** arr2) w := epollWait efd arr timeout w | E x w => E x w
-      MkIORes vs    w := values [] arr2 epollEvent k w
-   in R vs w
+epollWaitVals efd arr timeout t =
+  let R (k ** arr2) t := epollWait efd arr timeout t | E x t => E x t
+      vs # t          := values [] arr2 epollEvent k t
+   in R vs t
