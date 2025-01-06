@@ -43,7 +43,7 @@ export %inline
 SizeOf SEpollEvent where sizeof_ = epoll_event_size
 
 export
-InIO SEpollEvent
+InIO SEpollEvent where
 
 ||| Wrapper around a pointer of an `epoll_event` value.
 public export

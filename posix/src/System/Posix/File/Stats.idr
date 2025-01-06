@@ -63,7 +63,7 @@ SizeOf SStatvfs where
   sizeof_ = statvfs_size
 
 export
-InIO SStatvfs
+InIO SStatvfs where
 
 public export
 record Statvfs where

@@ -54,7 +54,7 @@ namespace Timespec
     sizeof_ = timespec_size
 
   export %inline
-  InIO STimespec
+  InIO STimespec where
 
   ||| Reads the `tv_sec` field of a `timespec` pointer.
   export %inline
@@ -128,7 +128,7 @@ namespace STimeval
     sizeof_ = timeval_size
 
   export %inline
-  InIO STimeval
+  InIO STimeval where
 
   export %inline
   sec : (r : STimeval) -> (0 p : Res r rs) => F1 rs TimeT
@@ -201,7 +201,7 @@ namespace Itimerval
     sizeof_ = itimerval_size
 
   export
-  InIO Itimerval
+  InIO Itimerval where
 
   export %inline
   interval : (r : Itimerval) -> F1 [World] STimeval

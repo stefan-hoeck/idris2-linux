@@ -72,7 +72,7 @@ Struct SigsetT where
   unwrap = ptr
 
 export
-InIO SigsetT
+InIO SigsetT where
 
 ||| Allocates a `sigset_t` with all signals cleared.
 |||
