@@ -107,12 +107,12 @@ SizeOf MutexT where sizeof_ = mutex_t_size
 ||| This must be freed with `destroyMutex`.
 export
 mkmutex : MutexType -> EPrim MutexT
-mkmutex t w =
-  let MkIORes m w := primStruct MutexT w
-      MkIORes x w := prim__pthread_mutex_init (unwrap m) (mutexCode t) w
+mkmutex mt t =
+  let m # t := primStruct MutexT t
+      x # t := toF1 (prim__pthread_mutex_init (unwrap m) (mutexCode mt)) t
    in case x of
-        0 => R m w
-        x => freeFail m (EN x) w
+        0 => R m t
+        x => freeFail m (EN x) t
 
 ||| Destroys a mutex and frees the memory allocated for it.
 export %inline
@@ -165,12 +165,12 @@ SizeOf CondT where sizeof_ = cond_t_size
 ||| This must be freed with `destroyCond`.
 export
 mkcond : EPrim CondT
-mkcond w =
-  let MkIORes m w := primStruct CondT w
-      MkIORes x w := prim__pthread_cond_init m.ptr w
+mkcond t =
+  let m # t := primStruct CondT t
+      x # t := toF1 (prim__pthread_cond_init m.ptr) t
    in case x of
-        0 => R m w
-        x => freeFail m (EN x) w
+        0 => R m t
+        x => freeFail m (EN x) t
 
 ||| Destroys a condition variable and frees the memory allocated for it.
 export %inline
@@ -285,6 +285,6 @@ pthreadKill t s = posToUnit $ prim__pthread_kill t.ptr s.sig
 export %inline
 pthreadSigmask : How -> List Signal -> EPrim ()
 pthreadSigmask h ss =
-  withSignals ss $ \p,w =>
-   let MkIORes _ w := prim__pthread_sigmask1 (howCode h) (unwrap p) w
-    in R () w
+  withSignals ss $ \p,t =>
+   let _ # t := toF1 (prim__pthread_sigmask1 (howCode h) (unwrap p)) t
+    in R () t

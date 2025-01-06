@@ -62,16 +62,16 @@ mkdir f (M m) = toUnit $ prim__mkdir f m
 ||| Opens a directory.
 export
 opendir : String -> EPrim Dir
-opendir s w =
-  let MkIORes p w := prim__calloc_dir w
-   in toVal (const $ wrapdir p) (prim__opendir s p) w
+opendir s t =
+  let p # t := ffi prim__calloc_dir t
+   in toVal (const $ wrapdir p) (prim__opendir s p) t
 
 ||| Opens a directory from a file descriptor.
 export
 fdopendir : FileDesc a => a -> EPrim Dir
-fdopendir fd w =
-  let MkIORes p w := prim__calloc_dir w
-   in toRes (MkIORes $ wrapdir p) (prim__fdopendir (fileDesc fd) p) w
+fdopendir fd t =
+  let p # t := ffi prim__calloc_dir t
+   in toRes (MkIORes $ wrapdir p) (prim__fdopendir (fileDesc fd) p) t
 
 ||| Rewinds a directory.
 export

@@ -141,28 +141,28 @@ setTimer w (TRV (TV si ui) (TV sv uv)) =
 export
 getTimer : Which -> EPrim Timerval
 getTimer wh =
-  withStruct Itimerval $ \str,w =>
-    let MkIORes _ w := getitimer wh str w
-        MkIORes r w := timerval str w
-     in R r w
+  withStruct Itimerval $ \str,t =>
+    let _ # t := toF1 (getitimer wh str) t
+        r # t := timerval str t
+     in R r t
 
 ||| Returns the current time for the given clock.
 export
 getTime : (c : ClockId) -> EPrim (IClock c)
 getTime c =
-  withStruct STimespec $ \str,w =>
-    let R _ w       := clockGetTime c str w | E x w => E x w
-        MkIORes c w := (toClock str) w
-     in R c w
+  withStruct STimespec $ \str,t =>
+    let R _ t := clockGetTime c str t | E x t => E x t
+        c # t := toClock str t
+     in R c t
 
 ||| Returns the resolution for the given clock.
 export
 getResolution : (c : ClockId) -> EPrim (IClock c)
 getResolution c =
-  withStruct STimespec $ \str,w =>
-    let R _ w       := clockGetRes c str w | E x w => E x w
-        MkIORes c w := (toClock str) w
-     in R c w
+  withStruct STimespec $ \str,t =>
+    let R _ t := clockGetRes c str t | E x t => E x t
+        c # t := toClock str t
+     in R c t
 
 ||| Like `nanosleep` but without the capability of keeping track of the
 ||| remaining duration in case of a signal interrupt.

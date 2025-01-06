@@ -96,18 +96,18 @@ abort : PrimIO ()
 ||| Suspends the current thread until a non-blocked signal is encountered.
 export %inline
 pause : EPrim ()
-pause w =
-  let MkIORes r w := primMap fromNeg prim__pause w
-   in if r == EINTR then R () w else E r w
+pause t =
+  let r # t := toF1 (primMap fromNeg prim__pause) t
+   in if r == EINTR then R () t else E r t
 
 ||| Atomically blocks the signals in `set`, then
 ||| pauses the thread (see `pause`) and restores the signal set
 ||| afterwards.
 export %inline
 sigsuspend_ : (set : SigsetT) -> EPrim ()
-sigsuspend_ s w =
-  let MkIORes r w := primMap fromNeg (prim__sigsuspend $ unwrap s) w
-   in if r == EINTR then R () w else E r w
+sigsuspend_ s t =
+  let r # t := toF1 (primMap fromNeg (prim__sigsuspend $ unwrap s)) t
+   in if r == EINTR then R () t else E r t
 
 ||| Synchronously awaits one of the signals in `set`.
 |||
@@ -145,16 +145,16 @@ sigtimedwait s i sec nsec =
 export %inline
 sigprocmask : How -> List Signal -> EPrim ()
 sigprocmask h ss =
-  withSignals ss $ \p,w =>
-    let MkIORes _ w := prim__sigprocmask1 (howCode h) (unwrap p) w
-     in R () w
+  withSignals ss $ \p,t =>
+    let _ # t := toF1 (prim__sigprocmask1 (howCode h) (unwrap p)) t
+     in R () t
 
 ||| Returns the current signal mask of the process.
 export %inline
 siggetprocmask : PrimIO (List Signal)
 siggetprocmask w =
   let MkIORes p  w := prim__siggetprocmask w
-      MkIORes ss w := getSignals (wrap p) w
+      MkIORes ss w := primRun (getSignals (wrap p)) w
       MkIORes _  w := prim__free p w
    in MkIORes ss w
 
@@ -163,7 +163,7 @@ export %inline
 sigpending : PrimIO (List Signal)
 sigpending w =
   let MkIORes p  w := prim__sigpending w
-      MkIORes ss w := getSignals (wrap p) w
+      MkIORes ss w := primRun (getSignals (wrap p)) w
       MkIORes _  w := prim__free p w
    in MkIORes ss w
 
@@ -181,7 +181,7 @@ sigwait ss = withSignals ss sigwait_
 export
 sigwaitinfo : List Signal -> EPrim Siginfo
 sigwaitinfo ss =
-  withSignals ss $ \set => withStruct SiginfoT $ \si,w =>
-    let R _ w       := sigwaitinfo_ set si w | E x w => E x w
-        MkIORes r w := siginfo si w
-     in R r w
+  withSignals ss $ \set => withStruct SiginfoT $ \si,t =>
+    let R _ t := sigwaitinfo_ set si t | E x t => E x t
+        r # t := siginfo si t
+     in R r t

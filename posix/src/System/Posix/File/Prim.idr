@@ -96,12 +96,12 @@ prim__readlink : (file : String) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 ||| Converts a number of bytes read into a buffer to a `ByteString`
 export %inline
 toBytes : Bits32 -> (Buffer -> Bits32 -> PrimIO SsizeT) -> EPrim ByteString
-toBytes n act w =
-  let MkIORes buf w := prim__newBuf n w
-      MkIORes rd  w := act buf n w
+toBytes n act t =
+  let buf # t := toF1 (prim__newBuf n) t
+      rd  # t := toF1 (act buf n) t
    in if rd < 0
-         then E (fromNeg rd) w
-         else R (unsafeByteString (cast rd) buf) w
+         then E (fromNeg rd) t
+         else R (unsafeByteString (cast rd) buf) t
 
 export %inline
 toFD : PrimIO CInt -> EPrim Fd
@@ -156,10 +156,10 @@ parameters {auto fid : FileDesc a}
     -> CArrayIO n b
     -> (b -> PrimIO c)
     -> EPrim (List c)
-  readVals p f w =
-    let R (k ** arr) w := readArr p w | E x w => E x w
-        MkIORes vs   w := values [] arr f k w
-     in R vs w
+  readVals p f t =
+    let R (k ** arr) t := readArr p t | E x t => E x t
+        vs # t         := values [] arr (toF1 . f) k t
+     in R vs t
 
   ||| Reads at most `n` bytes from a file into a buffer.
   export %inline
@@ -292,9 +292,9 @@ parameters {auto fid : FileDesc a}
   ||| Gets the flags set at an open file descriptor.
   export
   getFlags : EPrim Flags
-  getFlags w =
-   let MkIORes r w := prim__getFlags (fileDesc fd) w
-    in if r < 0 then E (fromNeg r) w else R (F $ cast r) w
+  getFlags t =
+   let r # t := toF1 (prim__getFlags (fileDesc fd)) t
+    in if r < 0 then E (fromNeg r) t else R (F $ cast r) t
 
   ||| Sets the flags of an open file descriptor.
   |||
@@ -324,14 +324,14 @@ truncate f len = toUnit $ prim__truncate f len
 ||| Atomically creates and opens a temporary, unique file.
 export
 mkstemp : String -> EPrim (Fd, String)
-mkstemp f w =
-  let pat := "\{f}XXXXXX"
-      len := stringByteLength pat
-      MkIORes buf w := prim__newBuf (cast len) w
-      MkIORes _ w   := toPrim (setString buf 0 pat) w
-      R fd w := toFD (prim__mkstemp buf) w | E x w => E x w
-      MkIORes str w :=  toPrim (getString buf 0 len) w
-   in R (fd, str) w
+mkstemp f t =
+  let pat     := "\{f}XXXXXX"
+      len     := stringByteLength pat
+      buf # t := toF1 (prim__newBuf (cast len)) t
+      _   # t := ioToF1 (setString buf 0 pat) t
+      R fd  t := toFD (prim__mkstemp buf) t | E x t => E x t
+      str # t := ioToF1 (getString buf 0 len) t
+   in R (fd, str) t
 
 --------------------------------------------------------------------------------
 -- Links

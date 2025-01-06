@@ -120,13 +120,13 @@ execve s a e = toUnit $ prim__execve s (unsafeUnwrap a) (unsafeUnwrap e)
 ||| the arguments list and environment.
 export
 execle : String -> List String -> List (String,String) -> EPrim ()
-execle s a e w =
-  let MkIORes args w := toPrim (fromListIO (map Just a ++ [Nothing])) w
-      MkIORes env  w := toPrim (fromListIO (map envpair e ++ [Nothing])) w
-      R res w        := execve s args env w | E x w => E x w
-      MkIORes _    w := toPrim (free args) w
-      MkIORes _    w := toPrim (free env) w
-   in R res w
+execle s a e t =
+  let args # t := ioToF1 (fromListIO (map Just a ++ [Nothing])) t
+      env  # t := ioToF1 (fromListIO (map envpair e ++ [Nothing])) t
+      R res  t := execve s args env t | E x t => E x t
+      _    # t := ioToF1 (free args) t
+      _    # t := ioToF1 (free env) t
+   in R res t
 
   where
     envpair : (String,String) -> Maybe String
@@ -147,11 +147,11 @@ execvp s a = toUnit $ prim__execvp s (unsafeUnwrap a)
 ||| the list of arguments.
 export
 execlp : String -> List String -> EPrim ()
-execlp s a w =
-  let MkIORes args w := toPrim (fromListIO (map Just a ++ [Nothing])) w
-      R res  w       := execvp s args w | E x w => E x w
-      MkIORes _    w := toPrim (free args) w
-   in R res w
+execlp s a t =
+  let args # t := ioToF1 (fromListIO (map Just a ++ [Nothing])) t
+      R res  t := execvp s args t | E x t => E x t
+      _    # t := ioToF1 (free args) t
+   in R res t
 
 ||| Runs the given shell command in a child process.
 |||
@@ -197,25 +197,25 @@ waitid_ t chld s (F f) =
 export %inline
 wait : EPrim (PidT, ProcStatus)
 wait =
-  withBox CInt $ \box,w =>
-    let R r w := wait_ box w | E x r => E x r
-        MkIORes c w := primRun (unbox box) w
-     in R (r, procStatus c) w
+  withBox CInt $ \box,t =>
+    let R r t := wait_ box t | E x r => E x r
+        c # t := unbox box t
+     in R (r, procStatus c) t
 
 ||| Convenience version of `waitpid_`.
 export %inline
 waitpid : PidT -> WaitFlags -> EPrim (PidT, ProcStatus)
 waitpid pid flags =
-  withBox CInt $ \box,w =>
-    let R r w := waitpid_ pid box flags w | E x r => E x r
-        MkIORes c w := primRun (unbox box) w
-     in R (r, procStatus c) w
+  withBox CInt $ \box,t =>
+    let R r t := waitpid_ pid box flags t | E x r => E x r
+        c # t := unbox box t
+     in R (r, procStatus c) t
 
 ||| Convenience version of `waitid_`.
 export %inline
 waitid : IdType -> PidT -> WaitFlags -> EPrim Siginfo
-waitid t pid fs =
-  withStruct SiginfoT $ \ss,w =>
-    let R _ w := waitid_ t pid ss fs w | E x w => E x w
-        MkIORes si w := siginfo ss w
-     in R si w
+waitid it pid fs =
+  withStruct SiginfoT $ \ss,t =>
+    let R _  t := waitid_ it pid ss fs t | E x t => E x t
+        si # t := siginfo ss t
+     in R si t

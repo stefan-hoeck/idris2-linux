@@ -6,6 +6,7 @@
 ||| encountered.
 module System.Posix.Errno.IO
 
+import Data.Linear.Token
 import System.Posix.Errno
 import System
 
@@ -13,9 +14,9 @@ import System
 
 fromEprim : EPrim a -> IO (Either Errno a)
 fromEprim f =
-  fromPrim $ \w => case f w of
-    R v w => MkIORes (Right v) w
-    E x w => MkIORes (Left x) w
+  runIO $ \t => case f t of
+    R v t => Right v # t
+    E x t => Left x # t
 
 export %inline
 ErrIO IO where

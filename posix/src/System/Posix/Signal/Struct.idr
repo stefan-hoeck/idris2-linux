@@ -2,6 +2,7 @@ module System.Posix.Signal.Struct
 
 import Data.C.Ptr
 import Data.Finite
+import Data.Linear.Traverse1
 import Derive.Prelude
 import System.Posix.Errno
 import System.Posix.Signal.Types
@@ -70,6 +71,9 @@ Struct SigsetT where
   wrap   = S
   unwrap = ptr
 
+export
+InIO SigsetT
+
 ||| Allocates a `sigset_t` with all signals cleared.
 |||
 ||| This must be freed with `freeSigset`.
@@ -86,51 +90,50 @@ fullSigset = primMap S prim__fullsigset
 
 ||| Adds a signal to a `sigset_t`
 export %inline
-sigaddset : SigsetT -> Signal -> PrimIO ()
-sigaddset (S p) s = prim__sigaddset p s.sig
+sigaddset : (r : SigsetT) -> Signal -> F1 [World] ()
+sigaddset (S p) s = ffi $ prim__sigaddset p s.sig
 
 ||| Removes a signal from a `sigset_t`
 export %inline
-sigdelset : SigsetT -> Signal -> PrimIO ()
-sigdelset (S p) s = prim__sigdelset p s.sig
+sigdelset : (r : SigsetT) -> Signal -> F1 [World] ()
+sigdelset (S p) s = ffi $ prim__sigdelset p s.sig
 
 ||| Tests if a signal is a member of a `sigset_t`.
 export %inline
-sigismember : SigsetT -> Signal -> PrimIO Bool
-sigismember (S p) s w =
-  let MkIORes r w := prim__sigismember p s.sig w
-   in case r of
-        0 => MkIORes False w
-        _ => MkIORes True w
+sigismember : (r : SigsetT) -> Signal -> F1 [World] Bool
+sigismember (S p) s t =
+  case ffi (prim__sigismember p s.sig) t of
+    0 # t => False # t
+    _ # t => True # t
 
 ||| Extracts the set signals from a `SigsetT`.
 export %inline
-getSignals : SigsetT -> PrimIO (List Signal)
+getSignals : (r : SigsetT) -> F1 [World] (List Signal)
 getSignals set = filterM [<] (sigismember set) values
 
 export
 withSignals : List Signal -> (SigsetT -> EPrim a) -> EPrim a
-withSignals ss f w =
-  let MkIORes sigs w := emptySigset w
-      MkIORes _    w := primTraverse_ (sigaddset sigs) ss w
-      R res        w := f sigs w
-        | E x w =>
-            let MkIORes _ w := toPrim (freeStruct sigs) w
-             in E x w
-      MkIORes _    w := toPrim (freeStruct sigs) w
-   in R res w
+withSignals ss f t =
+  let sigs # t := toF1 emptySigset t
+      _    # t := traverse1_ (\s => sigaddset sigs s) ss t
+      R res  t := f sigs t
+        | E x t =>
+            let _ # t := ioToF1 (freeStruct sigs) t
+             in E x t
+      _# t := ioToF1 (freeStruct sigs) t
+   in R res t
 
 export
 withoutSignals : List Signal -> (SigsetT -> EPrim a) -> EPrim a
-withoutSignals ss f w =
-  let MkIORes sigs w := fullSigset w
-      MkIORes _    w := primTraverse_ (sigdelset sigs) ss w
-      R res        w := f sigs w
-        | E x w =>
-            let MkIORes _ w := toPrim (freeStruct sigs) w
-             in E x w
-      MkIORes _    w := toPrim (freeStruct sigs) w
-   in R res w
+withoutSignals ss f t =
+  let sigs # t := toF1 fullSigset t
+      _    # t := traverse1_ (\s => sigdelset sigs s) ss t
+      R res  t := f sigs t
+        | E x t =>
+            let _ # t := ioToF1 (freeStruct sigs) t
+             in E x t
+      _ # t := ioToF1 (freeStruct sigs) t
+   in R res t
 
 --------------------------------------------------------------------------------
 -- Siginfo
@@ -163,12 +166,12 @@ record Siginfo where
 %runElab derive "Siginfo" [Show,Eq]
 
 export
-siginfo : SiginfoT -> PrimIO Siginfo
-siginfo (ST p) w =
-  let MkIORes sig w := get_siginfo_t_si_signo p w
-      MkIORes cod w := get_siginfo_t_si_code p w
-      MkIORes pid w := get_siginfo_t_si_pid p w
-      MkIORes uid w := get_siginfo_t_si_uid p w
-      MkIORes stt w := get_siginfo_t_si_status p w
-      MkIORes val w := get_siginfo_t_si_value p w
-   in MkIORes (SI (S sig) cod pid uid stt val) w
+siginfo : SiginfoT -> F1 [World] Siginfo
+siginfo (ST p) t =
+  let sig # t := ffi (get_siginfo_t_si_signo p) t
+      cod # t := ffi (get_siginfo_t_si_code p) t
+      pid # t := ffi (get_siginfo_t_si_pid p) t
+      uid # t := ffi (get_siginfo_t_si_uid p) t
+      stt # t := ffi (get_siginfo_t_si_status p) t
+      val # t := ffi (get_siginfo_t_si_value p) t
+   in SI (S sig) cod pid uid stt val # t

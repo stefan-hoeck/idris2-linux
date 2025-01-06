@@ -62,6 +62,9 @@ export %inline
 SizeOf SStatvfs where
   sizeof_ = statvfs_size
 
+export
+InIO SStatvfs
+
 public export
 record Statvfs where
   constructor SF
@@ -80,28 +83,28 @@ record Statvfs where
 %runElab derive "Statvfs" [Show,Eq]
 
 export
-toStatvfs : SStatvfs -> PrimIO Statvfs
-toStatvfs (SSF p) w =
-  let MkIORes bs  w :=  get_statvfs_f_bsize p w
-      MkIORes fbs w :=  get_statvfs_f_frsize p w
-      MkIORes bls w :=  get_statvfs_f_blocks p w
-      MkIORes frs w :=  get_statvfs_f_bfree p w
-      MkIORes abs w :=  get_statvfs_f_bavail p w
-      MkIORes fis w :=  get_statvfs_f_files p w
-      MkIORes ffs w :=  get_statvfs_f_ffree p w
-      MkIORes afs w :=  get_statvfs_f_favail p w
-      MkIORes fid w :=  get_statvfs_f_fsid p w
-      MkIORes flg w :=  get_statvfs_f_flag p w
-      MkIORes max w :=  get_statvfs_f_namemax p w
-   in MkIORes (SF bs fbs bls frs abs fis ffs afs fid flg max) w
+toStatvfs : SStatvfs -> F1 [World] Statvfs
+toStatvfs (SSF p) t =
+  let bs  # t := ffi (get_statvfs_f_bsize p) t
+      fbs # t := ffi (get_statvfs_f_frsize p) t
+      bls # t := ffi (get_statvfs_f_blocks p) t
+      frs # t := ffi (get_statvfs_f_bfree p) t
+      abs # t := ffi (get_statvfs_f_bavail p) t
+      fis # t := ffi (get_statvfs_f_files p) t
+      ffs # t := ffi (get_statvfs_f_ffree p) t
+      afs # t := ffi (get_statvfs_f_favail p) t
+      fid # t := ffi (get_statvfs_f_fsid p) t
+      flg # t := ffi (get_statvfs_f_flag p) t
+      max # t := ffi (get_statvfs_f_namemax p) t
+   in SF bs fbs bls frs abs fis ffs afs fid flg max # t
 
 %inline
 withStatvfs : (AnyPtr -> PrimIO CInt) -> EPrim Statvfs
 withStatvfs act =
-  withStruct SStatvfs $ \s,w =>
-    let R _ w       := toUnit (act $ unwrap s) w | E x w => E x w
-        MkIORes r w := toStatvfs s  w
-     in R r w
+  withStruct SStatvfs $ \s,t =>
+    let R _ t := toUnit (act $ unwrap s) t | E x t => E x t
+        r # t := toStatvfs s  t
+     in R r t
 
 --------------------------------------------------------------------------------
 -- FileStats
@@ -179,36 +182,36 @@ record FileStats where
 
 %runElab derive "FileStats" [Show,Eq]
 
-utc : PrimIO AnyPtr -> PrimIO (Clock UTC)
-utc act w =
-  let MkIORes p w := act w
-   in toClock (wrap p) w
+utc : PrimIO AnyPtr -> F1 [World] (Clock UTC)
+utc act t =
+  let p # t := toF1 act t
+   in toClock (wrap p) t
 
 export
-fileStats : SFileStats -> PrimIO FileStats
-fileStats (SFS p) w =
-  let MkIORes dev  w :=  get_stat_st_dev p w
-      MkIORes ino  w :=  get_stat_st_ino p w
-      MkIORes mode w :=  get_stat_st_mode p w
-      MkIORes lnk  w :=  get_stat_st_nlink p w
-      MkIORes uid  w :=  get_stat_st_uid p w
-      MkIORes gid  w :=  get_stat_st_gid p w
-      MkIORes rdv  w :=  get_stat_st_rdev p w
-      MkIORes siz  w :=  get_stat_st_size p w
-      MkIORes bsz  w :=  get_stat_st_blksize p w
-      MkIORes bls  w :=  get_stat_st_blocks p w
-      MkIORes ati  w :=  utc (get_stat_st_atim p) w
-      MkIORes mti  w :=  utc (get_stat_st_mtim p) w
-      MkIORes cti  w :=  utc (get_stat_st_ctim p) w
-   in MkIORes (FS dev ino mode lnk uid gid rdv siz bsz bls ati mti cti) w
+fileStats : SFileStats -> F1 [World] FileStats
+fileStats (SFS p) t =
+  let dev  # t := toF1 (get_stat_st_dev p) t
+      ino  # t := toF1 (get_stat_st_ino p) t
+      mode # t := toF1 (get_stat_st_mode p) t
+      lnk  # t := toF1 (get_stat_st_nlink p) t
+      uid  # t := toF1 (get_stat_st_uid p) t
+      gid  # t := toF1 (get_stat_st_gid p) t
+      rdv  # t := toF1 (get_stat_st_rdev p) t
+      siz  # t := toF1 (get_stat_st_size p) t
+      bsz  # t := toF1 (get_stat_st_blksize p) t
+      bls  # t := toF1 (get_stat_st_blocks p) t
+      ati  # t := utc (get_stat_st_atim p) t
+      mti  # t := utc (get_stat_st_mtim p) t
+      cti  # t := utc (get_stat_st_ctim p) t
+   in FS dev ino mode lnk uid gid rdv siz bsz bls ati mti cti # t
 
 %inline
 withFileStats : (AnyPtr -> PrimIO CInt) -> EPrim FileStats
 withFileStats act =
-  withStruct SFileStats $ \s,w =>
-    let R _ w       := toUnit (act $ unwrap s) w | E x w => E x w
-        MkIORes r w := fileStats s w
-     in R r w
+  withStruct SFileStats $ \s,t =>
+    let R _ t := toUnit (act $ unwrap s) t | E x t => E x t
+        r # t := fileStats s t
+     in R r t
 
 --------------------------------------------------------------------------------
 -- FFI
