@@ -43,6 +43,11 @@ modules = System.Posix.Dir
         , System.Posix.Signal.Struct
         , System.Posix.Signal.Types
 
+        , System.Posix.Socket
+        , System.Posix.Socket.Prim
+        , System.Posix.Socket.Struct
+        , System.Posix.Socket.Types
+
         , System.Posix.Time
         , System.Posix.Time.Types
 
