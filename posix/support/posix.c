@@ -10,10 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
+#include <sys/un.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -686,8 +686,8 @@ int li_bind_un(int sfd, const char *path) {
   struct sockaddr_un addr;
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
-  int res = bind(sfd, (struct sockaddr *) &addr, sizeof(addr));
+  strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
+  int res = bind(sfd, (struct sockaddr *)&addr, sizeof(addr));
   CHECKRES
 }
 
@@ -705,7 +705,7 @@ int li_connect_un(int sfd, const char *path) {
   struct sockaddr_un addr;
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
-  int res = connect(sfd, (struct sockaddr *) &addr, sizeof(addr));
+  strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
+  int res = connect(sfd, (struct sockaddr *)&addr, sizeof(addr));
   CHECKRES
 }
