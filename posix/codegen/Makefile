@@ -11,7 +11,7 @@ else
 endif
 
 gens := error_gen flags_gen whence_gen limits_gen filetype_gen signal_gen \
-	process_gen time_gen timer_gen pthreads_gen
+	process_gen time_gen timer_gen pthreads_gen socket_gen
 
 .PHONY: all
 all: $(gens)

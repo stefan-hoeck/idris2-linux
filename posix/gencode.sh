@@ -372,3 +372,44 @@ data CancelState : Type where
 EOT
 
 codegen/pthreads_gen >>src/System/Posix/Pthreads/Types.idr
+
+cat >src/System/Posix/Socket/Types.idr <<EOT
+-- Note: This module is automatically generated when Idris builds
+-- the library and the constants will be replaced with values
+-- matching the system this is generated on.
+--
+-- The placeholders are here so that it works with tools like the LSP
+-- without first compiling the library. They were generated on an x86_64
+-- GNU/Linux system with GCC. If you are on a similar system, your numbers
+-- might very well be identical.
+module System.Posix.Socket.Types
+
+import Data.Bits
+import Data.C.Integer
+import Derive.Finite
+import Derive.Prelude
+
+%default total
+%language ElabReflection
+
+public export
+data Domain : Type where
+  AF_UNIX  : Domain
+  AF_INET  : Domain
+  AF_INET6 : Domain
+
+%runElab derive "Domain" [Show,Eq,Ord,Finite]
+
+public export
+record SockType where
+  constructor ST
+  type : Bits32
+
+%runElab derive "SockType" [Show,Eq,Ord,FromInteger]
+
+public export
+Semigroup SockType where
+  ST x <+> ST y = ST $ x .|. y
+EOT
+
+codegen/socket_gen >>src/System/Posix/Socket/Types.idr
