@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
@@ -670,3 +671,12 @@ void set_itimerspec_it_value(struct itimerspec *v, struct timespec *val) {
   v->it_value = *val;
 }
 #endif
+
+////////////////////////////////////////////////////////////////////////////////
+// Sockets
+////////////////////////////////////////////////////////////////////////////////
+
+int li_socket(int domain, int type) {
+  int res = socket(domain, type, 0);
+  CHECKRES
+}

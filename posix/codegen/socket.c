@@ -26,7 +26,10 @@ int main() {
   print_type("SOCK_STREAM", SOCK_STREAM);
   print_type("SOCK_DGRAM", SOCK_DGRAM);
   print_type("SOCK_RAW", SOCK_RAW);
+#ifdef __GLIBC__
   print_type("SOCK_NONBLOCK", SOCK_NONBLOCK);
   print_type("SOCK_CLOEXEC", SOCK_CLOEXEC);
+#endif
+
   exit(0);
 }
