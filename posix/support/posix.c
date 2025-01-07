@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>
@@ -678,5 +679,33 @@ void set_itimerspec_it_value(struct itimerspec *v, struct timespec *val) {
 
 int li_socket(int domain, int type) {
   int res = socket(domain, type, 0);
+  CHECKRES
+}
+
+int li_bind_un(int sfd, const char *path) {
+  struct sockaddr_un addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
+  int res = bind(sfd, (struct sockaddr *) &addr, sizeof(addr));
+  CHECKRES
+}
+
+int li_listen(int sfd, int backlog) {
+  int res = listen(sfd, backlog);
+  CHECKRES
+}
+
+int li_accept(int sfd) {
+  int res = accept(sfd, NULL, NULL);
+  CHECKRES
+}
+
+int li_connect_un(int sfd, const char *path) {
+  struct sockaddr_un addr;
+  memset(&addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
+  int res = connect(sfd, (struct sockaddr *) &addr, sizeof(addr));
   CHECKRES
 }
