@@ -677,17 +677,21 @@ void set_itimerspec_it_value(struct itimerspec *v, struct timespec *val) {
 // Sockets
 ////////////////////////////////////////////////////////////////////////////////
 
+struct sockaddr_un *li_sockaddr_un(const char *path) {
+  struct sockaddr_un *addr = malloc(sizeof(struct sockaddr_un));
+  memset(addr, 0, sizeof(addr));
+  addr->sun_family = AF_UNIX;
+  strncpy(addr->sun_path, path, sizeof(addr->sun_path) - 1);
+  return addr;
+}
+
 int li_socket(int domain, int type) {
   int res = socket(domain, type, 0);
   CHECKRES
 }
 
-int li_bind_un(int sfd, const char *path) {
-  struct sockaddr_un addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
-  int res = bind(sfd, (struct sockaddr *)&addr, sizeof(addr));
+int li_bind(int sfd, struct sockaddr *addr, size_t len) {
+  int res = bind(sfd, addr, len);
   CHECKRES
 }
 
@@ -701,11 +705,7 @@ int li_accept(int sfd) {
   CHECKRES
 }
 
-int li_connect_un(int sfd, const char *path) {
-  struct sockaddr_un addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
-  int res = connect(sfd, (struct sockaddr *)&addr, sizeof(addr));
+int li_connect(int sfd, struct sockaddr *addr, size_t len) {
+  int res = connect(sfd, addr, len);
   CHECKRES
 }

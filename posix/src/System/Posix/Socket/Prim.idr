@@ -15,11 +15,11 @@ import public System.Posix.Socket.Types
 %foreign "C:li_socket, posix-idris"
 prim__socket : Bits8 -> Bits32 -> PrimIO CInt
 
-%foreign "C:li_bind_un, posix-idris"
-prim__bind_un : Bits32 -> String -> PrimIO CInt
+%foreign "C:li_bind, posix-idris"
+prim__bind : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
 
-%foreign "C:li_connect_un, posix-idris"
-prim__connect_un : Bits32 -> String -> PrimIO CInt
+%foreign "C:li_connect, posix-idris"
+prim__connect : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
 
 %foreign "C:li_listen, posix-idris"
 prim__listen : Bits32 -> Bits32 -> PrimIO CInt
@@ -54,14 +54,14 @@ accept s = toVal cast (prim__accept (fileDesc s))
 
 ||| Binds a socket to the given address.
 export
-bind : {d : _} -> Socket d -> String -> EPrim ()
-bind {d = AF_UNIX}  s pth = toUnit $ prim__bind_un (fileDesc s) pth
-bind {d = AF_INET}  s pth = ?bind_inet
-bind {d = AF_INET6} s pth = ?bind_inet6
+bind : {d : _} -> Socket d -> SockaddrUn -> EPrim ()
+bind {d = AF_UNIX}  s a = toUnit $ prim__bind (fileDesc s) (unwrap a) (sizeof SockaddrUn)
+bind {d = AF_INET}  s a = ?bind_inet
+bind {d = AF_INET6} s a = ?bind_inet6
 
 ||| Connects a socket to the given address.
 export
-connect : {d : _} -> Socket d -> String -> EPrim ()
-connect {d = AF_UNIX}  s pth = toUnit $ prim__connect_un (fileDesc s) pth
-connect {d = AF_INET}  s pth = ?connect_inet
-connect {d = AF_INET6} s pth = ?connect_inet6
+connect : {d : _} -> Socket d -> SockaddrUn -> EPrim ()
+connect {d = AF_UNIX}  s a = toUnit $ prim__connect (fileDesc s) (unwrap a) (sizeof SockaddrUn)
+connect {d = AF_INET}  s a = ?connect_inet
+connect {d = AF_INET6} s a = ?connect_inet6

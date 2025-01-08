@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 void print_domain(const char *name, int value) {
   printf("domainCode %s = %d\n", name, value);
@@ -30,6 +31,10 @@ int main() {
   print_type("SOCK_NONBLOCK", SOCK_NONBLOCK);
   print_type("SOCK_CLOEXEC", SOCK_CLOEXEC);
 #endif
+
+  printf("\npublic export\n");
+  printf("sockaddr_un_size : Bits32\n");
+  printf("sockaddr_un_size = %zd\n", sizeof(struct sockaddr_un));
 
   exit(0);
 }

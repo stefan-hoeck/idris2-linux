@@ -30,10 +30,10 @@ parameters {auto eio : ErrIO io}
 
   ||| Binds a socket to the given address.
   export %inline
-  bind : {d : _} -> Socket d -> String -> io ()
+  bind : {d : _} -> Socket d -> SockaddrUn -> io ()
   bind s = eprim . P.bind s
 
   ||| Connects a socket to the given address.
   export %inline
-  connect : {d : _} -> Socket d -> String -> io ()
+  connect : {d : _} -> Socket d -> SockaddrUn -> io ()
   connect s = eprim . P.connect s

@@ -60,3 +60,7 @@ SOCK_NONBLOCK = 2048
 public export
 SOCK_CLOEXEC : SockType
 SOCK_CLOEXEC = 524288
+
+public export
+sockaddr_un_size : Bits32
+sockaddr_un_size = 110

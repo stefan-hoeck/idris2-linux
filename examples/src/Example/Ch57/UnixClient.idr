@@ -33,7 +33,7 @@ app : Has Errno es => Has ArgErr es => (pth : String) -> Prog es ()
 app pth =
   use1 (malloc Bits8 4096) $ \arr => do
     cli <- socket AF_UNIX SOCK_STREAM
-    connect cli pth
+    use1 (runIO $ sockaddrUn pth) (connect cli)
     echo arr cli
 
 export covering
