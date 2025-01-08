@@ -1,0 +1,6 @@
+{
+  "threshold": 90,
+  "reporters": ["consoleFull"],
+  "ignore": ["**/__snapshots__/**", "**/node_modules/**"],
+  "absolute": true
+}
