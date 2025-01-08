@@ -107,6 +107,12 @@ ignore act =
 --------------------------------------------------------------------------------
 
 export %inline
+freeFail : Struct a => a -> Errno -> EPrim b
+freeFail s err t =
+  let _ # t := toF1 (prim__free $ unwrap s) t
+   in E err t
+
+export %inline
 finally : PrimIO () -> EPrim a -> EPrim a
 finally cleanup act t =
   case act t of

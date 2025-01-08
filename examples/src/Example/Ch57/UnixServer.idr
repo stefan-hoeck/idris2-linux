@@ -42,7 +42,7 @@ app pth =
   use1 (malloc Bits8 4096) $ \arr => do
     onErrno ENOENT (pure ()) (unlink pth)
     srv <- socket AF_UNIX SOCK_STREAM
-    use1 (runIO $ sockaddrUn pth) (bind srv)
+    bind srv pth
     listen srv 8
     serve arr srv
 

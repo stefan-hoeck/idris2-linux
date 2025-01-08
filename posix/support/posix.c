@@ -696,6 +696,26 @@ struct sockaddr_in *li_sockaddr_in(uint32_t ad, uint16_t port) {
   return addr;
 }
 
+struct sockaddr_in6 *li_sockaddr_in6(uint16_t port) {
+  struct sockaddr_in6 *addr = malloc(sizeof(struct sockaddr_in6));
+  memset(addr, 0, sizeof(addr));
+  addr->sin6_family = AF_INET6;
+  addr->sin6_port = htons(port);
+  return addr;
+}
+
+uint32_t sockaddr_in_addr(struct sockaddr_in *addr) {
+  return ntohl(addr->sin_addr.s_addr);
+}
+
+uint16_t sockaddr_in_port(struct sockaddr_in *addr) {
+  return ntohs(addr->sin_port);
+}
+
+char *sockaddr_in6_addr(struct sockaddr_in6 *addr) {
+  return addr->sin6_addr.s6_addr;
+}
+
 int li_socket(int domain, int type) {
   int res = socket(domain, type, 0);
   CHECKRES

@@ -52,22 +52,32 @@ export %inline
 accept : Socket d -> EPrim (Socket d)
 accept s = toVal cast (prim__accept (fileDesc s))
 
-||| Binds a socket to the given address.
+||| Binds a socket to the given address. See also `bind` for a more
+||| convenient version of this function.
 export
-bind : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
-bind s a = toUnit $ prim__bind (fileDesc s) (ptr d a) (addrSize d)
+bind_ : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
+bind_ s a = toUnit $ prim__bind (fileDesc s) (ptr d a) (addrSize d)
 
-||| Connects a socket to the given address.
+||| Connects a socket to the given address. See also `connect` for a more
+||| convenient version of this function.
 export
-connect : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
-connect s a = toUnit $ prim__connect (fileDesc s) (ptr d a) (addrSize d)
+connect_ : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
+connect_ s a = toUnit $ prim__connect (fileDesc s) (ptr d a) (addrSize d)
 
 --------------------------------------------------------------------------------
 -- Convenience API
 --------------------------------------------------------------------------------
 
+||| Convenience alias for `bind_`.
 export
-bindUN : Socket AF_UNIX -> String -> EPrim ()
-bindUN s pth t =
-  let addr # t := sockaddrUn pth t
+bind : {d : _} -> Socket d -> Addr d -> EPrim ()
+bind s a t =
+  let addr # t := sockaddr d a t
+   in finally (prim__free $ ptr d addr) (bind_ s addr) t
 
+||| Convenience alias for `connect_`.
+export
+connect : {d : _} -> Socket d -> Addr d -> EPrim ()
+connect s a t =
+  let addr # t := sockaddr d a t
+   in finally (prim__free $ ptr d addr) (connect_ s addr) t
