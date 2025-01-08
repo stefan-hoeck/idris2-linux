@@ -64,3 +64,11 @@ SOCK_CLOEXEC = 524288
 public export
 sockaddr_un_size : Bits32
 sockaddr_un_size = 110
+
+public export
+sockaddr_in_size : Bits32
+sockaddr_in_size = 16
+
+public export
+sockaddr_in6_size : Bits32
+sockaddr_in6_size = 28

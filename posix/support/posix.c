@@ -1,8 +1,10 @@
 // Copyright 2024 Stefan Höck
 
+#include <arpa/inet.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netinet/in.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
@@ -682,6 +684,15 @@ struct sockaddr_un *li_sockaddr_un(const char *path) {
   memset(addr, 0, sizeof(addr));
   addr->sun_family = AF_UNIX;
   strncpy(addr->sun_path, path, sizeof(addr->sun_path) - 1);
+  return addr;
+}
+
+struct sockaddr_in *li_sockaddr_in(uint32_t ad, uint16_t port) {
+  struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
+  memset(addr, 0, sizeof(addr));
+  addr->sin_family = AF_INET;
+  addr->sin_port = htons(port);
+  addr->sin_addr.s_addr = htonl(ad);
   return addr;
 }
 

@@ -54,14 +54,20 @@ accept s = toVal cast (prim__accept (fileDesc s))
 
 ||| Binds a socket to the given address.
 export
-bind : {d : _} -> Socket d -> SockaddrUn -> EPrim ()
-bind {d = AF_UNIX}  s a = toUnit $ prim__bind (fileDesc s) (unwrap a) (sizeof SockaddrUn)
-bind {d = AF_INET}  s a = ?bind_inet
-bind {d = AF_INET6} s a = ?bind_inet6
+bind : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
+bind s a = toUnit $ prim__bind (fileDesc s) (ptr d a) (addrSize d)
 
 ||| Connects a socket to the given address.
 export
-connect : {d : _} -> Socket d -> SockaddrUn -> EPrim ()
-connect {d = AF_UNIX}  s a = toUnit $ prim__connect (fileDesc s) (unwrap a) (sizeof SockaddrUn)
-connect {d = AF_INET}  s a = ?connect_inet
-connect {d = AF_INET6} s a = ?connect_inet6
+connect : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
+connect s a = toUnit $ prim__connect (fileDesc s) (ptr d a) (addrSize d)
+
+--------------------------------------------------------------------------------
+-- Convenience API
+--------------------------------------------------------------------------------
+
+export
+bindUN : Socket AF_UNIX -> String -> EPrim ()
+bindUN s pth t =
+  let addr # t := sockaddrUn pth t
+

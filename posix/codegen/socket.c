@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/in.h>
 
 void print_domain(const char *name, int value) {
   printf("domainCode %s = %d\n", name, value);
@@ -35,6 +36,14 @@ int main() {
   printf("\npublic export\n");
   printf("sockaddr_un_size : Bits32\n");
   printf("sockaddr_un_size = %zd\n", sizeof(struct sockaddr_un));
+
+  printf("\npublic export\n");
+  printf("sockaddr_in_size : Bits32\n");
+  printf("sockaddr_in_size = %zd\n", sizeof(struct sockaddr_in));
+
+  printf("\npublic export\n");
+  printf("sockaddr_in6_size : Bits32\n");
+  printf("sockaddr_in6_size = %zd\n", sizeof(struct sockaddr_in6));
 
   exit(0);
 }

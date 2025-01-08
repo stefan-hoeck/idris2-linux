@@ -107,44 +107,33 @@ ignore act =
 --------------------------------------------------------------------------------
 
 export %inline
+finally : PrimIO () -> EPrim a -> EPrim a
+finally cleanup act t =
+  case act t of
+    R r t => let _ # t := toF1 cleanup t in R r t
+    E x t => let _ # t := toF1 cleanup t in E x t
+
+export %inline
 primStruct : (0 a : Type) -> Struct a => SizeOf a => F1 [World] a
 primStruct a = ioToF1 (allocStruct a)
-
-export %inline
-freeFail : Struct a => a -> Errno -> EPrim b
-freeFail v x t =
-  let _ # t := toF1 (prim__free $ unwrap v) t
-   in E x t
-
-export %inline
-freeSucc : Struct a => a -> b -> EPrim b
-freeSucc str v t =
-  let _ # t := toF1 (prim__free $ unwrap str) t
-   in R v t
 
 export %inline
 withStruct : (0 a : Type) -> Struct a => SizeOf a => (a -> EPrim b) -> EPrim b
 withStruct a f t =
   let str # t := primStruct a t
-      R v   t := f str t | E x t => freeFail str x t
-   in freeSucc str v t
+   in finally (prim__free (unwrap str)) (f str) t
 
 export %inline
 withBox : (0 a : Type) -> SizeOf a => Deref a => (IOBox a -> EPrim b) -> EPrim b
 withBox a f t =
   let box # t := ioToF1 (malloc a 1) t
-      R r   t := f box t | E x t => let _ # t := ioToF1 (free box) t in E x t
-      _   # t := ioToF1 (free box) t
-   in R r t
+   in finally (toPrim $ free box) (f box) t
 
 export %inline
 withPtr :  Bits32 -> (AnyPtr -> EPrim b) -> EPrim b
 withPtr sz f t =
   let ptr         := prim__malloc sz
-      R v t       := f ptr t
-        | E x t => let _ # t := toF1 (prim__free ptr) t in E x t
-      _ # t := toF1 (prim__free ptr) t
-   in R v t
+   in finally (prim__free ptr) (f ptr) t
 
 export
 primTraverse_ : (a -> PrimIO ()) -> List a -> PrimIO ()
