@@ -36,6 +36,9 @@ import Example.Ch44.ChunkPipe
 import Example.Ch44.PipeSync
 import Example.Ch44.FifoServer
 
+import Example.Ch57.UnixClient
+import Example.Ch57.UnixServer
+
 import Example.Ch63.EpollExample
 import Example.Ch63.EpollPerformance
 
@@ -122,6 +125,8 @@ prog = do
     "pipe_sync"               :: t => pipeSync t
     "fifo_server"             :: t => fifoServer t
     "fifo_client"             :: t => fifoClient t
+    "unix-client"             :: t => unixClient t
+    "unix-server"             :: t => unixServer t
     "epoll_example"           :: t => epollExample t
     "epoll_performance"       :: t => epollPerformance t
     _                              =>
