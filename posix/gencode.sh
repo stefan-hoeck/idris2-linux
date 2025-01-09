@@ -410,6 +410,18 @@ record SockType where
 public export
 Semigroup SockType where
   ST x <+> ST y = ST $ x .|. y
+
+public export
+record SockFlags where
+  constructor SF
+  flags : Bits32
+
+namespace SockFlags
+  %runElab derive "SockFlags" [Show,Eq,Ord,FromInteger]
+
+public export
+Semigroup SockFlags where
+  SF x <+> SF y = SF $ x .|. y
 EOT
 
 codegen/socket_gen >>src/System/Posix/Socket/Types.idr

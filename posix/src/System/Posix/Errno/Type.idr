@@ -67,6 +67,10 @@ EAGAIN : Errno
 EAGAIN = 11
 
 public export %inline
+EWOULDBLOCK : Errno
+EWOULDBLOCK = 11
+
+public export %inline
 ENOMEM : Errno
 ENOMEM = 12
 

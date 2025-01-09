@@ -12,6 +12,7 @@ import public Data.C.Ptr
 import public System.Posix.Errno
 import public System.Posix.File.FileDesc
 import public System.Posix.File.Flags
+import public System.Posix.File.ReadRes
 import public System.Posix.File.Whence
 
 %default total
@@ -103,6 +104,32 @@ toBytes n act t =
          then E (fromNeg rd) t
          else R (unsafeByteString (cast rd) buf) t
 
+||| Converts a number of bytes read into `ReadRes ByteString`.
+export %inline
+ptrToRes : AnyPtr -> PrimIO SsizeT -> EPrim (ReadRes ByteString)
+ptrToRes ptr act t =
+  let rd  # t := toF1 act t
+   in if      rd < 0  then fromErr (fromNeg rd) t
+      else if rd == 0 then R EOI t
+      else
+       let s32     := cast {to = Bits32} rd
+           buf # t := toF1 (prim__newBuf s32) t
+           _   # t := toF1 (prim__copy_buf ptr buf s32) t
+        in R (Res $ unsafeByteString (cast s32) buf) t
+
+||| Converts a number of bytes read into `ReadRes ByteString`.
+export %inline
+toRes :
+     Bits32
+  -> (Buffer -> Bits32 -> PrimIO SsizeT)
+  -> EPrim (ReadRes ByteString)
+toRes n act t =
+  let buf # t := toF1 (prim__newBuf n) t
+      rd  # t := toF1 (act buf n) t
+   in if      rd < 0  then fromErr (fromNeg rd) t
+      else if rd == 0 then R EOI t
+      else                 R (Res $ unsafeByteString (cast rd) buf) t
+
 export %inline
 toFD : PrimIO CInt -> EPrim Fd
 toFD = toVal (MkFd . cast)
@@ -135,6 +162,14 @@ parameters {auto fid : FileDesc a}
   export %inline
   readPtr : AnyPtr -> (n : Bits32) -> EPrim Bits32
   readPtr ptr n = toSize $ prim__readptr (fileDesc fd) ptr n
+
+  ||| Reads at most `n` bytes from a file into an allocated pointer.
+  |||
+  ||| This is similar to `readres`, but it allows us to efficiently stream
+  ||| data into a large pointer, even in case the chunks of data are much smaller.
+  export %inline
+  readPtrRes : AnyPtr -> (n : Bits32) -> EPrim (ReadRes ByteString)
+  readPtrRes ptr n = ptrToRes ptr $ prim__readptr (fileDesc fd) ptr n
 
   ||| Reads at most `n * sizeof a` bytes into a preallocated array.
   export
@@ -172,6 +207,15 @@ parameters {auto fid : FileDesc a}
   export
   read : (n : Bits32) -> EPrim ByteString
   read n = toBytes n $  prim__read (fileDesc fd)
+
+  ||| Reads at most `n` bytes from a file into a bytestring.
+  |||
+  ||| This is a more convenient version of `read` that gives detailed
+  ||| information about why a read might fail. It is especially useful
+  ||| when reading from - possibly non-blocking - pipes or sockets.
+  export
+  readres : (n : Bits32) -> EPrim (ReadRes ByteString)
+  readres n = toRes n $  prim__read (fileDesc fd)
 
   ||| Atomically reads up to `n` bytes from the given file at
   ||| the given file offset.

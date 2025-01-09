@@ -18,23 +18,23 @@ usage =
 
 parameters {auto has : Has Errno es}
            {auto haa : Has ArgErr es}
-           {k        : Nat}
-           (arr      : CArrayIO k Bits8)
 
   covering
   echo : Socket AF_UNIX -> Prog es ()
   echo cli = do
-    readArr Stdin arr >>= \case
-      (0 ** _)   => close cli
-      (n ** dat) => ignore (writeArr cli dat) >> echo cli
+    readres Stdin 4096 >>= \case
+      Interrupted => stdoutLn "Interrupted" >> echo cli
+      NoData      => echo cli
+      Closed      => stdoutLn "Broken pipe." >> close cli
+      EOI         => stdoutLn "End of input." >> close cli
+      Res bs      => ignore (writeBytes cli bs) >> echo cli
 
 covering
 app : Has Errno es => Has ArgErr es => (pth : String) -> Prog es ()
-app pth =
-  use1 (malloc Bits8 4096) $ \arr => do
-    cli <- socket AF_UNIX SOCK_STREAM
-    connect cli pth
-    echo arr cli
+app pth = do
+  cli <- socket AF_UNIX SOCK_STREAM
+  connect cli pth
+  echo cli
 
 export covering
 unixClient : Has Errno es => Has ArgErr es => List String -> Prog es ()

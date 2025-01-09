@@ -72,6 +72,9 @@ prim__sockaddr_in_port: AnyPtr -> PrimIO Bits16
 %foreign "C:sockaddr_in_addr, posix-idris"
 prim__sockaddr_in_addr: AnyPtr -> PrimIO Bits32
 
+%foreign "C:sockaddr_in_addr_str, posix-idris"
+prim__sockaddr_in_addr_str: AnyPtr -> PrimIO String
+
 public export
 record IP4Addr where
   constructor IP4
@@ -107,6 +110,19 @@ export
 SizeOf SockaddrIn where
   sizeof_ = sockaddr_in_size
 
+namespace SockaddrIn
+  export %inline
+  port : SockaddrIn -> F1 [World] Bits16
+  port (SIN p) = ffi $ prim__sockaddr_in_port p
+
+  export %inline
+  addr : SockaddrIn -> F1 [World] Bits32
+  addr (SIN p) = ffi $ prim__sockaddr_in_addr p
+
+  export %inline
+  addrStr : SockaddrIn -> F1 [World] String
+  addrStr (SIN p) = ffi $ prim__sockaddr_in_addr_str p
+
 ||| Creates a `sockaddr_in` pointer and sets its `sun_path` value to
 |||
 ||| The allocated memory must be freed via `freeStruct`.
@@ -126,6 +142,9 @@ prim__sockaddr_in6_port: AnyPtr -> PrimIO Bits16
 
 %foreign "C:sockaddr_in6_addr, posix-idris"
 prim__sockaddr_in6_addr: AnyPtr -> AnyPtr
+
+%foreign "C:sockaddr_in6_addr_str, posix-idris"
+prim__sockaddr_in6_addr_str: AnyPtr -> PrimIO String
 
 public export
 record IP6Addr where
@@ -152,9 +171,18 @@ export
 SizeOf SockaddrIn6 where
   sizeof_ = sockaddr_in6_size
 
-export %inline
-addr6 : SockaddrIn6 -> CArrayIO 16 Bits8
-addr6 (SIN6 p) = unsafeWrap (prim__sockaddr_in6_addr p)
+namespace SockaddrIn6
+  export %inline
+  port : SockaddrIn6 -> F1 [World] Bits16
+  port (SIN6 p) = ffi $ prim__sockaddr_in6_port p
+
+  export %inline
+  addr6 : SockaddrIn6 -> CArrayIO 16 Bits8
+  addr6 (SIN6 p) = unsafeWrap (prim__sockaddr_in6_addr p)
+
+  export %inline
+  addrStr : SockaddrIn6 -> F1 [World] String
+  addrStr (SIN6 p) = ffi $ prim__sockaddr_in6_addr_str p
 
 ||| Creates a `sockaddr_in` pointer and sets its `sun_path` value to
 |||

@@ -13,6 +13,7 @@ import public Data.C.Ptr
 import public System.Posix.Errno
 import public System.Posix.File.FileDesc
 import public System.Posix.File.Flags
+import public System.Posix.File.ReadRes
 import public System.Posix.File.Whence
 
 %default total
@@ -71,6 +72,15 @@ parameters {auto fid : FileDesc a}
   export %inline
   read : (n : Bits32) -> io ByteString
   read = eprim . P.read fd
+
+  ||| Reads at most `n` bytes from a file into a bytestring.
+  |||
+  ||| This is a more convenient version of `read` that gives detailed
+  ||| information about why a read might fail. It is especially useful
+  ||| when reading from - possibly non-blocking - pipes or sockets.
+  export %inline
+  readres : (n : Bits32) -> io (ReadRes ByteString)
+  readres = eprim . P.readres fd
 
   ||| Atomically reads up to `n` bytes from the given file at
   ||| the given file offset.

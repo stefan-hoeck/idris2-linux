@@ -1,8 +1,15 @@
 module System.Posix.Socket.Prim
 
+import System.Posix.File.Prim
+
+import public Data.Buffer
+import public Data.Buffer.Core
+import public Data.ByteString
+import public Data.ByteVect
 import public Data.C.Ptr
 import public System.Posix.Errno
 import public System.Posix.File.FileDesc
+import public System.Posix.File.ReadRes
 import public System.Posix.Socket.Struct
 import public System.Posix.Socket.Types
 
@@ -26,6 +33,21 @@ prim__listen : Bits32 -> Bits32 -> PrimIO CInt
 
 %foreign "C:li_accept, posix-idris"
 prim__accept : Bits32 -> PrimIO CInt
+
+%foreign "C__collect_safe:li_recv, posix-idris"
+prim__recvptr : (file : Bits32) -> AnyPtr -> (max : Bits32) -> Bits32 -> PrimIO SsizeT
+
+%foreign "C:li_recv, posix-idris"
+prim__recv : (file : Bits32) -> Buffer -> (max : Bits32) -> Bits32 -> PrimIO SsizeT
+
+%foreign "C__collect_safe:li_recvfrom, posix-idris"
+prim__recvfromptr : (file : Bits32) -> AnyPtr -> (max : Bits32) -> Bits32 -> AnyPtr -> Bits32 -> PrimIO SsizeT
+
+%foreign "C:li_recvfrom, posix-idris"
+prim__recvfrom : (file : Bits32) -> Buffer -> (max : Bits32) -> Bits32 -> AnyPtr -> Bits32 -> PrimIO SsizeT
+
+%foreign "C:li_sendto, posix-idris"
+prim__sendto : (file : Bits32) -> Buffer -> (off,max : Bits32) -> Bits32 -> AnyPtr -> Bits32 -> PrimIO SsizeT
 
 --------------------------------------------------------------------------------
 -- API
@@ -63,6 +85,55 @@ bind_ s a = toUnit $ prim__bind (fileDesc s) (ptr d a) (addrSize d)
 export
 connect_ : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
 connect_ s a = toUnit $ prim__connect (fileDesc s) (ptr d a) (addrSize d)
+
+parameters (s : Socket d)
+  ||| Reads at most `n` bytes from a file into an allocated pointer.
+  export %inline
+  recvPtr : AnyPtr -> (n : Bits32) -> SockFlags -> EPrim (ReadRes ByteString)
+  recvPtr ptr n (SF f) = ptrToRes ptr $ prim__recvptr (fileDesc s) ptr n f
+
+  ||| Reads at most `n` bytes from a file into a bytestring.
+  export
+  recv : (n : Bits32) -> SockFlags -> EPrim (ReadRes ByteString)
+  recv n (SF f) = toRes n $ \b,x => prim__recv (fileDesc s) b x f
+
+||| Reads at most `n` bytes from a file into an allocated pointer.
+export %inline
+recvFromPtr :
+     {d : _}
+  -> Socket d
+  -> AnyPtr
+  -> (n : Bits32)
+  -> SockFlags
+  -> Sockaddr d
+  -> EPrim (ReadRes ByteString)
+recvFromPtr s buf n (SF f) p =
+  ptrToRes buf $ prim__recvfromptr (fileDesc s) buf n f (ptr d p) (addrSize d)
+
+||| Reads at most `n` bytes from a file into an allocated pointer.
+export %inline
+recvFrom :
+     {d : _}
+  -> Socket d
+  -> (n : Bits32)
+  -> SockFlags
+  -> Sockaddr d
+  -> EPrim (ReadRes ByteString)
+recvFrom s n (SF f) p =
+  toRes n $ \buf,x => prim__recvfrom (fileDesc s) buf x f (ptr d p) (addrSize d)
+
+||| Sends the given byte string via the given socket to the peer at the
+||| given address.
+export %inline
+sendto :
+     {d : _}
+  -> Socket d
+  -> ByteString
+  -> SockFlags
+  -> Sockaddr d
+  -> EPrim Bits32
+sendto s (BS n $ BV b o _) (SF f) p =
+  toSize $ prim__sendto (fileDesc s) (unsafeGetBuffer b) (cast o) (cast n) f (ptr d p) (addrSize d)
 
 --------------------------------------------------------------------------------
 -- Convenience API

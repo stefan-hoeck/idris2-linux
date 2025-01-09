@@ -23,6 +23,7 @@ void print_errorcodes() {
   print_code("EBADF", EBADF);
   print_code("ECHILD", ECHILD);
   print_code("EAGAIN", EAGAIN);
+  print_code("EWOULDBLOCK", EWOULDBLOCK);
   print_code("ENOMEM", ENOMEM);
   print_code("EACCES", EACCES);
   print_code("EFAULT", EFAULT);

@@ -18,6 +18,12 @@ void print_type(const char *name, int value) {
   printf("%s = %d\n", name, value);
 }
 
+void print_flag(const char *name, int value) {
+  printf("\npublic export\n");
+  printf("%s : SockFlags\n", name);
+  printf("%s = %d\n", name, value);
+}
+
 int main() {
   printf("\npublic export\n");
   printf("domainCode : Domain -> Bits8\n");
@@ -32,6 +38,12 @@ int main() {
   print_type("SOCK_NONBLOCK", SOCK_NONBLOCK);
   print_type("SOCK_CLOEXEC", SOCK_CLOEXEC);
 #endif
+
+  print_flag("MSG_DONTWAIT", MSG_DONTWAIT);
+  print_flag("MSG_OOB", MSG_OOB);
+  print_flag("MSG_PEEK", MSG_PEEK);
+  print_flag("MSG_WAITALL", MSG_WAITALL);
+  print_flag("MSG_NOSIGNAL", MSG_NOSIGNAL);
 
   printf("\npublic export\n");
   printf("sockaddr_un_size : Bits32\n");

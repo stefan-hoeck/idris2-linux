@@ -4,6 +4,7 @@ import System.Posix.Socket.Prim as P
 
 import public System.Posix.Socket.Struct
 import public System.Posix.Socket.Types
+import public System.Posix.File.ReadRes
 
 parameters {auto eio : ErrIO io}
 
@@ -47,3 +48,41 @@ parameters {auto eio : ErrIO io}
   export
   connect : {d : _} -> Socket d -> Addr d -> io ()
   connect s = eprim . P.connect s
+
+  ||| Reads at most `n` bytes from a file into an allocated pointer.
+  export %inline
+  recvPtr :
+       Socket d
+    -> AnyPtr
+    -> (n : Bits32)
+    -> SockFlags
+    -> io (ReadRes ByteString)
+  recvPtr s ptr n = eprim . P.recvPtr s ptr n
+
+  ||| Reads at most `n` bytes from a file into an allocated pointer.
+  export %inline
+  recvFromPtr :
+      {d : _}
+    -> Socket d
+    -> AnyPtr
+    -> (n : Bits32)
+    -> SockFlags
+    -> Sockaddr d
+    -> io (ReadRes ByteString)
+  recvFromPtr s ptr n sf = eprim . P.recvFromPtr s ptr n sf
+
+  ||| Reads at most `n` bytes from a file into a bytestring.
+  export %inline
+  recv : Socket d -> (n : Bits32) -> SockFlags -> io (ReadRes ByteString)
+  recv s n = eprim . P.recv s n
+
+  ||| Reads at most `n` bytes from a socket into a bytestring
+  export %inline
+  recvFrom :
+      {d : _}
+    -> Socket d
+    -> (n : Bits32)
+    -> SockFlags
+    -> Sockaddr d
+    -> io (ReadRes ByteString)
+  recvFrom s n sf = eprim . P.recvFrom s n sf

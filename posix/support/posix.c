@@ -708,12 +708,34 @@ uint32_t sockaddr_in_addr(struct sockaddr_in *addr) {
   return ntohl(addr->sin_addr.s_addr);
 }
 
+const char *sockaddr_in_addr_str(struct sockaddr_in *addr) {
+  char res[INET_ADDRSTRLEN];
+  const char *buf = inet_ntop(AF_INET, &addr->sin_addr, res, INET_ADDRSTRLEN);
+
+  if (buf == NULL) {
+    return "";
+  } else {
+    return buf;
+  }
+}
+
 uint16_t sockaddr_in_port(struct sockaddr_in *addr) {
   return ntohs(addr->sin_port);
 }
 
 char *sockaddr_in6_addr(struct sockaddr_in6 *addr) {
   return addr->sin6_addr.s6_addr;
+}
+
+const char *sockaddr_in6_addr_str(struct sockaddr_in6 *addr) {
+  char res[INET6_ADDRSTRLEN];
+  const char *buf = inet_ntop(AF_INET, &addr->sin6_addr, res, INET6_ADDRSTRLEN);
+
+  if (buf == NULL) {
+    return "";
+  } else {
+    return buf;
+  }
 }
 
 int li_socket(int domain, int type) {
@@ -738,5 +760,23 @@ int li_accept(int sfd) {
 
 int li_connect(int sfd, struct sockaddr *addr, size_t len) {
   int res = connect(sfd, addr, len);
+  CHECKRES
+}
+
+ssize_t li_recv(int fd, char *buf, size_t bytes, int flags) {
+  int res = recv(fd, buf, bytes, flags);
+  CHECKRES
+}
+
+ssize_t li_recvfrom(int fd, char *buf, size_t bytes, int flags,
+                    struct sockaddr *addr, socklen_t len) {
+  socklen_t plen = len;
+  int res = recvfrom(fd, buf, bytes, flags, addr, &plen);
+  CHECKRES
+}
+
+ssize_t li_sendto(int fd, char *buf, size_t off, size_t bytes, int flags,
+                  struct sockaddr *addr, socklen_t len) {
+  int res = sendto(fd, buf + off, bytes, flags, addr, len);
   CHECKRES
 }

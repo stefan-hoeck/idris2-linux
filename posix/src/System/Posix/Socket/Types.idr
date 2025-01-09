@@ -36,6 +36,18 @@ Semigroup SockType where
   ST x <+> ST y = ST $ x .|. y
 
 public export
+record SockFlags where
+  constructor SF
+  flags : Bits32
+
+namespace SockFlags
+  %runElab derive "SockFlags" [Show,Eq,Ord,FromInteger]
+
+public export
+Semigroup SockFlags where
+  SF x <+> SF y = SF $ x .|. y
+
+public export
 domainCode : Domain -> Bits8
 domainCode AF_UNIX  = 1
 domainCode AF_INET  = 2
@@ -60,6 +72,26 @@ SOCK_NONBLOCK = 2048
 public export
 SOCK_CLOEXEC : SockType
 SOCK_CLOEXEC = 524288
+
+public export
+MSG_DONTWAIT : SockFlags
+MSG_DONTWAIT = 64
+
+public export
+MSG_OOB : SockFlags
+MSG_OOB = 1
+
+public export
+MSG_PEEK : SockFlags
+MSG_PEEK = 2
+
+public export
+MSG_WAITALL : SockFlags
+MSG_WAITALL = 256
+
+public export
+MSG_NOSIGNAL : SockFlags
+MSG_NOSIGNAL = 16384
 
 public export
 sockaddr_un_size : Bits32
