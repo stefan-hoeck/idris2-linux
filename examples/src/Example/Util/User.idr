@@ -13,7 +13,7 @@ parameters {auto hf : Has Errno es}
   export
   entries : (buf : Bits32) -> Prog es (List PasswdEntry)
   entries buf = do
-    bs <- readFile "/etc/passwd" buf
+    bs <- readFile ByteString "/etc/passwd" buf
     pure (mapMaybe readEntry $ unixLines bs)
 
   export %inline

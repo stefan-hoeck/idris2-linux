@@ -5,6 +5,7 @@ import Derive.Prelude
 
 import System.Linux.Epoll.Flags
 import System.Posix.File.FileDesc
+import System.Posix.File.ReadRes
 
 %default total
 %language ElabReflection
@@ -60,3 +61,7 @@ epollEvent (SE p) t =
   let fd # t := ffi (prim__get_epoll_event_fd p) t
       ev # t := ffi (prim__get_epoll_event_events p) t
    in E (E ev) (cast fd) # t
+
+export %inline %hint
+convEpollEvent : Convert EpollEvent
+convEpollEvent = C SEpollEvent epollEvent

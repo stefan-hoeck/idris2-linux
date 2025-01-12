@@ -46,13 +46,13 @@ closedir = eprim . P.closedir
 
 ||| Reads the next entry from a directory.
 export
-readdir : ErrIO io => Dir -> io (Maybe ByteString)
-readdir = eprim . P.readdir
+readdir : (0 r : Type) -> FromBuf r => ErrIO io => Dir -> io (ReadRes r)
+readdir r = eprim . P.readdir r
 
 ||| Returns the current working directory.
 export %inline
-getcwd : ErrIO io => io ByteString
-getcwd = eprim $ P.getcwd
+getcwd : (0 r : Type) -> FromBuf r => ErrIO io => io r
+getcwd r = eprim $ P.getcwd r
 
 ||| Changes the current working directory
 export

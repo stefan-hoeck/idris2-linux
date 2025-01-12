@@ -164,4 +164,7 @@ export %inline
 Resource (CArrayIO n a) where cleanup = liftIO . free
 
 export %inline
+Resource CPtr where cleanup = freePtr
+
+export %inline
 Struct a => Resource a where cleanup = freeStruct

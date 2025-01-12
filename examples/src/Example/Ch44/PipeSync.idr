@@ -35,7 +35,7 @@ parameters {auto he : Has Errno es}
   run : Nat -> Nat -> Vect 2 Fd -> Prog es ()
   run 0     tot [i,o] = do
     close o
-    n <- read i 1
+    n <- read i String 1
     stdoutLn "Parent ready to go."
   run (S k) tot fds   = do
     0 <- fork | p => run k tot fds

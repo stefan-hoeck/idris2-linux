@@ -45,6 +45,9 @@ prim__writeptr : (file : Bits32) -> AnyPtr -> (off,max : Bits32) -> PrimIO Ssize
 %foreign "C:li_pwrite, posix-idris"
 prim__pwrite : (file : Bits32) -> Buffer -> (off,max : Bits32) -> OffT -> PrimIO SsizeT
 
+%foreign "C__collect_safe:li_pwrite, posix-idris"
+prim__pwriteptr : (file : Bits32) -> AnyPtr -> (off,max : Bits32) -> OffT -> PrimIO SsizeT
+
 %foreign "C:lseek, posix-idris"
 prim__lseek : (file : Bits32) -> (off : OffT) -> (whence : CInt) -> PrimIO OffT
 
@@ -94,41 +97,48 @@ prim__readlink : (file : String) -> Buffer -> (max : Bits32) -> PrimIO SsizeT
 -- Utilities
 --------------------------------------------------------------------------------
 
-||| Converts a number of bytes read into a buffer to a `ByteString`
+||| Converts a number of bytes read into a buffer to a suitable result.
 export %inline
-toBytes : Bits32 -> (Buffer -> Bits32 -> PrimIO SsizeT) -> EPrim ByteString
-toBytes n act t =
+allocRead : FromBuf a => Bits32 -> (Buffer -> Bits32 -> PrimIO SsizeT) -> EPrim a
+allocRead n act t =
   let buf # t := toF1 (prim__newBuf n) t
       rd  # t := toF1 (act buf n) t
    in if rd < 0
          then E (fromNeg rd) t
-         else R (unsafeByteString (cast rd) buf) t
+         else let r # t := fromBuf (B (cast rd) buf) t in R r t
 
-||| Converts a number of bytes read into `ReadRes ByteString`.
-export %inline
-ptrToRes : AnyPtr -> PrimIO SsizeT -> EPrim (ReadRes ByteString)
-ptrToRes ptr act t =
-  let rd  # t := toF1 act t
-   in if      rd < 0  then fromErr (fromNeg rd) t
-      else if rd == 0 then R EOI t
-      else
-       let s32     := cast {to = Bits32} rd
-           buf # t := toF1 (prim__newBuf s32) t
-           _   # t := toF1 (prim__copy_buf ptr buf s32) t
-        in R (Res $ unsafeByteString (cast s32) buf) t
-
-||| Converts a number of bytes read into `ReadRes ByteString`.
+||| Like `allocRead` but treats certain errors as valid results.
 export %inline
 toRes :
-     Bits32
+     {auto fb : FromBuf a}
+  -> Bits32
   -> (Buffer -> Bits32 -> PrimIO SsizeT)
-  -> EPrim (ReadRes ByteString)
+  -> EPrim (ReadRes a)
 toRes n act t =
   let buf # t := toF1 (prim__newBuf n) t
       rd  # t := toF1 (act buf n) t
    in if      rd < 0  then fromErr (fromNeg rd) t
       else if rd == 0 then R EOI t
-      else                 R (Res $ unsafeByteString (cast rd) buf) t
+      else let r # t := fromBuf (B (cast rd) buf) t in R (Res r) t
+
+
+||| Converts a number of bytes read into a C-ptr to a suitable result.
+export %inline
+ptrRead : FromPtr a => AnyPtr -> PrimIO SsizeT -> EPrim a
+ptrRead ptr act t =
+  let rd  # t := toF1 act t
+   in if rd < 0
+         then E (fromNeg rd) t
+         else let res # t := fromPtr (CP (cast rd) ptr) t in R res t
+
+||| Like `ptrRead` but treats certain errors as valid results.
+export %inline
+ptrToRes : FromPtr a => AnyPtr -> PrimIO SsizeT -> EPrim (ReadRes a)
+ptrToRes ptr act t =
+  let rd  # t := toF1 act t
+   in if      rd < 0  then fromErr (fromNeg rd) t
+      else if rd == 0 then R EOI t
+      else let res # t := fromPtr (CP (cast rd) ptr) t  in R (Res res) t
 
 export %inline
 toFD : PrimIO CInt -> EPrim Fd
@@ -158,64 +168,32 @@ parameters {auto fid : FileDesc a}
     let MkIORes _ w := prim__close (fileDesc fd) w
      in MkIORes () w
 
-  ||| Reads at most `n` bytes from a file into an allocated pointer.
+  ||| Reads at most `n` bytes from a file into a pre-allocated pointer.
   export %inline
-  readPtr : AnyPtr -> (n : Bits32) -> EPrim Bits32
-  readPtr ptr n = toSize $ prim__readptr (fileDesc fd) ptr n
+  readPtr : (0 r : Type) -> FromPtr r => CPtr -> EPrim r
+  readPtr r (CP sz p) = ptrRead p $ prim__readptr (fileDesc fd) p sz
 
-  ||| Reads at most `n` bytes from a file into an allocated pointer.
+  ||| Reads at most `n` bytes from a file into a pre-allocated pointer.
   |||
   ||| This is similar to `readres`, but it allows us to efficiently stream
   ||| data into a large pointer, even in case the chunks of data are much smaller.
   export %inline
-  readPtrRes : AnyPtr -> (n : Bits32) -> EPrim (ReadRes ByteString)
-  readPtrRes ptr n = ptrToRes ptr $ prim__readptr (fileDesc fd) ptr n
+  readPtrRes : (0 r : Type) -> FromPtr r => CPtr -> EPrim (ReadRes r)
+  readPtrRes r (CP sz p) = ptrToRes p $ prim__readptr (fileDesc fd) p sz
 
-  ||| Reads at most `n * sizeof a` bytes into a preallocated array.
+  ||| Reads at most `n` bytes from a file into a suitable result type.
   export
-  readArr : {n : _} -> SizeOf b => CArrayIO n b -> EPrim (k ** CArrayIO k b)
-  readArr p w =
-    let ptr    := unsafeUnwrap p
-        sz     := sizeof b
-        R bs w := readPtr ptr (cast n * sz) w | E x w => E x w
-        k      := cast (bs `div` sz)
-     in R (k ** unsafeWrap ptr) w
+  read : (0 r : Type) -> FromBuf r => (n : Bits32) -> EPrim r
+  read r n = allocRead n $  prim__read (fileDesc fd)
 
-  ||| Reads at most `n * sizeof a` bytes into a preallocated array and
-  ||| converts it to a list of values.
-  export
-  readVals :
-       {n : _}
-    -> {auto sof : SizeOf b}
-    -> {auto der : Deref b}
-    -> CArrayIO n b
-    -> (b -> PrimIO c)
-    -> EPrim (List c)
-  readVals p f t =
-    let R (k ** arr) t := readArr p t | E x t => E x t
-        vs # t         := values [] arr (toF1 . f) k t
-     in R vs t
-
-  ||| Reads at most `n` bytes from a file into a buffer.
-  export %inline
-  readRaw : Buffer -> (n : Bits32) -> EPrim (k ** IOBuffer k)
-  readRaw buf n w =
-    let R sz w := toSize (prim__read (fileDesc fd) buf n) w | E x w => E x w
-     in R (cast sz ** unsafeMBuffer buf) w
-
-  ||| Reads at most `n` bytes from a file into a bytestring.
-  export
-  read : (n : Bits32) -> EPrim ByteString
-  read n = toBytes n $  prim__read (fileDesc fd)
-
-  ||| Reads at most `n` bytes from a file into a bytestring.
+  ||| Reads at most `n` bytes from a file into a suitable result type.
   |||
   ||| This is a more convenient version of `read` that gives detailed
   ||| information about why a read might fail. It is especially useful
   ||| when reading from - possibly non-blocking - pipes or sockets.
   export
-  readres : (n : Bits32) -> EPrim (ReadRes ByteString)
-  readres n = toRes n $  prim__read (fileDesc fd)
+  readres : (0 r : Type) -> FromBuf r => (n : Bits32) -> EPrim (ReadRes r)
+  readres r n = toRes n $  prim__read (fileDesc fd)
 
   ||| Atomically reads up to `n` bytes from the given file at
   ||| the given file offset.
@@ -224,8 +202,8 @@ parameters {auto fid : FileDesc a}
   |||        arbitrary data streams such as pipes or sockets.
   |||        Also, it will not change the position of the open file description.
   export
-  pread : (n : Bits32) -> OffT -> EPrim ByteString
-  pread n off = toBytes n $ \b,x => prim__pread (fileDesc fd) b x off
+  pread : (0 r : Type) -> FromBuf r => (n : Bits32) -> OffT -> EPrim r
+  pread r n off = allocRead n $ \b,x => prim__pread (fileDesc fd) b x off
 
   ||| Writes up to the number of bytes in the bytestring
   ||| to the given file.
@@ -233,35 +211,13 @@ parameters {auto fid : FileDesc a}
   ||| Note: This is an atomic operation if `fd` is a regular file that
   |||       was opened in "append" mode (with the `O_APPEND` flag).
   export
-  writeBytes : ByteString -> EPrim Bits32
-  writeBytes (BS n $ BV b o _) =
-    toSize $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
-
-  ||| Writes up to the given number of bytes from the given buffer starting
-  ||| at the given offset.
-  |||
-  ||| Note: This is an atomic operation if `fd` is a regular file that
-  |||       was opened in "append" mode (with the `O_APPEND` flag).
-  export %inline
-  writeRaw : Buffer -> (offset,n : Bits32) -> EPrim Bits32
-  writeRaw buf o n = toSize $ prim__write (fileDesc fd) buf o n
-
-  ||| Writes up to the number of bytes from the given C ptr.
-  |||
-  ||| Note: This is an atomic operation if `fd` is a regular file that
-  |||       was opened in "append" mode (with the `O_APPEND` flag).
-  export %inline
-  writePtr : AnyPtr -> (n : Bits32) -> EPrim Bits32
-  writePtr buf n = toSize $ prim__writeptr (fileDesc fd) buf 0 n
-
-  ||| Writes the content of the given array.
-  |||
-  ||| Note: This is an atomic operation if `fd` is a regular file that
-  |||       was opened in "append" mode (with the `O_APPEND` flag).
-  export %inline
-  writeArr : {n : _} -> SizeOf b => CArrayIO n b -> EPrim Bits32
-  writeArr p = writePtr (unsafeUnwrap p) (cast n * sizeof b)
-
+  write : ToBuf r => r -> EPrim Bits32
+  write v =
+    case unsafeToBuf v of
+      Left (CP sz ptr)        =>
+        toSize $ prim__writeptr (fileDesc fd) ptr 0 sz
+      Right (BS n $ BV b o _) =>
+        toSize $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
 
   ||| Atomically writes up to the number of bytes in the bytestring
   ||| to the given file at the given file offset.
@@ -270,25 +226,13 @@ parameters {auto fid : FileDesc a}
   |||        arbitrary data streams such as pipes or sockets.
   |||        Also, it will not change the position of the open file description.
   export
-  pwriteBytes : ByteString -> OffT -> EPrim Bits32
-  pwriteBytes (BS n $ BV b o _) off =
-    toSize $ prim__pwrite (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) off
-
-  export %inline
-  write : {n : _} -> IBuffer n -> EPrim Bits32
-  write ibuf = writeRaw (unsafeGetBuffer ibuf) 0 (cast n)
-
-  export %inline
-  writeIO : {n : _} -> IOBuffer n -> EPrim Bits32
-  writeIO mbuf = writeRaw (unsafeFromMBuffer mbuf) 0 (cast n)
-
-  export %inline
-  writeStr : String -> EPrim Bits32
-  writeStr = writeBytes . fromString
-
-  export %inline
-  writeStrLn : String -> EPrim Bits32
-  writeStrLn = writeStr . (++ "\n")
+  pwrite : ToBuf r => r -> OffT -> EPrim Bits32
+  pwrite v off =
+    case unsafeToBuf v of
+      Left (CP sz ptr)        =>
+        toSize $ prim__pwriteptr (fileDesc fd) ptr 0 sz off
+      Right (BS n $ BV b o _) =>
+        toSize $ prim__pwrite (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n) off
 
 --------------------------------------------------------------------------------
 -- File seeking
@@ -370,12 +314,12 @@ export
 mkstemp : String -> EPrim (Fd, String)
 mkstemp f t =
   let pat     := "\{f}XXXXXX"
-      len     := stringByteLength pat
-      buf # t := toF1 (prim__newBuf (cast len)) t
+      len     := cast {to = Bits32} $ stringByteLength pat
+      buf # t := toF1 (prim__newBuf len) t
       _   # t := ioToF1 (setString buf 0 pat) t
       R fd  t := toFD (prim__mkstemp buf) t | E x t => E x t
-      str # t := ioToF1 (getString buf 0 len) t
-   in R (fd, str) t
+      nm  # t := fromBuf (B len buf) t
+   in R (fd, nm) t
 
 --------------------------------------------------------------------------------
 -- Links
@@ -421,8 +365,8 @@ rename f l = toUnit $ prim__rename f l
 ||| This allocates a buffer of 4096 bytes for the byte array holding
 ||| the result.
 export %inline
-readlink : (file : String) -> EPrim ByteString
-readlink f = toBytes 4096 $ prim__readlink f
+readlink : FromBuf a => (file : String) -> EPrim a
+readlink f = allocRead 4096 $ prim__readlink f
 
 --------------------------------------------------------------------------------
 -- Standard input and output
@@ -430,11 +374,11 @@ readlink f = toBytes 4096 $ prim__readlink f
 
 export %inline
 stdout : String -> PrimIO ()
-stdout s = ignore $ writeStr Stdout s
+stdout s = ignore $ write Stdout s
 
 export %inline
 stdoutLn : String -> PrimIO ()
-stdoutLn s = ignore $ writeStrLn Stdout s
+stdoutLn = stdout . (++ "\n")
 
 export %inline
 prnt : Show a => a -> PrimIO ()
@@ -446,8 +390,8 @@ prntLn = stdoutLn . show
 
 export %inline
 stderr : String -> PrimIO ()
-stderr s = ignore $ writeStr Stderr s
+stderr s = ignore $ write Stderr s
 
 export %inline
 stderrLn : String -> PrimIO ()
-stderrLn s = ignore $ writeStrLn Stderr s
+stderrLn = stderr . (++ "\n")

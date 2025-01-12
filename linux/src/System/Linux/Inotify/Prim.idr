@@ -40,9 +40,6 @@ inotifyRm : Inotify -> Watch -> EPrim ()
 inotifyRm f w = toUnit $ prim__inotify_rm (fileDesc f) (cast w)
 
 ||| Reads at most `buf` from an `inotify` file descriptor.
-export
+export %inline
 inotifyRead : (buf : Bits32) -> Inotify -> EPrim (List InotifyRes)
-inotifyRead buf i =
-  withPtr (cast buf) $ \p,w =>
-    let R x w := readPtr i p buf w | E x w => E x w
-     in R (results [<] p p x) w
+inotifyRead buf i = read i _ buf

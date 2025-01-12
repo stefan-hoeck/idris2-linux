@@ -27,9 +27,9 @@ covering
 loop : Has Errno es => Prog es ()
 loop = do
   _   <- stdout "Command: "
-  cmd <- read Stdin 4096
-  when (cmd.size > 0) $ do
-    status <- system $ toString cmd
+  cmd <- read Stdin String 4096
+  when (cmd /= "") $ do
+    status <- system cmd
     printStatus status
     loop
   stdoutLn "\nGoodbye!"

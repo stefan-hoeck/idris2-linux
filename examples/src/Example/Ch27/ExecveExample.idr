@@ -26,6 +26,6 @@ export
 execveExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
 execveExample ["--help"]  = stdoutLn usage
 execveExample []          = do
-  p <- getcwd
-  execle"\{toString p}/examples/build/exec/linux-examples" args env
+  p <- getcwd {r = String}
+  execle"\{p}/examples/build/exec/linux-examples" args env
 execveExample args        = fail (WrongArgs usage)

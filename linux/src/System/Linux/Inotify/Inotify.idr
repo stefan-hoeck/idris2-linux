@@ -3,6 +3,7 @@ module System.Linux.Inotify.Inotify
 import Data.C.Ptr
 import Derive.Prelude
 import System.Posix.File.FileDesc
+import System.Posix.File.ReadRes
 import System.Linux.Inotify.Flags
 
 %default total
@@ -93,3 +94,11 @@ results sx orig cur sz =
         orig
         (assert_smaller cur $ prim__inotify_next cur)
         sz
+
+export
+FromPtr (List InotifyRes) where
+  fromPtr (CP sz p) t = results [<] p p sz # t
+
+export %inline
+FromBuf (List InotifyRes) where
+  fromBuf = viaPtrFromBuf

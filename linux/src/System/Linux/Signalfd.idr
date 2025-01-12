@@ -42,10 +42,5 @@ signalfd ss = eprim . P.signalfd ss
 ||| Note: This will overwrite the data stored in `arr` and the
 |||       result is a wrapper around the same pointer.
 export
-readSignalfd :
-     {n : _}
-  -> {auto eio : ErrIO io}
-  -> Signalfd
-  -> (arr : CArrayIO n SSiginfo)
-  -> io (List Siginfo)
+readSignalfd : ErrIO io => Signalfd -> Nat -> io (List Siginfo)
 readSignalfd fd = eprim . P.readSignalfd fd

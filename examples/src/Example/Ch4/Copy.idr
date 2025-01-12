@@ -26,22 +26,23 @@ usage =
 parameters {auto hf : Has Errno es}
 
   covering
-  copyRaw : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es ()
-  copyRaw buf i o = streamRaw i buf (writeRawAll o)
+  copyRaw : FileDesc a => FileDesc b => CPtr -> a -> b -> Prog es Bool
+  copyRaw p i o = streamPtr CPtr i p (ignore . write o)
 
   covering
-  copy : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es ()
-  copy buf i o = stream i buf (writeAll o)
+  copy : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es Bool
+  copy buf i o = stream ByteString i buf (ignore . write o)
 
   covering
-  cpRaw : Bits32 -> String -> String -> Prog es ()
+  cpRaw : Bits32 -> String -> String -> Prog es Bool
   cpRaw buf i o =
-    withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copyRaw buf fi fo
+    use [openFile i 0 0, openFile o create 0x660, cptr (cast buf)] $
+      \[fi,fo,p] => copyRaw p fi fo
 
   covering
-  cp : Bits32 -> String -> String -> Prog es ()
+  cp : Bits32 -> String -> String -> Prog es Bool
   cp buf i o =
-    withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copy buf fi fo
+    use [openFile i 0 0, openFile o create 0x660] $ \[fi,fo] => copy buf fi fo
 
   export covering
   copyProg : Has ArgErr es => List String -> Prog es ()
@@ -50,10 +51,10 @@ parameters {auto hf : Has Errno es}
     fi  <- readOptIO OPath i
     fo  <- readOptIO OPath o
     buf <- parseEnv OBits32 "LI_BUF_SIZE" 0x10000
-    cp buf fi fo
+    ignore $ cp buf fi fo
   copyProg [i,o,"raw"] = do
     fi  <- readOptIO OPath i
     fo  <- readOptIO OPath o
     buf <- parseEnv OBits32 "LI_BUF_SIZE" 0x10000
-    cpRaw buf fi fo
+    ignore $ cpRaw buf fi fo
   copyProg _ = fail (WrongArgs usage)

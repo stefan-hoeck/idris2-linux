@@ -47,7 +47,7 @@ parameters {auto hf : Has Errno es}
 
   inDir : UidT -> String -> Prog es ()
   inDir u p = do
-    r <- dropErr toEOF (readFile "/proc/\{p}/status" 0x10000)
+    r <- dropErr toEOF (readFile _ "/proc/\{p}/status" 0x10000)
     let m := processInfo r
     case (lookup "Name" m, hasUID u m) of
       (Just n,True) => stdoutLn "\{p}: \{n}"

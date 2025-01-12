@@ -35,36 +35,28 @@ parameters {auto he : Has Errno es}
   prnt : Bits32 -> Vect 2 Fd -> Prog es ()
   prnt sz [i,o] = do
     close o
-    buf <- primIO (prim__newBuf sz)
-    strm buf
+    b <- stream Buf i sz $ \(B n _) => stdoutLn "\{show n} bytes read"
     close i
-
-    where
-      covering
-      strm : Buffer -> Prog es ()
-      strm buf =
-        onErrno EAGAIN (stdoutLn "read: currently no data" >> strm buf) $
-          readRaw i buf sz >>= \case
-            (0 ** _) => stdoutLn "End of input."
-            (n ** _) => stdoutLn "\{show n} bytes read" >> strm buf
+    stdoutLn $ if b then "End of input." else "Aborted due to broken pipe."
 
   covering
   chld : Bits32 -> Bits32 -> Vect 2 Fd -> Prog es ()
   chld tot sz [i,o] = do
     close i
     buf <- primIO (prim__newBuf sz)
-    strm buf tot
+    strm buf 0 tot
     close o
 
     where
       covering
-      strm : Buffer -> (rem : Bits32) -> Prog es ()
-      strm buf 0   = pure ()
-      strm buf rem =
-        onErrno EAGAIN (stdoutLn "write: currently no space" >> strm buf rem) $ do
-          w <- writeRaw o buf 0 (min rem sz)
-          stdoutLn "\{show w} bytes written"
-          strm buf (rem - w)
+      strm : Buffer -> (off : Bits32) -> (rem : Bits32) -> Prog es ()
+      strm buf off 0   = pure ()
+      strm buf off rem =
+        let bs := unsafeByteString (cast (off + min rem sz)) buf
+         in onErrno EAGAIN (stdoutLn "write: currently no space" >> strm buf off rem) $ do
+              w <- write o (drop (cast off) bs)
+              stdoutLn "\{show w} bytes written"
+              strm buf (off + w) (rem - w)
 
   covering
   run : (ts,rs,ws : String) -> Flags -> Prog es ()

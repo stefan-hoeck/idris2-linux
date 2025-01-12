@@ -4,6 +4,7 @@ import Data.C.Ptr
 
 import Derive.Prelude
 
+import System.Posix.File.ReadRes
 import public Data.C.Integer
 import public System.Clock
 import public System.Posix.Errno
@@ -92,6 +93,10 @@ namespace Timespec
           _ # t := setNsec ts (cast $ nanoseconds cl) t
        in f ts t
 
+export %inline %hint
+convertClock : {t : _} -> Convert (Clock t)
+convertClock = C STimespec (\x,t => toClock x t)
+
 --------------------------------------------------------------------------------
 -- STimeval
 --------------------------------------------------------------------------------
@@ -165,6 +170,10 @@ namespace STimeval
     let sec  # t := STimeval.sec stv t
         usec # t := STimeval.usec stv t
      in TV sec usec # t
+
+export %inline %hint
+convertTimeval : Convert Timeval
+convertTimeval = C STimeval (\x => timeval x)
 
 --------------------------------------------------------------------------------
 -- Timerval
@@ -244,6 +253,10 @@ namespace Itimerval
         sval # t := Itimerval.value itv t
         val  # t := timeval sval t
      in TRV iv val # t
+
+export %inline %hint
+convertTimerval : Convert Timerval
+convertTimerval = C Itimerval timerval
 
 --------------------------------------------------------------------------------
 -- Timerspec
@@ -333,3 +346,7 @@ namespace Itimerspec
   export
   duration : TimeT -> NsecT -> Clock Duration
   duration s ns = makeDuration (cast s) (cast ns)
+
+export %inline %hint
+convTimerspec : Convert Timerspec
+convTimerspec = C Itimerspec timerspec

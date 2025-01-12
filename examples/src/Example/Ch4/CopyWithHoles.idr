@@ -31,12 +31,12 @@ parameters {auto hf : Has Errno es}
 
   covering
   copy : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es ()
-  copy buf i o = stream i buf (\(BS n bv) => writeBlocks o n bv)
+  copy buf i o = ignore $ stream _ i buf (\(BS n bv) => writeBlocks o n bv)
 
   covering
   cp : Bits32 -> String -> String -> Prog es ()
   cp buf i o =
-    withFile i 0 0 $ \fi => withFile o create 0o660 $ \fo => copy buf fi fo
+    use [openFile i 0 0, openFile o create 0o660] $ \[fi,fo] => copy buf fi fo
 
   export covering
   copyh : Has ArgErr es => List String -> Prog es ()

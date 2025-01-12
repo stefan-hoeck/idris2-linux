@@ -44,7 +44,7 @@ disp True  = toHexString (Just ':')
 parameters {auto hf : Has Errno es}
 
   readHere : Bool -> Fd -> Bits32 -> Prog es ()
-  readHere b fd n = read fd n >>= \x => stdoutLn "\{rd b n}: \{disp b x}"
+  readHere b fd n = read fd _ n >>= \x => stdoutLn "\{rd b n}: \{disp b x}"
 
   seek : List Cmd -> (fd : Fd) -> Prog es ()
   seek []        fd = pure ()
@@ -59,7 +59,7 @@ parameters {auto hf : Has Errno es}
       cmd (ReadHex m) = readHere True  fd m
 
       cmd (Write str) =
-        writeStr fd str >>= \n => stdoutLn "s\{str}: wrote \{show n} bytes"
+        write fd str >>= \n => stdoutLn "s\{str}: wrote \{show n} bytes"
 
   export
   seekProg : Has ArgErr es => List String -> Prog es ()

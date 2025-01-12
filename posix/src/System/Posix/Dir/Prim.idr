@@ -85,18 +85,13 @@ closedir p = toUnit $ prim__closedir (dirptr p)
 
 ||| Reads the next entry from a directory.
 export
-readdir : Dir -> EPrim (Maybe ByteString)
-readdir p w =
-  let dp     := dirptr p
-      R bs w := toBytes 256 (\b,_ => prim__readdir dp b) w | E x w => E x w
-   in case bs of
-        BS 0 _ => R Nothing w
-        bs     => R (Just bs) w
+readdir : (0 r : Type) -> FromBuf r => Dir -> EPrim (ReadRes r)
+readdir r p = toRes 256 (\b,_ => prim__readdir (dirptr p) b)
 
 ||| Returns the current working directory.
 export %inline
-getcwd : EPrim ByteString
-getcwd = toBytes 4096 (prim__getcwd)
+getcwd : (0 r : Type) -> FromBuf r => EPrim r
+getcwd r = allocRead 4096 prim__getcwd
 
 ||| Changes the current working directory
 export

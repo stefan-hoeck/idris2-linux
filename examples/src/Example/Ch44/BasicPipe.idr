@@ -24,20 +24,21 @@ parameters {auto he : Has Errno es}
 
   covering
   prnt : PidT -> Vect 2 Fd -> Prog es ()
-  prnt pid [i,o] = do
-    close o
-    stdoutLn "Spawned child \{show pid}"
-    streamRaw i 0x1000 (writeRawAll Stdout)
-    close i
+  prnt pid [i,o] =
+    use1 (cptr 0x1000) $ \cp => do
+      close o
+      stdoutLn "Spawned child \{show pid}"
+      ignore $ streamPtr CPtr i cp (ignore . write Stdout)
+      close i
 
   covering
   chld : String -> Vect 2 Fd -> Prog es ()
   chld s [i,o] = do
     close i
     pid <- getpid
-    writeAllStr o "Hello. I'm child number \{show pid}\n"
-    writeAllStr o "Here's the message I got:\n"
-    writeAllStr o "\n  '\{s}'\n"
+    writeAll o "Hello. I'm child number \{show pid}\n"
+    writeAll o "Here's the message I got:\n"
+    writeAll o "\n  '\{s}'\n"
 
   covering
   run : String -> Prog es ()

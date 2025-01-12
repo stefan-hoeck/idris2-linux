@@ -27,97 +27,25 @@ parameters {auto has : Has Errno es}
   withFile pth fs m = use1 (openFile pth fs m)
 
   export
-  writeVect :
-       {0 fd   : Type}
-    -> {n      : _}
-    -> {auto _ : SizeOf a}
-    -> {auto _ : SetPtr a}
-    -> {auto _ : FileDesc fd}
-    -> fd
-    -> Vect n a
-    -> Prog es Bits32
-  writeVect fd vs =
-    use1 (malloc a n) $ \p => do
-      runIO $ writeVect p vs
-      writeArr fd p
-
-  export
-  writeList :
-       {0 fd   : Type}
-    -> {auto _ : SizeOf a}
-    -> {auto _ : SetPtr a}
-    -> {auto _ : FileDesc fd}
-    -> fd
-    -> List a
-    -> Prog es Bits32
-  writeList fd vs = writeVect fd (fromList vs)
-
-  export
-  writeVal :
-       {0 fd   : Type}
-    -> {auto _ : SizeOf a}
-    -> {auto _ : SetPtr a}
-    -> {auto _ : FileDesc fd}
-    -> fd
-    -> a
-    -> Prog es Bits32
-  writeVal fd v = writeVect fd [v]
-
-  export
-  readFile : String -> Bits32 -> Prog es ByteString
-  readFile pth buf = withFile pth O_RDONLY 0 $ \fd => read fd buf
-
-  export
-  readStr : String -> Bits32 -> Prog es String
-  readStr pth buf = toString <$> readFile pth buf
-
-  export covering
-  writeAll : FileDesc a => a -> ByteString -> Prog es ()
-  writeAll fd (BS 0 _) = pure ()
-  writeAll fd bs       =
-    writeBytes fd bs >>= \m => writeAll fd (drop (cast m) bs)
-
-  export covering %inline
-  writeAllStr : FileDesc a => a -> String -> Prog es ()
-  writeAllStr fd = writeAll fd . fromString
-
-  export covering
-  writeRawAll : FileDesc a => a -> {k : _} -> IOBuffer k -> Prog es ()
-  writeRawAll fd buf = go 0 (cast k)
-    where
-      go : Bits32 -> Bits32 -> Prog es ()
-      go o 0 = pure ()
-      go o n = writeRaw fd (unsafeFromMBuffer buf) o n >>= \w => go (o+w) (n-w)
+  readFile : (0 r : Type) -> FromBuf r => String -> Bits32 -> Prog es r
+  readFile r pth buf = withFile pth O_RDONLY 0 $ \fd => read fd r buf
 
   export covering
   stream :
        {auto fid : FileDesc a}
+    -> (0 r : Type)
+    -> {auto frb : FromBuf r}
     -> (fd : a)
     -> (buffer : Bits32)
-    -> (ByteString -> Prog es ())
-    -> Prog es ()
-  stream fd buf run =
-    read fd buf >>= \case
-      BS 0 _ => pure ()
-      bs     => run bs >> stream fd buf run
-
-  export covering
-  streamRaw :
-       {auto fid : FileDesc a}
-    -> (fd : a)
-    -> (buffer : Bits32)
-    -> ({k : Nat} -> IOBuffer k -> Prog es ())
-    -> Prog es ()
-  streamRaw fd sz run = do
-    buf <- primIO (prim__newBuf sz)
-    go buf
-
-    where
-      go : Buffer -> Prog es ()
-      go buf =
-        readRaw fd buf sz >>= \case
-          (0 ** _) => pure ()
-          (k ** b) => run b >> go buf
+    -> (r -> Prog es ())
+    -> Prog es Bool
+  stream r fd buf run =
+    readres fd r buf >>= \case
+      EOI         => pure True
+      Closed      => pure False
+      NoData      => stream r fd buf run
+      Interrupted => stream r fd buf run
+      Res v       => run v >> stream r fd buf run
 
   export
   readVect :
@@ -129,11 +57,11 @@ parameters {auto has : Has Errno es}
     -> (n      : Nat)
     -> Prog es (Vect n a)
   readVect fd n =
-    use1 (malloc a n) $ \p => do
-      (bs ** _) <- readArr fd p
-      if bs < n
-        then fail EINVAL
-        else runIO $ withIArray p toVect
+    use1 (cptrOf a n) $ \p => do
+      vs <- readPtr fd (List a) p
+      case toVect n vs of
+        Just r => pure r
+        Nothing => fail EINVAL
 
   export
   readVal :
@@ -144,3 +72,20 @@ parameters {auto has : Has Errno es}
     -> fd
     -> Prog es a
   readVal fd = head <$> readVect fd 1
+
+  export covering
+  streamPtr :
+       {auto fid : FileDesc a}
+    -> (0 r      : Type)
+    -> {auto frb : FromPtr r}
+    -> (fd  : a)
+    -> CPtr
+    -> (r -> Prog es ())
+    -> Prog es Bool
+  streamPtr r fd cp run =
+    readPtrRes fd r cp >>= \case
+      Interrupted => streamPtr r fd cp run
+      NoData      => streamPtr r fd cp run
+      Closed      => pure False
+      EOI         => pure True
+      Res res     => run res >> streamPtr r fd cp run

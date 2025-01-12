@@ -39,11 +39,7 @@ export %inline
 signalfd : List Signal -> SignalfdFlags -> EPrim Signalfd
 signalfd ss fs = withSignals ss $ \set => signalfd_ set fs
 
-||| Reads data from a `signalfd` into a pre-allocated array.
+||| Reads at most `n` values of type `Siginfo` from a `Signalfd`.
 export %inline
-readSignalfd :
-     {n : _}
-  -> Signalfd
-  -> CArrayIO n SSiginfo
-  -> EPrim (List Siginfo)
-readSignalfd fd arr = readVals fd arr siginfo
+readSignalfd : Signalfd -> Nat -> EPrim (List Siginfo)
+readSignalfd fd n = read fd _ (cast n * sizeof SiginfoT)

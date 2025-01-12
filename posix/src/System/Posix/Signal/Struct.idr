@@ -5,6 +5,7 @@ import Data.Finite
 import Data.Linear.Traverse1
 import Derive.Prelude
 import System.Posix.Errno
+import System.Posix.File.ReadRes
 import System.Posix.Signal.Types
 
 %default total
@@ -175,3 +176,7 @@ siginfo (ST p) t =
       stt # t := ffi (get_siginfo_t_si_status p) t
       val # t := ffi (get_siginfo_t_si_value p) t
    in SI (S sig) cod pid uid stt val # t
+
+export %inline %hint
+convertSiginfo : Convert Siginfo
+convertSiginfo = C SiginfoT siginfo

@@ -19,9 +19,9 @@ parameters {auto hf : Has Errno es}
       covering
       go : Dir -> s -> Prog es s
       go dir st = do
-        readdir dir >>= \case
-          Nothing   => pure st
-          Just p    => f st (toString p) >>= go dir
+        readdir String dir >>= \case
+          Res p => f st p >>= go dir
+          _     => pure st
 
   export covering
   withDir : String -> (String -> Prog es ()) -> Prog es ()

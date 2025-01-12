@@ -25,11 +25,11 @@ usage =
 parameters {auto hf : Has Errno es}
 
   covering
-  loop : SortedMap Signal Nat -> Signalfd -> CArrayIO 1 SSiginfo -> Prog es ()
-  loop cs fd arr = do
-    [si] <- readSignalfd fd arr | _ => loop cs fd arr
+  loop : SortedMap Signal Nat -> Signalfd -> Prog es ()
+  loop cs fd = do
+    [si] <- readSignalfd fd 1 | _ => loop cs fd
     case si.signal == SIGINT of
-      False => loop (insertWith (+) si.signal 1 cs) fd arr
+      False => loop (insertWith (+) si.signal 1 cs) fd
       True  => do
         stdoutLn "\nGot SIGINT. Signal counts:"
         for_ (SortedMap.toList cs) $ \(s,n) => stdoutLn "\{s}: \{show n}"
@@ -37,18 +37,17 @@ parameters {auto hf : Has Errno es}
   covering
   app : Has ArgErr es => Nat -> Prog es ()
   app n =
-    use [malloc SSiginfo 1] $ \[arr] =>
-      use1 (signalfd values 0) $ \fd => do
-        pid       <- getpid
-        stdoutLn "PID: \{show pid}"
-        sigprocmask SIG_SETMASK values
-        when (n > 0) $ do
-          stdoutLn "sleeping for \{show n} seconds"
-          sleep (cast n)
-          ss <- sigpending
-          stdoutLn "pending signals: \{unwords $ map interpolate ss}"
+    use1 (signalfd values 0) $ \fd => do
+      pid       <- getpid
+      stdoutLn "PID: \{show pid}"
+      sigprocmask SIG_SETMASK values
+      when (n > 0) $ do
+        stdoutLn "sleeping for \{show n} seconds"
+        sleep (cast n)
+        ss <- sigpending
+        stdoutLn "pending signals: \{unwords $ map interpolate ss}"
 
-        loop empty fd arr
+      loop empty fd
 
   export covering
   sigReceiveFd : Has ArgErr es => List String -> Prog es ()

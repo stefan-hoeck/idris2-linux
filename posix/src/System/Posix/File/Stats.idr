@@ -5,6 +5,7 @@ import Derive.Prelude
 import System.Clock
 import System.Posix.Errno
 import System.Posix.File.FileDesc
+import System.Posix.File.ReadRes
 import System.Posix.File.Type
 import System.Posix.Time
 
@@ -105,6 +106,10 @@ withStatvfs act =
     let R _ t := toUnit (act $ unwrap s) t | E x t => E x t
         r # t := toStatvfs s  t
      in R r t
+
+export %inline %hint
+convertStatvfs : Convert Statvfs
+convertStatvfs = C SStatvfs toStatvfs
 
 --------------------------------------------------------------------------------
 -- FileStats
@@ -212,6 +217,10 @@ withFileStats act =
     let R _ t := toUnit (act $ unwrap s) t | E x t => E x t
         r # t := fileStats s t
      in R r t
+
+export %inline %hint
+convertFileStats : Convert FileStats
+convertFileStats = C SFileStats fileStats
 
 --------------------------------------------------------------------------------
 -- FFI
