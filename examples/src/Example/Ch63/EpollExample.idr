@@ -48,7 +48,7 @@ parameters {auto has : Has Errno es}
       covering readStdin : Prog es ()
       readStdin = do
         onErrno EAGAIN (stdoutLn "Stdin temporarily exhausted") $ do
-          bs <- read Stdin 4
+          bs <- read Stdin ByteString 4
           stdoutLn "got \{show bs.size} bytes from stdin"
           readStdin
 

@@ -25,18 +25,18 @@ parameters {auto has : Has Errno es}
     recv cli 4096 0 >>= \case
       EOI         => stdoutLn "End of input." >> close cli
       Closed      => stdoutLn "Connection closed by peer." >> close cli
-      Interrupted => stdoutLn "Read interrupted" >> echo cli
+      Interrupted => stdoutLn "Read interrupted"
       NoData      => echo cli
-      Res bs      => ignore (writeBytes Stdout bs) >> echo cli
+      Res bs      => ignore (write Stdout bs) >> echo cli
 
   covering
   serve : Socket AF_UNIX -> Prog es ()
   serve srv = do
-    onErrno EINTR (serve srv) $ do
+    onErrno EINTR (stdoutLn "Server interrupted.") $ do
       cli <- accept srv
       stdoutLn "Got a new connection"
       echo cli
-    serve srv
+      serve srv
 
 covering
 app : Has Errno es => Has ArgErr es => (pth : String) -> Prog es ()

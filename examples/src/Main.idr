@@ -68,7 +68,7 @@ parameters {auto has : Has Errno es}
   readTill : FileDesc a => Fuel -> Nat -> a -> Prog es ()
   readTill Dry      n fd = stdoutLn "out of fuel"
   readTill (More x) n fd =
-    read fd 0x10000 >>= \case
+    read fd ByteString 0x10000 >>= \case
       BS 0 _ => stdoutLn "reached end of file after \{show n} bytes"
       BS m y => stdoutLn "read \{show m} bytes" >> readTill x (m+n) fd
 

@@ -22,12 +22,12 @@ parameters {auto has : Has Errno es}
   covering
   echo : Socket AF_UNIX -> Prog es ()
   echo cli = do
-    readres Stdin 4096 >>= \case
+    readres Stdin ByteString 4096 >>= \case
       Interrupted => stdoutLn "Interrupted" >> echo cli
       NoData      => echo cli
       Closed      => stdoutLn "Broken pipe." >> close cli
       EOI         => stdoutLn "End of input." >> close cli
-      Res bs      => ignore (writeBytes cli bs) >> echo cli
+      Res bs      => ignore (write cli bs) >> echo cli
 
 covering
 app : Has Errno es => Has ArgErr es => (pth : String) -> Prog es ()
