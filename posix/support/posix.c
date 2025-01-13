@@ -708,7 +708,7 @@ uint32_t sockaddr_in_addr(struct sockaddr_in *addr) {
   return ntohl(addr->sin_addr.s_addr);
 }
 
-const unsigned char *sockaddr_in_addr_str(struct sockaddr_in *addr) {
+const char *sockaddr_in_addr_str(struct sockaddr_in *addr) {
   char res[INET_ADDRSTRLEN];
   const char *buf = inet_ntop(AF_INET, &addr->sin_addr, res, INET_ADDRSTRLEN);
 
@@ -723,7 +723,7 @@ uint16_t sockaddr_in_port(struct sockaddr_in *addr) {
   return ntohs(addr->sin_port);
 }
 
-char *sockaddr_in6_addr(struct sockaddr_in6 *addr) {
+unsigned char *sockaddr_in6_addr(struct sockaddr_in6 *addr) {
   return addr->sin6_addr.s6_addr;
 }
 
