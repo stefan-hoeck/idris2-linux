@@ -681,7 +681,7 @@ void set_itimerspec_it_value(struct itimerspec *v, struct timespec *val) {
 
 struct sockaddr_un *li_sockaddr_un(const char *path) {
   struct sockaddr_un *addr = malloc(sizeof(struct sockaddr_un));
-  memset(addr, 0, sizeof(addr));
+  memset(addr, 0, sizeof(struct sockaddr_un));
   addr->sun_family = AF_UNIX;
   strncpy(addr->sun_path, path, sizeof(addr->sun_path) - 1);
   return addr;
@@ -689,7 +689,7 @@ struct sockaddr_un *li_sockaddr_un(const char *path) {
 
 struct sockaddr_in *li_sockaddr_in(uint32_t ad, uint16_t port) {
   struct sockaddr_in *addr = malloc(sizeof(struct sockaddr_in));
-  memset(addr, 0, sizeof(addr));
+  memset(addr, 0, sizeof(struct sockaddr_in));
   addr->sin_family = AF_INET;
   addr->sin_port = htons(port);
   addr->sin_addr.s_addr = htonl(ad);
@@ -698,7 +698,7 @@ struct sockaddr_in *li_sockaddr_in(uint32_t ad, uint16_t port) {
 
 struct sockaddr_in6 *li_sockaddr_in6(uint16_t port) {
   struct sockaddr_in6 *addr = malloc(sizeof(struct sockaddr_in6));
-  memset(addr, 0, sizeof(addr));
+  memset(addr, 0, sizeof(struct sockaddr_in6));
   addr->sin6_family = AF_INET6;
   addr->sin6_port = htons(port);
   return addr;
