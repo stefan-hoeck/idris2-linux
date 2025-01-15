@@ -219,6 +219,30 @@ parameters {auto fid : FileDesc a}
       Right (BS n $ BV b o _) =>
         toSize $ prim__write (fileDesc fd) (unsafeGetBuffer b) (cast o) (cast n)
 
+  ||| Iteratively writes a value to a file descriptor making sure
+  ||| that the whole value is written. Use this, if a single call to
+  ||| `write` might not write the complete data (for instance, when
+  ||| writing to a pipe or socket).
+  export
+  fwrite : ToBuf r => r -> EPrim ()
+  fwrite v =
+    case (unsafeToBuf v) of
+      Left  (CP sz p) => goPtr p sz
+      Right bs        => go bs
+
+    where
+      goPtr : AnyPtr -> Bits32 -> EPrim ()
+      goPtr p 0  t = R () t
+      goPtr p sz t =
+        let R m t := write (CP sz p) t | E x t => E x t
+         in goPtr (prim__inc_ptr p m 1) (assert_smaller sz $ sz - m) t
+
+      go : ByteString -> EPrim ()
+      go (BS 0 _) t = R () t
+      go bs       t =
+        let R m t := write bs t | E x t => E x t
+         in go (assert_smaller bs $ drop (cast m) bs) t
+
   ||| Atomically writes up to the number of bytes in the bytestring
   ||| to the given file at the given file offset.
   |||
@@ -374,7 +398,7 @@ readlink f = allocRead 4096 $ prim__readlink f
 
 export %inline
 stdout : String -> PrimIO ()
-stdout s = ignore $ write Stdout s
+stdout s = ignore $ fwrite Stdout s
 
 export %inline
 stdoutLn : String -> PrimIO ()
@@ -390,7 +414,7 @@ prntLn = stdoutLn . show
 
 export %inline
 stderr : String -> PrimIO ()
-stderr s = ignore $ write Stderr s
+stderr s = ignore $ fwrite Stderr s
 
 export %inline
 stderrLn : String -> PrimIO ()

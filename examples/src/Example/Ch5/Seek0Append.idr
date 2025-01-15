@@ -24,7 +24,7 @@ parameters {auto hf : Has Errno es}
   seekWriteBytes : Fd -> Prog es ()
   seekWriteBytes fd = do
     ignore $ lseek fd 0 SEEK_SET
-    ignore (write fd "hello world")
+    fwrite fd "hello world"
 
   export covering
   seekAppendProg : Has ArgErr es => List String -> Prog es ()

@@ -43,7 +43,7 @@ parameters {auto he : Has Errno es}
   serve pos fd = do
     [p,n] <- readVect fd 2
     stdoutLn "Got request from client \{show p}: \{show n} bytes"
-    withFile (clientFifo p) O_WRONLY 0 $ \o => ignore $ write o (the (List _) [pos])
+    withFile (clientFifo p) O_WRONLY 0 $ \o => fwrite o (the (List _) [pos])
     serve (pos + n) fd
 
   export covering
@@ -65,7 +65,7 @@ parameters {auto he : Has Errno es}
     tryMkFifo pth
     stdoutLn "Created FIFO at \{pth}"
     stdoutLn "Sending request (PID=\{show pid}) for \{show n} bytes"
-    withFile serverFifo O_WRONLY 0 $ \s => ignore (write s (the (List _) [pid,cast n]))
+    withFile serverFifo O_WRONLY 0 $ \s => fwrite s (the (List _) [pid,cast n])
     stdoutLn "Sent message to server"
     v <- withFile pth O_RDONLY 0 $ \s => readVal {a = Bits64} s
     stdoutLn (show v)

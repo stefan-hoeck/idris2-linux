@@ -1,7 +1,10 @@
 module Example.Ch57.DgramClient
 
+import Data.ByteVect
+import Data.ByteString
 import Example.Util.File
 import Example.Util.Opts
+import System.Posix.Process
 import System.Posix.Socket
 
 %default total
@@ -27,18 +30,22 @@ parameters {auto has : Has Errno es}
       NoData      => echo cli
       Closed      => stdoutLn "Broken pipe." >> close cli
       EOI         => stdoutLn "End of input." >> close cli
-      Res bs      => ignore (write cli bs) >> echo cli
+      Res bs      => fwrite cli bs >> echo cli
 
 covering
-app : Has Errno es => Has ArgErr es => (pth : String) -> Prog es ()
-app pth = do
-  cli <- socket AF_UNIX SOCK_STREAM
-  connect cli pth
-  echo cli
+app : Has Errno es => Has ArgErr es => List String -> Prog es ()
+app args = do
+  cli <- socket AF_UNIX SOCK_DGRAM
+  srv <- runIO (sockaddrUn "/tmp/ud_ucase")
+  pid <- getpid
+  bind cli "/tmp/ud_ucase_cli.\{show pid}"
+  for_ args $ \arg => do
+    _  <- sendto cli arg 0 srv
+    bs <- recvFrom cli ByteString 128 0 srv
+    write Stdout (bs <+> "\n")
+  remove "/tmp/ud_ucase_cli.\{show pid}"
 
 export covering
-unixClient : Has Errno es => Has ArgErr es => List String -> Prog es ()
-unixClient ["--help"] = stdoutLn usage
-unixClient []         = app "/tmp/le_unix_skt"
-unixClient [s]        = app s
-unixClient args       = fail (WrongArgs usage)
+dgramClient : Has Errno es => Has ArgErr es => List String -> Prog es ()
+dgramClient ["--help"] = stdoutLn usage
+dgramClient args       = app args

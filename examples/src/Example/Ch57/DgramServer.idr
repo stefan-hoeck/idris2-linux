@@ -21,8 +21,10 @@ parameters {auto has : Has Errno es}
   covering
   serve : Socket AF_UNIX -> SockaddrUn -> Prog es ()
   serve srv addr = do
-    bs <- recvFrom srv ByteString 4096 0 addr
-    _  <- sendto srv (toUpper bs) 0 addr
+    bs  <- recvFrom srv ByteString 4096 0 addr
+    pth <- runIO (path addr)
+    stdoutLn "Got \{show bs.size} bytes of data from \{pth}"
+    _   <- sendto srv (toUpper bs) 0 addr
     serve srv addr
 
 covering
@@ -37,7 +39,7 @@ app pth = do
     (use1 (allocStruct _) (serve srv))
 
 export covering
-unixServer : Has Errno es => Has ArgErr es => List String -> Prog es ()
-unixServer ["--help"] = stdoutLn usage
-unixServer []         = app "/tmp/ud_ucase"
-unixServer args       = fail (WrongArgs usage)
+dgramServer : Has Errno es => Has ArgErr es => List String -> Prog es ()
+dgramServer ["--help"] = stdoutLn usage
+dgramServer []         = app "/tmp/ud_ucase"
+dgramServer args       = fail (WrongArgs usage)

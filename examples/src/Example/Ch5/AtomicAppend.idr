@@ -32,14 +32,13 @@ parameters {auto hf : Has Errno es}
 
   appendBytes : Nat -> Fd -> Prog es ()
   appendBytes 0     fd = pure ()
-  appendBytes (S k) fd =
-    ignore (write fd "A") >> appendBytes k fd
+  appendBytes (S k) fd = fwrite fd "A" >> appendBytes k fd
 
   seekWriteBytes : Nat -> Fd -> Prog es ()
   seekWriteBytes 0     fd = pure ()
   seekWriteBytes (S k) fd = do
     ignore $ lseek fd 0 SEEK_END
-    ignore (write fd "A")
+    fwrite fd "A"
     seekWriteBytes k fd
 
   export covering

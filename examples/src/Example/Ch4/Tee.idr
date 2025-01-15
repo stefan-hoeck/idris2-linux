@@ -23,7 +23,7 @@ parameters {auto ha : Has ArgErr es}
     buf <- parseEnv OBits32 "LI_BUF_SIZE" 1024
     ignore $ withFile fo fs 0o666 $ \fd =>
       stream ByteString Stdin buf $ \bs =>
-        writeAll fd bs >> writeAll Stdout bs
+        fwrite fd bs >> fwrite Stdout bs
 
   export covering
   tee : List String -> Prog es ()

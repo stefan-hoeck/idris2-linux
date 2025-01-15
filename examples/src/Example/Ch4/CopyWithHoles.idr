@@ -25,7 +25,7 @@ parameters {auto hf : Has Errno es}
     let MkBreakRes l1 l2 bv1 bv2 _ := break (0 ==) bv
         MkBreakRes l3 l4 bv3 bv4 _ := break (0 /=) bv2
      in do
-          writeAll o (BS l1 bv1)
+          fwrite o (BS l1 bv1)
           ignore $ lseek o (cast l3) SEEK_CUR
           writeBlocks o l4 bv4
 

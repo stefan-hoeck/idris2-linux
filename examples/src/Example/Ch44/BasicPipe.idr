@@ -28,7 +28,7 @@ parameters {auto he : Has Errno es}
     use1 (cptr 0x1000) $ \cp => do
       close o
       stdoutLn "Spawned child \{show pid}"
-      ignore $ streamPtr CPtr i cp (ignore . write Stdout)
+      ignore $ streamPtr CPtr i cp (fwrite Stdout)
       close i
 
   covering
@@ -36,9 +36,9 @@ parameters {auto he : Has Errno es}
   chld s [i,o] = do
     close i
     pid <- getpid
-    writeAll o "Hello. I'm child number \{show pid}\n"
-    writeAll o "Here's the message I got:\n"
-    writeAll o "\n  '\{s}'\n"
+    fwrite o "Hello. I'm child number \{show pid}\n"
+    fwrite o "Here's the message I got:\n"
+    fwrite o "\n  '\{s}'\n"
 
   covering
   run : String -> Prog es ()

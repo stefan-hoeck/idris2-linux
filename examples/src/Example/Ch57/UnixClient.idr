@@ -27,7 +27,7 @@ parameters {auto has : Has Errno es}
       NoData      => echo cli
       Closed      => stdoutLn "Broken pipe." >> close cli
       EOI         => stdoutLn "End of input." >> close cli
-      Res bs      => ignore (write cli bs) >> echo cli
+      Res bs      => fwrite cli bs >> echo cli
 
 covering
 app : Has Errno es => Has ArgErr es => (pth : String) -> Prog es ()

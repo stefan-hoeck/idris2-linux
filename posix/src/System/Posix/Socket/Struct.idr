@@ -34,6 +34,9 @@ Cast CInt (Socket d) where cast = S . cast
 %foreign "C:li_sockaddr_un, posix-idris"
 prim__sockaddr_un: String -> PrimIO AnyPtr
 
+%foreign "C:sockaddr_un_path, posix-idris"
+prim__sockaddr_un_path: AnyPtr -> PrimIO String
+
 export
 record SockaddrUn where
   constructor SUN
@@ -58,6 +61,10 @@ SizeOf SockaddrUn where
 export %inline
 sockaddrUn : (path : String) -> F1 [World] SockaddrUn
 sockaddrUn path = toF1 $ primMap SUN $ prim__sockaddr_un path
+
+export %inline
+path : SockaddrUn -> F1 [World] String
+path (SUN p) = toF1 $ prim__sockaddr_un_path p
 
 --------------------------------------------------------------------------------
 -- SockaddrIn

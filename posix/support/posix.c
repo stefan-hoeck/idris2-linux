@@ -704,6 +704,10 @@ struct sockaddr_in6 *li_sockaddr_in6(uint16_t port) {
   return addr;
 }
 
+char *sockaddr_un_path(struct sockaddr_un *addr) {
+  return addr->sun_path;
+}
+
 uint32_t sockaddr_in_addr(struct sockaddr_in *addr) {
   return ntohl(addr->sin_addr.s_addr);
 }

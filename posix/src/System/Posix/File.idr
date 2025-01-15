@@ -86,27 +86,11 @@ parameters {auto fid : FileDesc a}
 
   ||| Iteratively writes a value to a file descriptor making sure
   ||| that the whole value is written. Use this, if a single call to
-  ||| `write` might to write the complete data (for instance, when
+  ||| `write` might not write the complete data (for instance, when
   ||| writing to a pipe or socket).
-  export
-  writeAll : ToBuf r => r -> io ()
-  writeAll v =
-    case (unsafeToBuf v) of
-      Left  (CP sz p) => goPtr p sz
-      Right bs        => go bs
-
-    where
-      goPtr : AnyPtr -> Bits32 -> io ()
-      goPtr p 0  = pure ()
-      goPtr p sz = do
-        m <- write (CP sz p)
-        goPtr (prim__inc_ptr p m 1) (assert_smaller sz $ sz - m)
-
-      go : ByteString -> io ()
-      go (BS 0 _) = pure ()
-      go bs       = do
-        m <- write bs
-        go (assert_smaller bs $ drop (cast m) bs)
+  export %inline
+  fwrite : ToBuf r => r -> io ()
+  fwrite = eprim . P.fwrite fd
 
   ||| Atomically writes up to the number of bytes in the bytestring
   ||| to the given file at the given file offset.

@@ -27,11 +27,11 @@ parameters {auto hf : Has Errno es}
 
   covering
   copyRaw : FileDesc a => FileDesc b => CPtr -> a -> b -> Prog es Bool
-  copyRaw p i o = streamPtr CPtr i p (ignore . write o)
+  copyRaw p i o = streamPtr CPtr i p (fwrite o)
 
   covering
   copy : FileDesc a => FileDesc b => Bits32 -> a -> b -> Prog es Bool
-  copy buf i o = stream ByteString i buf (ignore . write o)
+  copy buf i o = stream ByteString i buf (fwrite o)
 
   covering
   cpRaw : Bits32 -> String -> String -> Prog es Bool

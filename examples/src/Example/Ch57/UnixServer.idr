@@ -27,7 +27,7 @@ parameters {auto has : Has Errno es}
       Closed      => stdoutLn "Connection closed by peer." >> close cli
       Interrupted => stdoutLn "Read interrupted"
       NoData      => echo cli
-      Res bs      => ignore (write Stdout bs) >> echo cli
+      Res bs      => fwrite Stdout bs >> echo cli
 
   covering
   serve : Socket AF_UNIX -> Prog es ()
