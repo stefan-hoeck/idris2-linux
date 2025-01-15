@@ -49,6 +49,9 @@ prim__recvfrom : (file : Bits32) -> Buffer -> (max : Bits32) -> Bits32 -> AnyPtr
 %foreign "C:li_sendto, posix-idris"
 prim__sendto : (file : Bits32) -> Buffer -> (off,max : Bits32) -> Bits32 -> AnyPtr -> Bits32 -> PrimIO SsizeT
 
+%foreign "C__collect_safe:li_sendto, posix-idris"
+prim__sendtoptr : (file : Bits32) -> AnyPtr -> (off,max : Bits32) -> Bits32 -> AnyPtr -> Bits32 -> PrimIO SsizeT
+
 --------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------
@@ -89,51 +92,66 @@ connect_ s a = toUnit $ prim__connect (fileDesc s) (ptr d a) (addrSize d)
 parameters (s : Socket d)
   ||| Reads at most `n` bytes from a file into an allocated pointer.
   export %inline
-  recvPtr : AnyPtr -> (n : Bits32) -> SockFlags -> EPrim (ReadRes ByteString)
-  recvPtr ptr n (SF f) = ptrToRes ptr $ prim__recvptr (fileDesc s) ptr n f
+  recvPtr : (0 r : Type) -> FromPtr r => CPtr -> SockFlags -> EPrim (ReadRes r)
+  recvPtr r (CP sz p) (SF f) = ptrToRes p $ prim__recvptr (fileDesc s) p sz f
 
   ||| Reads at most `n` bytes from a file into a bytestring.
   export
-  recv : (n : Bits32) -> SockFlags -> EPrim (ReadRes ByteString)
-  recv n (SF f) = toRes n $ \b,x => prim__recv (fileDesc s) b x f
+  recv : (0 r : Type) -> FromBuf r => Bits32 -> SockFlags -> EPrim (ReadRes r)
+  recv r n (SF f) = toRes n $ \b,x => prim__recv (fileDesc s) b x f
 
 ||| Reads at most `n` bytes from a file into an allocated pointer.
 export %inline
 recvFromPtr :
      {d : _}
   -> Socket d
-  -> AnyPtr
-  -> (n : Bits32)
+  -> (0 r : Type)
+  -> {auto frp : FromPtr r}
+  -> CPtr
   -> SockFlags
   -> Sockaddr d
-  -> EPrim (ReadRes ByteString)
-recvFromPtr s buf n (SF f) p =
-  ptrToRes buf $ prim__recvfromptr (fileDesc s) buf n f (ptr d p) (addrSize d)
+  -> EPrim r
+recvFromPtr s r (CP sz pt) (SF f) p =
+  ptrRead pt $ prim__recvfromptr (fileDesc s) pt sz f (ptr d p) (addrSize d)
 
 ||| Reads at most `n` bytes from a file into an allocated pointer.
 export %inline
 recvFrom :
      {d : _}
   -> Socket d
+  -> (0 r : Type)
+  -> {auto frb : FromBuf r}
   -> (n : Bits32)
   -> SockFlags
   -> Sockaddr d
-  -> EPrim (ReadRes ByteString)
-recvFrom s n (SF f) p =
-  toRes n $ \buf,x => prim__recvfrom (fileDesc s) buf x f (ptr d p) (addrSize d)
+  -> EPrim r
+recvFrom s r n (SF f) p =
+  allocRead n $ \buf,x => prim__recvfrom (fileDesc s) buf x f (ptr d p) (addrSize d)
 
 ||| Sends the given byte string via the given socket to the peer at the
 ||| given address.
 export %inline
 sendto :
      {d : _}
+  -> {auto tob : ToBuf r}
   -> Socket d
-  -> ByteString
+  -> r
   -> SockFlags
   -> Sockaddr d
   -> EPrim Bits32
-sendto s (BS n $ BV b o _) (SF f) p =
-  toSize $ prim__sendto (fileDesc s) (unsafeGetBuffer b) (cast o) (cast n) f (ptr d p) (addrSize d)
+sendto s v (SF f) p =
+  case unsafeToBuf v of
+    Left (CP sz pt) =>
+      toSize $ prim__sendtoptr (fileDesc s) pt 0 sz f (ptr d p) (addrSize d)
+    Right (BS n $ BV b o _) =>
+      toSize $ prim__sendto
+        (fileDesc s)
+        (unsafeGetBuffer b)
+        (cast o)
+        (cast n)
+        f
+        (ptr d p)
+        (addrSize d)
 
 --------------------------------------------------------------------------------
 -- Convenience API

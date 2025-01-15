@@ -53,36 +53,57 @@ parameters {auto eio : ErrIO io}
   export %inline
   recvPtr :
        Socket d
-    -> AnyPtr
-    -> (n : Bits32)
+    -> (0 r : Type)
+    -> {auto frp : FromPtr r}
+    -> CPtr
     -> SockFlags
-    -> io (ReadRes ByteString)
-  recvPtr s ptr n = eprim . P.recvPtr s ptr n
+    -> io (ReadRes r)
+  recvPtr s r cp = eprim . P.recvPtr s r cp
 
   ||| Reads at most `n` bytes from a file into an allocated pointer.
   export %inline
   recvFromPtr :
       {d : _}
     -> Socket d
-    -> AnyPtr
-    -> (n : Bits32)
+    -> (0 r : Type)
+    -> {auto frp : FromPtr r}
+    -> CPtr
     -> SockFlags
     -> Sockaddr d
-    -> io (ReadRes ByteString)
-  recvFromPtr s ptr n sf = eprim . P.recvFromPtr s ptr n sf
+    -> io r
+  recvFromPtr s r cp sf = eprim . P.recvFromPtr s r cp sf
 
   ||| Reads at most `n` bytes from a file into a bytestring.
   export %inline
-  recv : Socket d -> (n : Bits32) -> SockFlags -> io (ReadRes ByteString)
-  recv s n = eprim . P.recv s n
+  recv :
+       Socket d
+    -> (0 r : Type)
+    -> {auto frb : FromBuf r}
+    -> (n : Bits32)
+    -> SockFlags
+    -> io (ReadRes r)
+  recv s r n = eprim . P.recv s r n
 
   ||| Reads at most `n` bytes from a socket into a bytestring
   export %inline
   recvFrom :
       {d : _}
     -> Socket d
+    -> (0 r : Type)
+    -> {auto frb : FromBuf r}
     -> (n : Bits32)
     -> SockFlags
     -> Sockaddr d
-    -> io (ReadRes ByteString)
-  recvFrom s n sf = eprim . P.recvFrom s n sf
+    -> io r
+  recvFrom s r n sf = eprim . P.recvFrom s r n sf
+
+  export
+  sendto :
+       {d : _}
+    -> {auto tob : ToBuf r}
+    -> Socket d
+    -> r
+    -> SockFlags
+    -> Sockaddr d
+    -> io Bits32
+  sendto s r f = eprim . P.sendto s r f

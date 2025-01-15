@@ -22,7 +22,7 @@ parameters {auto has : Has Errno es}
   covering
   echo : Socket AF_UNIX -> Prog es ()
   echo cli = do
-    recv cli 4096 0 >>= \case
+    recv cli ByteString 4096 0 >>= \case
       EOI         => stdoutLn "End of input." >> close cli
       Closed      => stdoutLn "Connection closed by peer." >> close cli
       Interrupted => stdoutLn "Read interrupted"
