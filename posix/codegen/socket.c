@@ -43,7 +43,10 @@ int main() {
   print_flag("MSG_OOB", MSG_OOB);
   print_flag("MSG_PEEK", MSG_PEEK);
   print_flag("MSG_WAITALL", MSG_WAITALL);
+#ifdef MSG_NOSIGNAL
+  // known to be undefined for older versions of macOS
   print_flag("MSG_NOSIGNAL", MSG_NOSIGNAL);
+#endif
 
   printf("\npublic export\n");
   printf("sockaddr_un_size : Bits32\n");
