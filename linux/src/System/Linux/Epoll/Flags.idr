@@ -28,6 +28,10 @@ Semigroup Event where
 public export
 Monoid Event where neutral = E 0
 
+export
+hasEvent : Event -> Event -> Bool
+hasEvent (E x) (E y) = (x .&. y) == y
+
 public export
 record EpollFlags where
   constructor F
