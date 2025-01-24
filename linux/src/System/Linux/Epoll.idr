@@ -2,6 +2,9 @@ module System.Linux.Epoll
 
 import System.Linux.Epoll.Prim as P
 
+import System.Posix.Signal
+import System.Posix.Timer
+
 import public Data.C.Ptr
 import public System.Linux.Epoll.Flags
 import public System.Linux.Epoll.Struct
@@ -44,3 +47,25 @@ epollWaitVals :
   -> Int32
   -> io (List EpollEvent)
 epollWaitVals efd arr = eprim . P.epollWaitVals efd arr
+
+export %inline
+epollPwait2 :
+     {n : _}
+  -> {auto eio : ErrIO io}
+  -> Epollfd
+  -> CArrayIO n SEpollEvent
+  -> Clock Duration
+  -> List Signal
+  -> io (k ** CArrayIO k SEpollEvent)
+epollPwait2 efd arr timeout = eprim . P.epollPwait2 efd arr timeout
+
+export %inline
+epollPwait2Vals :
+     {n : _}
+  -> {auto eio : ErrIO io}
+  -> Epollfd
+  -> CArrayIO n SEpollEvent
+  -> Clock Duration
+  -> List Signal
+  -> io (List EpollEvent)
+epollPwait2Vals efd arr timeout = eprim . P.epollPwait2Vals efd arr timeout

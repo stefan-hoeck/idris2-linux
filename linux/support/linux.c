@@ -85,6 +85,18 @@ int li_epoll_wait(int epfd, struct epoll_event *evlist, int max, int timeout) {
   CHECKRES
 }
 
+int li_epoll_pwait2(int epfd, struct epoll_event *evlist, int max,
+                    const struct timespec *timeout) {
+  int res = epoll_pwait2(epfd, evlist, max, timeout, NULL);
+  CHECKRES
+}
+
+int li_epoll_spwait2(int epfd, struct epoll_event *evlist, int max,
+                     const struct timespec *timeout, const sigset_t *sigmask) {
+  int res = epoll_pwait2(epfd, evlist, max, timeout, sigmask);
+  CHECKRES
+}
+
 int get_epoll_event_events(struct epoll_event *ev) { return ev->events; }
 
 int get_epoll_event_fd(struct epoll_event *ev) { return ev->data.fd; }
