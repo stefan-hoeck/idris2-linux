@@ -524,4 +524,4 @@ namespace STm
   ctime : TimeT -> String
 
   export
-  mktime : Tm -> TimeT
+  mktime : Tm -> PrimIO TimeT
