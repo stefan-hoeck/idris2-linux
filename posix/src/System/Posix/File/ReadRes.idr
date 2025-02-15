@@ -76,7 +76,7 @@ record CPtr where
   ptr  : AnyPtr
 
 export
-cptrOf1 : (0 a : Type) -> SizeOf a => Nat -> F1 [World] CPtr
+cptrOf1 : (0 a : Type) -> SizeOf a => Nat -> F1 World CPtr
 cptrOf1 a n t =
   let sz := cast n * sizeof a
       p  := prim__malloc sz
@@ -87,7 +87,7 @@ cptrOf : HasIO io => (0 a : Type) -> SizeOf a => Nat -> io CPtr
 cptrOf a = runIO . cptrOf1 a
 
 export %inline
-cptr1 : Nat -> F1 [World] CPtr
+cptr1 : Nat -> F1 World CPtr
 cptr1 = cptrOf1 Bits8
 
 export %inline
@@ -95,7 +95,7 @@ cptr : HasIO io => Nat -> io CPtr
 cptr = runIO . cptr1
 
 export %inline
-freePtr1 : CPtr -> F1' [World]
+freePtr1 : CPtr -> F1' World
 freePtr1 (CP _ p) = toF1 (prim__free p)
 
 export %inline
@@ -109,7 +109,7 @@ record Buf where
   buf  : Buffer
 
 export %inline
-buf : Bits32 -> F1 [World] Buf
+buf : Bits32 -> F1 World Buf
 buf sz t =
   let b # t := toF1 (prim__newBuf sz) t
    in B sz b # t
@@ -124,7 +124,7 @@ buf sz t =
 ||| a codepoint consisting of several bytes.
 public export
 interface FromBuf a where
-  fromBuf : Buf -> F1 [World] a
+  fromBuf : Buf -> F1 World a
 
 public export
 0 EMBuffer : Type
@@ -188,7 +188,7 @@ export %inline
   unsafeToBuf buf = Right $ unsafeByteString n (unsafeGetBuffer buf)
 
 export %inline
-{n : _} -> ToBuf (MBuffer' t n) where
+{n : _} -> ToBuf (MBuffer t n) where
   unsafeToBuf buf = Right $ unsafeByteString n (unsafeFromMBuffer buf)
 
 export %inline
@@ -196,7 +196,7 @@ ToBuf CPtr where
   unsafeToBuf = Left
 
 export %inline
-{n : _} -> SizeOf a => ToBuf (CArray' t n a) where
+{n : _} -> SizeOf a => ToBuf (CArray t n a) where
   unsafeToBuf arr =
     Left (CP (cast n * sizeof a) (unsafeUnwrap arr))
 
@@ -231,7 +231,7 @@ record Convert t where
   0 source : Type
   {auto sof  : SizeOf source}
   {auto derf : Deref source}
-  convert : source -> F1 [World] t
+  convert : source -> F1 World t
 
 ||| Interface for wrapping or converting a c-land pointer.
 |||
@@ -245,7 +245,7 @@ record Convert t where
 ||| a codepoint consisting of several bytes.
 public export
 interface FromPtr a where
-  fromPtr : CPtr -> F1 [World] a
+  fromPtr : CPtr -> F1 World a
 
 export %inline
 FromPtr CPtr where
@@ -306,7 +306,7 @@ SizeOf a => FromBuf (ECArrayIO a) where
   fromBuf b t = let cp # t := fromBuf b t in fromPtr cp t
 
 export
-viaPtrFromBuf : FromPtr r => Buf -> F1 [World] r
+viaPtrFromBuf : FromPtr r => Buf -> F1 World r
 viaPtrFromBuf b t =
   let cp # t := fromBuf b t
       r  # t := fromPtr cp t

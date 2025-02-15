@@ -28,13 +28,13 @@ timerfd c = eprim . P.timerfd c
 ||| Use the `TFD_TIMER_ABSTIME` flag if the time should be interpreted as
 ||| an absolute wall clock time.
 export %inline
-setitime : ErrIO io => Timerfd -> Bits32 -> (new,old : Itimerspec) -> io ()
+setitime : ErrIO io => Timerfd -> Bits32 -> (new,old : IOTimerspec) -> io ()
 setitime t f new = eprim . P.setitime t f new
 
 ||| Reads the currently set `itimerspec` of a `timerfd` and uses the given
 ||| pointer to place the data.
 export %inline
-getitime : HasIO io => Timerfd -> (old : Itimerspec) -> io ()
+getitime : HasIO io => Timerfd -> (old : IOTimerspec) -> io ()
 getitime t = primIO . P.getitime t
 
 ||| Reads data from a `timerfd`.

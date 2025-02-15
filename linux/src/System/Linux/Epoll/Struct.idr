@@ -43,9 +43,6 @@ Struct SEpollEvent where
 export %inline
 SizeOf SEpollEvent where sizeof_ = epoll_event_size
 
-export
-InIO SEpollEvent where
-
 ||| Wrapper around a pointer of an `epoll_event` value.
 public export
 record EpollEvent where
@@ -56,7 +53,7 @@ record EpollEvent where
 %runElab derive "EpollEvent" [Show,Eq]
 
 export
-epollEvent : SEpollEvent -> F1 [World] EpollEvent
+epollEvent : SEpollEvent -> F1 World EpollEvent
 epollEvent (SE p) t =
   let fd # t := ffi (prim__get_epoll_event_fd p) t
       ev # t := ffi (prim__get_epoll_event_events p) t

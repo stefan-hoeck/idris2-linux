@@ -13,12 +13,12 @@ import public System.Posix.Errno.Type
 
 public export
 data ERes : Type -> Type where
-  R : (v : t)   -> (1 w : T1 [World]) -> ERes t
-  E : (x : Errno) -> (1 w : T1 [World]) -> ERes t
+  R : (v : t)   -> (1 w : T1 World) -> ERes t
+  E : (x : Errno) -> (1 w : T1 World) -> ERes t
 
 public export
 0 EPrim : Type -> Type
-EPrim t = (1 w : T1 [World]) -> ERes t
+EPrim t = (1 w : T1 World) -> ERes t
 
 ||| An interface for dealing with system errors in `IO`
 public export
@@ -120,7 +120,7 @@ finally cleanup act t =
     E x t => let _ # t := toF1 cleanup t in E x t
 
 export %inline
-primStruct : (0 a : Type) -> Struct a => SizeOf a => F1 [World] a
+primStruct : (0 a : Type) -> Struct a => SizeOf a => F1 World a
 primStruct a = ioToF1 (allocStruct a)
 
 export %inline
@@ -170,10 +170,10 @@ values :
   -> {auto sof : SizeOf b}
   -> List c
   -> CArrayIO n b
-  -> (b -> F1 [World] c)
+  -> (b -> F1 World c)
   -> (k : Nat)
   -> {auto 0 prf : LTE k n}
-  -> F1 [World] (List c)
+  -> F1 World (List c)
 values cs arr f 0     t = cs # t
 values cs arr f (S k) t =
   let vb # t := getNat arr k t

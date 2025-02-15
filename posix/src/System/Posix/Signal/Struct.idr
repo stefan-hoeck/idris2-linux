@@ -72,9 +72,6 @@ Struct SigsetT where
   wrap   = S
   unwrap = ptr
 
-export
-InIO SigsetT where
-
 ||| Allocates a `sigset_t` with all signals cleared.
 |||
 ||| This must be freed with `freeSigset`.
@@ -91,17 +88,17 @@ fullSigset = primMap S prim__fullsigset
 
 ||| Adds a signal to a `sigset_t`
 export %inline
-sigaddset : (r : SigsetT) -> Signal -> F1 [World] ()
+sigaddset : (r : SigsetT) -> Signal -> F1 World ()
 sigaddset (S p) s = ffi $ prim__sigaddset p s.sig
 
 ||| Removes a signal from a `sigset_t`
 export %inline
-sigdelset : (r : SigsetT) -> Signal -> F1 [World] ()
+sigdelset : (r : SigsetT) -> Signal -> F1 World ()
 sigdelset (S p) s = ffi $ prim__sigdelset p s.sig
 
 ||| Tests if a signal is a member of a `sigset_t`.
 export %inline
-sigismember : (r : SigsetT) -> Signal -> F1 [World] Bool
+sigismember : (r : SigsetT) -> Signal -> F1 World Bool
 sigismember (S p) s t =
   case ffi (prim__sigismember p s.sig) t of
     0 # t => False # t
@@ -109,7 +106,7 @@ sigismember (S p) s t =
 
 ||| Extracts the set signals from a `SigsetT`.
 export %inline
-getSignals : (r : SigsetT) -> F1 [World] (List Signal)
+getSignals : (r : SigsetT) -> F1 World (List Signal)
 getSignals set = filterM [<] (sigismember set) values
 
 export
@@ -167,7 +164,7 @@ record Siginfo where
 %runElab derive "Siginfo" [Show,Eq]
 
 export
-siginfo : SiginfoT -> F1 [World] Siginfo
+siginfo : SiginfoT -> F1 World Siginfo
 siginfo (ST p) t =
   let sig # t := ffi (get_siginfo_t_si_signo p) t
       cod # t := ffi (get_siginfo_t_si_code p) t

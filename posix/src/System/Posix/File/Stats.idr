@@ -63,9 +63,6 @@ export %inline
 SizeOf SStatvfs where
   sizeof_ = statvfs_size
 
-export
-InIO SStatvfs where
-
 public export
 record Statvfs where
   constructor SF
@@ -84,7 +81,7 @@ record Statvfs where
 %runElab derive "Statvfs" [Show,Eq]
 
 export
-toStatvfs : SStatvfs -> F1 [World] Statvfs
+toStatvfs : SStatvfs -> F1 World Statvfs
 toStatvfs (SSF p) t =
   let bs  # t := ffi (get_statvfs_f_bsize p) t
       fbs # t := ffi (get_statvfs_f_frsize p) t
@@ -187,13 +184,13 @@ record FileStats where
 
 %runElab derive "FileStats" [Show,Eq]
 
-utc : PrimIO AnyPtr -> F1 [World] (Clock UTC)
+utc : PrimIO AnyPtr -> F1 World (Clock UTC)
 utc act t =
   let p # t := toF1 act t
    in toClock (wrap p) t
 
 export
-fileStats : SFileStats -> F1 [World] FileStats
+fileStats : SFileStats -> F1 World FileStats
 fileStats (SFS p) t =
   let dev  # t := toF1 (get_stat_st_dev p) t
       ino  # t := toF1 (get_stat_st_ino p) t

@@ -49,14 +49,14 @@ timerfd c (F f) = toVal cast $ prim__timerfd_create (clockCode c) f
 ||| Use the `TFD_TIMER_ABSTIME` flag if the time should be interpreted as
 ||| an absolute wall clock time.
 export %inline
-setitime : Timerfd -> Bits32 -> (new,old : Itimerspec) -> EPrim ()
+setitime : Timerfd -> Bits32 -> (new,old : IOTimerspec) -> EPrim ()
 setitime t f new old =
   toUnit $ prim__timerfd_settime (fileDesc t) f (unwrap new) (unwrap old)
 
 ||| Reads the currently set `itimerspec` of a `timerfd` and uses the given
 ||| pointer to place the data.
 export %inline
-getitime : Timerfd -> (old : Itimerspec) -> PrimIO ()
+getitime : Timerfd -> (old : IOTimerspec) -> PrimIO ()
 getitime t old = prim__timerfd_gettime (fileDesc t) (unwrap old)
 
 ||| Reads data from a `timerfd`.
@@ -86,7 +86,7 @@ setTime t f (TS i v) =
 export %inline
 getTime : Timerfd -> EPrim Timerspec
 getTime fd =
-  withStruct Itimerspec $ \str,t =>
+  withStruct IOTimerspec $ \str,t =>
     let _  # t := toF1 (getitime fd str) t
         ts # t := timerspec str t
      in R ts t

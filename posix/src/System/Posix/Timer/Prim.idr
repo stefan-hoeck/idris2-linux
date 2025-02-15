@@ -64,12 +64,12 @@ clock : PrimIO ClockT
 ||| * ITIMER_PROF: Counts down in process time
 |||   (i.e. the sum of kernel-mode and user-mode CPU time) and raises SIGPROF
 export %inline
-setitimer : Which -> (new,old : Itimerval) -> EPrim ()
+setitimer : Which -> (new,old : IOTimerval) -> EPrim ()
 setitimer w n o = toUnit $ prim__setitimer (whichCode w) (unwrap n) (unwrap o)
 
 ||| Writes the currently set timer for `Which` into `old.
 export %inline
-getitimer : Which -> (old : Itimerval) -> PrimIO ()
+getitimer : Which -> (old : IOTimerval) -> PrimIO ()
 getitimer w o = prim__getitimer (whichCode w) (unwrap o)
 
 ||| A very basic version of `setitimer` that raises `SIGALRM`
@@ -82,15 +82,15 @@ export %foreign "C:alarm, posix-idris"
 alarm : UInt -> PrimIO UInt
 
 ||| Writes the current time for the given clock into the
-||| `STimespec` pointer.
+||| `IOTimespec` pointer.
 export %inline
-clockGetTime : ClockId -> STimespec -> EPrim ()
+clockGetTime : ClockId -> IOTimespec -> EPrim ()
 clockGetTime c t = toUnit $ prim__clock_gettime (clockCode c) (unwrap t)
 
 ||| Writes the resolution for the given clock into the
-||| `STimespec` pointer.
+||| `IOTimespec` pointer.
 export %inline
-clockGetRes : ClockId -> STimespec -> EPrim ()
+clockGetRes : ClockId -> IOTimespec -> EPrim ()
 clockGetRes c t = toUnit $ prim__clock_getres (clockCode c) (unwrap t)
 
 ||| High resolution sleeping for the duration given in `dur`.
@@ -98,12 +98,12 @@ clockGetRes c t = toUnit $ prim__clock_getres (clockCode c) (unwrap t)
 ||| In case this is interrupted by a signal, it returns `Left EINTR`
 ||| and writes the remaining duration into `rem`.
 export %inline
-nanosleep_ : (dur,rem : STimespec) -> EPrim ()
+nanosleep_ : (dur,rem : IOTimespec) -> EPrim ()
 nanosleep_ d r = toUnit $ prim__nanosleep (unwrap d) (unwrap r)
 
 ||| Like `nanosleep` but allows us to specify the system clock to use.
 export %inline
-clockNanosleep : ClockId -> (dur,rem : STimespec) -> EPrim ()
+clockNanosleep : ClockId -> (dur,rem : IOTimespec) -> EPrim ()
 clockNanosleep c d r =
   posToUnit $ prim__clock_nanosleep (clockCode c) (unwrap d) (unwrap r)
 
@@ -112,7 +112,7 @@ clockNanosleep c d r =
 ||| This is useful to get exact wakeup times even in case of lots of signal
 ||| interrupts.
 export %inline
-clockNanosleepAbs : ClockId -> (time : STimespec) -> EPrim ()
+clockNanosleepAbs : ClockId -> (time : IOTimespec) -> EPrim ()
 clockNanosleepAbs c d =
   posToUnit $ prim__clock_nanosleep_abs (clockCode c) (unwrap d)
 
@@ -141,7 +141,7 @@ setTimer w (TRV (TV si ui) (TV sv uv)) =
 export
 getTimer : Which -> EPrim Timerval
 getTimer wh =
-  withStruct Itimerval $ \str,t =>
+  withStruct IOTimerval $ \str,t =>
     let _ # t := toF1 (getitimer wh str) t
         r # t := timerval str t
      in R r t
@@ -150,7 +150,7 @@ getTimer wh =
 export
 getTime : (c : ClockId) -> EPrim (IClock c)
 getTime c =
-  withStruct STimespec $ \str,t =>
+  withStruct IOTimespec $ \str,t =>
     let R _ t := clockGetTime c str t | E x t => E x t
         c # t := toClock str t
      in R c t
@@ -159,7 +159,7 @@ getTime c =
 export
 getResolution : (c : ClockId) -> EPrim (IClock c)
 getResolution c =
-  withStruct STimespec $ \str,t =>
+  withStruct IOTimespec $ \str,t =>
     let R _ t := clockGetRes c str t | E x t => E x t
         c # t := toClock str t
      in R c t

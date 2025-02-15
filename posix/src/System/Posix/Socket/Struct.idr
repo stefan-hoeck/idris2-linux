@@ -48,9 +48,6 @@ Struct SockaddrUn where
   unwrap = ptr
 
 export
-InIO SockaddrUn where
-
-export
 SizeOf SockaddrUn where
   sizeof_ = sockaddr_un_size
 
@@ -59,11 +56,11 @@ SizeOf SockaddrUn where
 |||
 ||| The allocated memory must be freed via `freeStruct`.
 export %inline
-sockaddrUn : (path : String) -> F1 [World] SockaddrUn
+sockaddrUn : (path : String) -> F1 World SockaddrUn
 sockaddrUn path = toF1 $ primMap SUN $ prim__sockaddr_un path
 
 export %inline
-path : SockaddrUn -> F1 [World] String
+path : SockaddrUn -> F1 World String
 path (SUN p) = toF1 $ prim__sockaddr_un_path p
 
 --------------------------------------------------------------------------------
@@ -111,30 +108,27 @@ Struct SockaddrIn where
   unwrap = ptr
 
 export
-InIO SockaddrIn where
-
-export
 SizeOf SockaddrIn where
   sizeof_ = sockaddr_in_size
 
 namespace SockaddrIn
   export %inline
-  port : SockaddrIn -> F1 [World] Bits16
+  port : SockaddrIn -> F1 World Bits16
   port (SIN p) = ffi $ prim__sockaddr_in_port p
 
   export %inline
-  addr : SockaddrIn -> F1 [World] Bits32
+  addr : SockaddrIn -> F1 World Bits32
   addr (SIN p) = ffi $ prim__sockaddr_in_addr p
 
   export %inline
-  addrStr : SockaddrIn -> F1 [World] String
+  addrStr : SockaddrIn -> F1 World String
   addrStr (SIN p) = ffi $ prim__sockaddr_in_addr_str p
 
 ||| Creates a `sockaddr_in` pointer and sets its `sun_path` value to
 |||
 ||| The allocated memory must be freed via `freeStruct`.
 export %inline
-sockaddrIn : IP4Addr -> F1 [World] SockaddrIn
+sockaddrIn : IP4Addr -> F1 World SockaddrIn
 sockaddrIn (IP4 a p) = toF1 $ primMap SIN $ prim__sockaddr_in (ip4addr a) p
 
 --------------------------------------------------------------------------------
@@ -172,15 +166,12 @@ Struct SockaddrIn6 where
   unwrap = ptr
 
 export
-InIO SockaddrIn6 where
-
-export
 SizeOf SockaddrIn6 where
   sizeof_ = sockaddr_in6_size
 
 namespace SockaddrIn6
   export %inline
-  port : SockaddrIn6 -> F1 [World] Bits16
+  port : SockaddrIn6 -> F1 World Bits16
   port (SIN6 p) = ffi $ prim__sockaddr_in6_port p
 
   export %inline
@@ -188,14 +179,14 @@ namespace SockaddrIn6
   addr6 (SIN6 p) = unsafeWrap (prim__sockaddr_in6_addr p)
 
   export %inline
-  addrStr : SockaddrIn6 -> F1 [World] String
+  addrStr : SockaddrIn6 -> F1 World String
   addrStr (SIN6 p) = ffi $ prim__sockaddr_in6_addr_str p
 
 ||| Creates a `sockaddr_in` pointer and sets its `sun_path` value to
 |||
 ||| The allocated memory must be freed via `freeStruct`.
 export
-sockaddrIn6 : IP6Addr -> F1 [World] SockaddrIn6
+sockaddrIn6 : IP6Addr -> F1 World SockaddrIn6
 sockaddrIn6 (IP6 addr pr) t =
   let res # t := toF1 (prim__sockaddr_in6 pr) t
       _   # t := writeVect (addr6 $ SIN6 res) addr t
@@ -230,7 +221,7 @@ addrSize AF_INET  = sizeof SockaddrIn
 addrSize AF_INET6 = sizeof SockaddrIn6
 
 export
-sockaddr : (d : _) -> Addr d -> F1 [World] (Sockaddr d)
+sockaddr : (d : _) -> Addr d -> F1 World (Sockaddr d)
 sockaddr AF_UNIX  a = sockaddrUn a
 sockaddr AF_INET  a = sockaddrIn a
 sockaddr AF_INET6 a = sockaddrIn6 a
