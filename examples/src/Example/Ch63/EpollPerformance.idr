@@ -49,7 +49,7 @@ covering
 app : Has Errno es => Prog es ()
 app = do
   sigprocmask SIG_SETMASK [SIGINT]
-  ref <- newIORef Z
+  ref <- newref Z
   use
     [ epollCreate 0
     , signalfd [SIGINT] 0

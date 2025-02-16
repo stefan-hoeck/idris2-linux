@@ -20,6 +20,10 @@ Has Errno es => ErrIO (EitherT (HSum es) IO) where
       R r t => Right r # t
       E x t => Left (inject x) # t
 
+export %inline
+Lift1 World (EitherT (HSum es) IO) where
+  lift1 = runIO
+
 --------------------------------------------------------------------------------
 -- Lifting computations
 --------------------------------------------------------------------------------

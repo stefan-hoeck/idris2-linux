@@ -121,11 +121,11 @@ execve s a e = toUnit $ prim__execve s (unsafeUnwrap a) (unsafeUnwrap e)
 export
 execle : String -> List String -> List (String,String) -> EPrim ()
 execle s a e t =
-  let args # t := ioToF1 (fromListIO (map Just a ++ [Nothing])) t
-      env  # t := ioToF1 (fromListIO (map envpair e ++ [Nothing])) t
+  let args # t := ioToF1 (fromList (map Just a ++ [Nothing])) t
+      env  # t := ioToF1 (fromList (map envpair e ++ [Nothing])) t
       R res  t := execve s args env t | E x t => E x t
-      _    # t := ioToF1 (free args) t
-      _    # t := ioToF1 (free env) t
+      _    # t := free1 args t
+      _    # t := free1 env t
    in R res t
 
   where
@@ -148,9 +148,9 @@ execvp s a = toUnit $ prim__execvp s (unsafeUnwrap a)
 export
 execlp : String -> List String -> EPrim ()
 execlp s a t =
-  let args # t := ioToF1 (fromListIO (map Just a ++ [Nothing])) t
+  let args # t := ioToF1 (fromList (map Just a ++ [Nothing])) t
       R res  t := execvp s args t | E x t => E x t
-      _    # t := ioToF1 (free args) t
+      _    # t := free1 args t
    in R res t
 
 ||| Runs the given shell command in a child process.
