@@ -41,4 +41,4 @@ unixClient : Has Errno es => Has ArgErr es => List String -> Prog es ()
 unixClient ["--help"] = stdoutLn usage
 unixClient []         = app "/tmp/le_unix_skt"
 unixClient [s]        = app s
-unixClient args       = fail (WrongArgs usage)
+unixClient args       = throw (WrongArgs usage)

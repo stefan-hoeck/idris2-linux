@@ -17,15 +17,15 @@ pthreadSelf = primIO P.pthreadSelf
 
 ||| Blocks the current thread and waits for the given thread to terminate.
 export %inline
-pthreadJoin : ErrIO io => PthreadT -> io ()
-pthreadJoin p = eprim (P.pthreadJoin p)
+pthreadJoin : Has Errno es => EIO1 f => PthreadT -> f es ()
+pthreadJoin p = elift1 (P.pthreadJoin p)
 
 ||| Allocates and initializes a new mutex of the given type.
 |||
 ||| This must be freed with `destroyMutex`.
 export
-mkmutex : ErrIO io => MutexType -> io MutexT
-mkmutex t = eprim (P.mkmutex t)
+mkmutex : Has Errno es => EIO1 f => MutexType -> f es MutexT
+mkmutex t = elift1 (P.mkmutex t)
 
 ||| Destroys a mutex and frees the memory allocated for it.
 export %inline
@@ -35,28 +35,28 @@ destroyMutex m = primIO (P.destroyMutex m)
 ||| Tries to lock the given mutex, blocking the calling thread
 ||| in case it is already locked.
 export %inline
-lockMutex : ErrIO io => MutexT -> io ()
-lockMutex p = eprim (P.lockMutex p)
+lockMutex : Has Errno es => EIO1 f => MutexT -> f es ()
+lockMutex p = elift1 (P.lockMutex p)
 
 ||| Like `lockMutex` but returns a boolean with `False` indicating
 ||| that the lock timed out
 export
-timedlockMutex : ErrIO io => MutexT -> Clock Duration -> io Bool
-timedlockMutex p cl = eprim (P.timedlockMutex p cl)
+timedlockMutex : Has Errno es => EIO1 f => MutexT -> Clock Duration -> f es Bool
+timedlockMutex p cl = elift1 (P.timedlockMutex p cl)
 
 ||| Like `lockMutex` but returns `False` in case the mutex is
 ||| already locked.
 export
-trylockMutex : ErrIO io => MutexT -> io Bool
-trylockMutex p = eprim (P.trylockMutex p)
+trylockMutex : Has Errno es => EIO1 f => MutexT -> f es Bool
+trylockMutex p = elift1 (P.trylockMutex p)
 
 ||| Unlocks the given mutex.
 |||
 ||| This is an error if the calling thread is not the one holding
 ||| the mutex's lock.
 export %inline
-unlockMutex : ErrIO io => MutexT -> io ()
-unlockMutex p = eprim (P.unlockMutex p)
+unlockMutex : Has Errno es => EIO1 f => MutexT -> f es ()
+unlockMutex p = elift1 (P.unlockMutex p)
 
 --------------------------------------------------------------------------------
 -- CondT
@@ -66,8 +66,8 @@ unlockMutex p = eprim (P.unlockMutex p)
 |||
 ||| This must be freed with `destroyCond`.
 export %inline
-mkcond : ErrIO io => io CondT
-mkcond = eprim P.mkcond
+mkcond : Has Errno es => EIO1 f => f es CondT
+mkcond = elift1 P.mkcond
 
 ||| Destroys a condition variable and frees the memory allocated for it.
 export %inline
@@ -80,15 +80,15 @@ destroyCond = primIO . destroyCond
 ||| which of them will be signalled. We are only guaranteed that at least
 ||| of them will be woken up.
 export %inline
-condSignal : ErrIO io => CondT -> io ()
-condSignal = eprim . condSignal
+condSignal : Has Errno es => EIO1 f => CondT -> f es ()
+condSignal c = elift1 (condSignal c)
 
 ||| Broadcasts the given `pthread_cond_t`.
 |||
 ||| This will wake up all threads waiting on the given condition.
 export %inline
-condBroadcast : ErrIO io => CondT -> io ()
-condBroadcast = eprim . condBroadcast
+condBroadcast : Has Errno es => EIO1 f => CondT -> f es ()
+condBroadcast c = elift1 (condBroadcast c)
 
 ||| Blocks the given thread and waits for the given condition to
 ||| be signalled.
@@ -97,13 +97,13 @@ condBroadcast = eprim . condBroadcast
 ||| lock is automatically released upon calling `condWait`, and when
 ||| the thread is woken up, the mutex will automatically be locked again.
 export %inline
-condWait : ErrIO io => CondT -> MutexT -> io ()
-condWait c = eprim . condWait c
+condWait : Has Errno es => EIO1 f => CondT -> MutexT -> f es ()
+condWait c m = elift1 (condWait c m)
 
 ||| Like `condWait` but will return `False` in case the operation timed out.
 export %inline
-condTimedwait : ErrIO io => CondT -> MutexT -> Clock Duration -> io Bool
-condTimedwait c m = eprim . condTimedwait c m
+condTimedwait : Has Errno es => EIO1 f => CondT -> MutexT -> Clock Duration -> f es Bool
+condTimedwait c m d = elift1 (condTimedwait c m d)
 
 --------------------------------------------------------------------------------
 -- Thread Cancelation
@@ -111,8 +111,8 @@ condTimedwait c m = eprim . condTimedwait c m
 
 ||| Sends a cancelation request to the given thread.
 export %inline
-pthreadCancel : ErrIO io => PthreadT -> io ()
-pthreadCancel = eprim . P.pthreadCancel
+pthreadCancel : Has Errno es => EIO1 f => PthreadT -> f es ()
+pthreadCancel t = elift1 (P.pthreadCancel t)
 
 ||| Tests for thread cancelation in the absence of other cancelation
 ||| points.
@@ -137,8 +137,8 @@ setCancelState = primIO . P.setCancelState
 ||| Adjust the thread's signal mask according to the given `How`
 ||| and signal set.
 export %inline
-pthreadSigmask : ErrIO io => How -> List Signal -> io ()
-pthreadSigmask h = eprim . P.pthreadSigmask h
+pthreadSigmask : Has Errno es => EIO1 f => How -> List Signal -> f es ()
+pthreadSigmask h ss = elift1 (P.pthreadSigmask h ss)
 
 ||| Returns the current signal mask of the thread.
 |||
@@ -152,5 +152,5 @@ pthreadSiggetmask = primIO P.pthreadSiggetmask
 
 ||| Sends the given signal to the given thread.
 export %inline
-pthreadKill : ErrIO io => PthreadT -> Signal -> io ()
-pthreadKill t = eprim . P.pthreadKill t
+pthreadKill : Has Errno es => EIO1 f => PthreadT -> Signal -> f es ()
+pthreadKill t s = elift1 (P.pthreadKill t s)

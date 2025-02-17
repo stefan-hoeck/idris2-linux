@@ -42,4 +42,4 @@ export covering
 dgramServer : Has Errno es => Has ArgErr es => List String -> Prog es ()
 dgramServer ["--help"] = stdoutLn usage
 dgramServer []         = app "/tmp/ud_ucase"
-dgramServer args       = fail (WrongArgs usage)
+dgramServer args       = throw (WrongArgs usage)

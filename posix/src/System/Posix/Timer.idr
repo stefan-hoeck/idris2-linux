@@ -32,13 +32,13 @@ clock = primIO P.clock
 ||| * ITIMER_PROF: Counts down in process time
 |||   (i.e. the sum of kernel-mode and user-mode CPU time) and raises SIGPROF
 export %inline
-setTimer : ErrIO io => Which -> Timerval -> io ()
-setTimer w t = eprim (P.setTimer w t)
+setTimer : Has Errno es => EIO1 f => Which -> Timerval -> f es ()
+setTimer w t = elift1 (P.setTimer w t)
 
 ||| Returns the currently set timer for `Which`.
 export %inline
-getTimer : ErrIO io => Which -> io Timerval
-getTimer w = eprim (P.getTimer w)
+getTimer : Has Errno es => EIO1 f => Which -> f es Timerval
+getTimer w = elift1 (P.getTimer w)
 
 ||| A very basic version of `setitimer` that raises `SIGALRM`
 ||| after the given number of seconds.
@@ -52,16 +52,16 @@ alarm u = primIO (P.alarm u)
 
 ||| Returns the current time for the given clock.
 export %inline
-getTime : ErrIO io => (c : ClockId) -> io (IClock c)
-getTime c = eprim (P.getTime c)
+getTime : Has Errno es => EIO1 f => (c : ClockId) -> f es (IClock c)
+getTime c = elift1 (P.getTime c)
 
 ||| Returns the resolution for the given clock.
 export %inline
-getResolution : ErrIO io => (c : ClockId) -> io (IClock c)
-getResolution c = eprim (P.getResolution c)
+getResolution : Has Errno es => EIO1 f => (c : ClockId) -> f es (IClock c)
+getResolution c = elift1 (P.getResolution c)
 
 ||| Like `nanosleep` but without the capability of keeping track of the
 ||| remaining duration in case of a signal interrupt.
 export %inline
-nanosleep : ErrIO io => (dur : Clock Monotonic) -> io ()
-nanosleep cl = eprim (P.nanosleep cl)
+nanosleep : Has Errno es => EIO1 f => (dur : Clock Monotonic) -> f es ()
+nanosleep cl = elift1 (P.nanosleep cl)

@@ -68,4 +68,4 @@ parameters {auto hf : Has Errno es}
     fi <- readOptIO OPath i
     cs <- injectEither (traverse readCmd t)
     withFile fi (O_RDWR <+> O_CREAT) 0o666 (seek cs)
-  seekProg _ = fail (WrongArgs usage)
+  seekProg _ = throw (WrongArgs usage)

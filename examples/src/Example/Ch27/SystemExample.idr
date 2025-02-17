@@ -19,7 +19,7 @@ usage =
   Runs shell commands given at the command-line.
   """
 
-printStatus : ErrIO io => ProcStatus -> io ()
+printStatus : Has Errno es => ProcStatus -> Prog es ()
 printStatus (Exited 127) = stdoutLn "(Probably) could not invoke shell"
 printStatus s            = stdoutLn $ prettyStatus "" s
 
@@ -38,4 +38,4 @@ export covering
 systemExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
 systemExample ["--help"]  = stdoutLn "\{usage}"
 systemExample []          = loop
-systemExample args        = fail (WrongArgs usage)
+systemExample args        = throw (WrongArgs usage)

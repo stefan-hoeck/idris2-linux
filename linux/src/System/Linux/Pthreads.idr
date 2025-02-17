@@ -12,5 +12,5 @@ import public System.Posix.Pthreads
 |||
 ||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
 export %inline
-pthreadSigqueue : ErrIO io => PthreadT -> Signal -> (word : CInt) -> io ()
-pthreadSigqueue p s = eprim . P.pthreadSigqueue p s
+pthreadSigqueue : Has Errno es => EIO1 f => PthreadT -> Signal -> (word : CInt) -> f es ()
+pthreadSigqueue p s word = elift1 (P.pthreadSigqueue p s word)

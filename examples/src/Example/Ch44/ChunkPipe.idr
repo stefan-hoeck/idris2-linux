@@ -75,4 +75,4 @@ parameters {auto he : Has Errno es}
   chunkPipe [ts,rs,ws,"1"] = run ts rs ws O_DIRECT
   chunkPipe [ts,rs,ws,"2"] = run ts rs ws O_NONBLOCK
   chunkPipe [ts,rs,ws,"3"] = run ts rs ws (O_DIRECT <+> O_NONBLOCK)
-  chunkPipe args           = fail (WrongArgs usage)
+  chunkPipe args           = throw (WrongArgs usage)

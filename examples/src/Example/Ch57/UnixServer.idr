@@ -52,4 +52,4 @@ unixServer : Has Errno es => Has ArgErr es => List String -> Prog es ()
 unixServer ["--help"] = stdoutLn usage
 unixServer []         = app "/tmp/le_unix_skt"
 unixServer [s]        = app s
-unixServer args       = fail (WrongArgs usage)
+unixServer args       = throw (WrongArgs usage)

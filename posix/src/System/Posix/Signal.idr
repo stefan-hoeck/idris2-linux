@@ -17,8 +17,8 @@ import public System.Posix.Signal.Types
 
 ||| Sends a signal to a running process or a group of processes.
 export %inline
-kill : ErrIO io => PidT -> Signal -> io ()
-kill p s = eprim (P.kill p s)
+kill : Has Errno es => EIO1 f => PidT -> Signal -> f es ()
+kill p s = elift1 (P.kill p s)
 
 ||| Sends a signal to the calling thread.
 export %inline
@@ -29,14 +29,14 @@ raise s = primIO (P.raise s)
 |||
 ||| Note that `sig` must be in the range [SIGRTMIN, SIGRTMAX].
 export %inline
-sigqueue : ErrIO io => PidT -> Signal -> (word : CInt) -> io ()
-sigqueue p s word = eprim (P.sigqueue p s word)
+sigqueue : Has Errno es => EIO1 f => PidT -> Signal -> (word : CInt) -> f es ()
+sigqueue p s word = elift1 (P.sigqueue p s word)
 
 ||| Adjust the process signal mask according to the given `How`
 ||| and signal set.
 export %inline
-sigprocmask : ErrIO io => How -> List Signal -> io ()
-sigprocmask h ss = eprim (P.sigprocmask h ss)
+sigprocmask : Has Errno es => EIO1 f => How -> List Signal -> f es ()
+sigprocmask h ss = elift1 (P.sigprocmask h ss)
 
 ||| Terminates the application by raising `SIGABRT` and dumps core.
 |||
@@ -48,8 +48,8 @@ abort = primIO P.abort
 
 ||| Suspends the current thread until a non-blocked signal is encountered.
 export %inline
-pause : ErrIO io => io ()
-pause = eprim P.pause
+pause : Has Errno es => EIO1 f => f es ()
+pause = elift1 P.pause
 
 ||| Returns the current signal mask of the process.
 export %inline
@@ -65,20 +65,20 @@ sigpending = primIO P.sigpending
 ||| pauses the thread (see `pause`) and restores the signal set
 ||| afterwards.
 export %inline
-sigsuspend : ErrIO io => List Signal -> io ()
-sigsuspend ss = eprim (P.sigsuspend ss)
+sigsuspend : Has Errno es => EIO1 f => List Signal -> f es ()
+sigsuspend ss = elift1 (P.sigsuspend ss)
 
 ||| Synchronously awaits one of the signals in `set`.
 |||
 ||| This is like `sigwaitinfo` but with a simpler API.
 export %inline
-sigwait : ErrIO io => List Signal -> io Signal
-sigwait ss = eprim (P.sigwait ss)
+sigwait : Has Errno es => EIO1 f => List Signal -> f es Signal
+sigwait ss = elift1 (P.sigwait ss)
 
 ||| Synchronously awaits one of the signals in `set`.
 |||
 ||| Note: Usually, the signals in `set` should first be blocked via
 |||       `sigprocmask`.
 export
-sigwaitinfo : ErrIO io => List Signal -> io Siginfo
-sigwaitinfo ss = eprim (P.sigwaitinfo ss)
+sigwaitinfo : Has Errno es => EIO1 f => List Signal -> f es Siginfo
+sigwaitinfo ss = elift1 (P.sigwaitinfo ss)

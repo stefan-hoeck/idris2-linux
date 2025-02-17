@@ -58,7 +58,7 @@ readPair s =
   case forget $ split ('/' ==) s of
     [x]   => (,0) <$> readOptIO OTime x
     [x,y] => [| MkPair (readOptIO OTime x) (readOptIO ONsecT y) |]
-    _     => fail (WrongArgs usage)
+    _     => throw (WrongArgs usage)
 
 readSpec : Has Errno es => Has ArgErr es => String -> Prog es Timerspec
 readSpec s =
@@ -72,7 +72,7 @@ readSpec s =
       (s,n)   <- readPair x
       (si,ni) <- readPair y
       pure $ TS (duration si ni) (duration s n)
-    _     => fail (WrongArgs usage)
+    _     => throw (WrongArgs usage)
 
 covering
 app : Has Errno es => Has ArgErr es => (t,exp : String) -> Prog es ()
@@ -89,5 +89,5 @@ timerfdExample : Has Errno es => Has ArgErr es => List String -> Prog es ()
 timerfdExample ["--help"]  = stdoutLn usage
 timerfdExample [s]         = app s "1"
 timerfdExample [s,m]       = app s m
-timerfdExample args        = fail (WrongArgs usage)
+timerfdExample args        = throw (WrongArgs usage)
 

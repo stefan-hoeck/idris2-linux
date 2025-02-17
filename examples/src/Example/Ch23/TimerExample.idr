@@ -100,4 +100,4 @@ timerExample [s]         = app s   "0" "0" "0"
 timerExample [s,u]       = app s   u   "0" "0"
 timerExample [s,u,is]    = app s   u   is  "0"
 timerExample [s,u,is,us] = app s   u   is  us
-timerExample args        = fail (WrongArgs usage)
+timerExample args        = throw (WrongArgs usage)

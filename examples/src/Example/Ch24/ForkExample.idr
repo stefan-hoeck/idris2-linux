@@ -66,4 +66,4 @@ parameters {auto has : Has Errno es}
   forkExample : List String -> Prog es ()
   forkExample ["--help"]  = stdoutLn usage
   forkExample []          = forkTest
-  forkExample args        = fail (WrongArgs usage)
+  forkExample args        = throw (WrongArgs usage)

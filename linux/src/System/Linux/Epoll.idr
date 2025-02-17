@@ -14,58 +14,63 @@ import public System.Posix.File
 
 ||| Opens a new `epoll` file descriptor.
 export %inline
-epollCreate : ErrIO io => EpollFlags -> io Epollfd
-epollCreate = eprim . P.epollCreate
+epollCreate : Has Errno es => EIO1 f => EpollFlags -> f es Epollfd
+epollCreate fs = elift1 (P.epollCreate fs)
 
 export %inline
 epollCtl :
-     {auto ifd : FileDesc f}
-  -> {auto eio : ErrIO io}
+     {auto ifd : FileDesc g}
+  -> {auto has : Has Errno es}
+  -> {auto eio : EIO1 f}
   -> Epollfd
   -> EpollOp
-  -> (fd : f)
+  -> (fd : g)
   -> Event
-  -> io ()
-epollCtl efd op fd = eprim . P.epollCtl efd op fd
+  -> f es ()
+epollCtl efd op fd ev = elift1 (P.epollCtl efd op fd ev)
 
 export %inline
 epollWait :
      {n : _}
-  -> {auto eio : ErrIO io}
+  -> {auto has : Has Errno es}
+  -> {auto eio : EIO1 f}
   -> Epollfd
   -> CArrayIO n SEpollEvent
   -> Int32
-  -> io (k ** CArrayIO k SEpollEvent)
-epollWait efd arr = eprim . P.epollWait efd arr
+  -> f es (k ** CArrayIO k SEpollEvent)
+epollWait efd arr timeout = elift1 (P.epollWait efd arr timeout)
 
 export %inline
 epollWaitVals :
      {n : _}
-  -> {auto eio : ErrIO io}
+  -> {auto has : Has Errno es}
+  -> {auto eio : EIO1 f}
   -> Epollfd
   -> CArrayIO n SEpollEvent
   -> Int32
-  -> io (List EpollEvent)
-epollWaitVals efd arr = eprim . P.epollWaitVals efd arr
+  -> f es (List EpollEvent)
+epollWaitVals efd arr timeout = elift1 (P.epollWaitVals efd arr timeout)
 
 export %inline
 epollPwait2 :
      {n : _}
-  -> {auto eio : ErrIO io}
+  -> {auto has : Has Errno es}
+  -> {auto eio : EIO1 f}
   -> Epollfd
   -> CArrayIO n SEpollEvent
   -> Clock Duration
   -> List Signal
-  -> io (k ** CArrayIO k SEpollEvent)
-epollPwait2 efd arr timeout = eprim . P.epollPwait2 efd arr timeout
+  -> f es (k ** CArrayIO k SEpollEvent)
+epollPwait2 efd arr timeout ss = elift1 (P.epollPwait2 efd arr timeout ss)
 
 export %inline
 epollPwait2Vals :
      {n : _}
-  -> {auto eio : ErrIO io}
+  -> {auto has : Has Errno es}
+  -> {auto eio : EIO1 f}
   -> Epollfd
   -> CArrayIO n SEpollEvent
   -> Clock Duration
   -> List Signal
-  -> io (List EpollEvent)
-epollPwait2Vals efd arr timeout = eprim . P.epollPwait2Vals efd arr timeout
+  -> f es (List EpollEvent)
+epollPwait2Vals efd arr timeout ss = elift1 (P.epollPwait2Vals efd arr timeout ss)

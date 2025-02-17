@@ -16,7 +16,7 @@ usage =
   """
 
 covering
-run : ErrIO io => List String -> io ()
+run : Has Errno es => List String -> Prog es ()
 run as = do
   for_ (zipWithIndex as) $ \(n,s) => stdoutLn "args[\{show n}] = \{s}"
   for_ !getEnvironment $ \(n,s)   => stdoutLn "\{n}=\{s}"

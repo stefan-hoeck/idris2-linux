@@ -70,7 +70,7 @@ export %inline
 readTimerfd : Timerfd -> EPrim Bits64
 readTimerfd fd t =
   let r # t := ffi (prim__timerfd_read (fileDesc fd)) t
-   in if r < 0 then E (fromNeg r) t else R (cast r) t
+   in if r < 0 then E (inject $ fromNeg r) t else R (cast r) t
 
 --------------------------------------------------------------------------------
 -- Convenience API

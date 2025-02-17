@@ -30,4 +30,4 @@ parameters {auto ha : Has ArgErr es}
   tee ["--help"] = stdoutLn usage
   tee [dst]      = run create dst
   tee ["-a",dst] = run append dst
-  tee _          = fail (WrongArgs usage)
+  tee _          = throw (WrongArgs usage)

@@ -15,19 +15,19 @@ import public System.Posix.File
 
 ||| Opens a new `inotify` file descriptor.
 export %inline
-inotifyInit : ErrIO io => InotifyFlags -> io Inotify
-inotifyInit = eprim . P.inotifyInit
+inotifyInit : Has Errno es => EIO1 f => InotifyFlags -> f es Inotify
+inotifyInit fs = elift1 (P.inotifyInit fs)
 
 ||| Watches a file for the given events.
 export %inline
-inotifyAddWatch : ErrIO io => Inotify -> String -> InotifyMask -> io Watch
-inotifyAddWatch fd s = eprim . P.inotifyAddWatch fd s
+inotifyAddWatch : Has Errno es => EIO1 f => Inotify -> String -> InotifyMask -> f es Watch
+inotifyAddWatch fd s m = elift1 (P.inotifyAddWatch fd s m)
 
 export %inline
-inotifyRm : ErrIO io => Inotify -> Watch -> io ()
-inotifyRm fd = eprim . P.inotifyRm fd
+inotifyRm : Has Errno es => EIO1 f => Inotify -> Watch -> f es ()
+inotifyRm fd w = elift1 (P.inotifyRm fd w)
 
 ||| Reads at most `buf` from an `inotify` file descriptor.
 export
-inotifyRead : ErrIO io => (buf : Bits32) -> Inotify -> io (List InotifyRes)
-inotifyRead buf = eprim . P.inotifyRead buf
+inotifyRead : Has Errno es => EIO1 f => (buf : Bits32) -> Inotify -> f es (List InotifyRes)
+inotifyRead buf i = elift1 (P.inotifyRead buf i)

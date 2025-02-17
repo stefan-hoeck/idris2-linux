@@ -53,7 +53,7 @@ parameters {auto he : Has Errno es}
     tryMkFifo serverFifo
     use [openFile serverFifo O_RDONLY 0, openFile serverFifo O_WRONLY 0] $
       \[fd,_] => serve 0 fd
-  fifoServer args        = fail (WrongArgs usage)
+  fifoServer args        = throw (WrongArgs usage)
 
   export
   fifoClient : List String -> Prog es ()
@@ -71,4 +71,4 @@ parameters {auto he : Has Errno es}
     stdoutLn (show v)
 
 
-  fifoClient args        = fail (WrongArgs usage)
+  fifoClient args        = throw (WrongArgs usage)

@@ -130,15 +130,15 @@ lockMutex p = posToUnit $ prim__pthread_mutex_lock (unwrap p)
 export
 timedlockMutex : MutexT -> Clock Duration -> EPrim Bool
 timedlockMutex p cl =
-  notErr ETIMEDOUT $ withTimespec cl $ \ts =>
-    posToUnit (prim__pthread_mutex_timedlock (unwrap p) (unwrap ts))
+  withTimespec cl $ \ts =>
+    posNotErr ETIMEDOUT (prim__pthread_mutex_timedlock (unwrap p) (unwrap ts))
 
 ||| Like `lockMutex` but returns `False` in case the mutex is
 ||| already locked.
 export
 trylockMutex : MutexT -> EPrim Bool
 trylockMutex p =
-  notErr EBUSY $ posToUnit (prim__pthread_mutex_trylock $ unwrap p)
+  posNotErr EBUSY (prim__pthread_mutex_trylock $ unwrap p)
 
 ||| Unlocks the given mutex.
 |||
@@ -207,8 +207,8 @@ condWait p m = posToUnit $ prim__pthread_cond_wait p.ptr m.ptr
 export %inline
 condTimedwait : CondT -> MutexT -> Clock Duration -> EPrim Bool
 condTimedwait p m cl =
-  notErr ETIMEDOUT $ withTimespec cl $ \ts =>
-    posToUnit (prim__pthread_cond_timedwait p.ptr m.ptr (unwrap ts))
+  withTimespec cl $ \ts =>
+    posNotErr ETIMEDOUT (prim__pthread_cond_timedwait p.ptr m.ptr (unwrap ts))
 
 --------------------------------------------------------------------------------
 -- Thread Cancelation

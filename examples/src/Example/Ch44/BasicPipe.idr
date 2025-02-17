@@ -51,4 +51,4 @@ parameters {auto he : Has Errno es}
   basicPipe : List String -> Prog es ()
   basicPipe ["--help"]  = stdoutLn usage
   basicPipe [s]         = run s
-  basicPipe args        = fail (WrongArgs usage)
+  basicPipe args        = throw (WrongArgs usage)

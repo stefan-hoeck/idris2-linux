@@ -25,8 +25,8 @@ import public System.Posix.Signal
 ||| * In general, use `readSignalfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `signalfd`.
 export %inline
-signalfd_ : ErrIO io => (set : SigsetT) -> SignalfdFlags -> io Signalfd
-signalfd_ set = eprim . P.signalfd_ set
+signalfd_ : Has Errno es => EIO1 f => (set : SigsetT) -> SignalfdFlags -> f es Signalfd
+signalfd_ set fs = elift1 (P.signalfd_ set fs)
 
 --------------------------------------------------------------------------------
 -- Convenience API
@@ -34,13 +34,13 @@ signalfd_ set = eprim . P.signalfd_ set
 
 ||| Convenience alias for `signalfd_`.
 export %inline
-signalfd : ErrIO io => List Signal -> SignalfdFlags -> io Signalfd
-signalfd ss = eprim . P.signalfd ss
+signalfd : Has Errno es => EIO1 f => List Signal -> SignalfdFlags -> f es Signalfd
+signalfd ss fs = elift1 (P.signalfd ss fs)
 
 ||| Reads data from a `signalfd` into a pre-allocated array.
 |||
 ||| Note: This will overwrite the data stored in `arr` and the
 |||       result is a wrapper around the same pointer.
 export
-readSignalfd : ErrIO io => Signalfd -> Nat -> io (List Siginfo)
-readSignalfd fd = eprim . P.readSignalfd fd
+readSignalfd : Has Errno es => EIO1 f => Signalfd -> Nat -> f es (List Siginfo)
+readSignalfd fd n = elift1 (P.readSignalfd fd n)

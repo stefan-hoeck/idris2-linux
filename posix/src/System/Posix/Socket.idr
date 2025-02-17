@@ -6,48 +6,49 @@ import public System.Posix.Socket.Struct
 import public System.Posix.Socket.Types
 import public System.Posix.File.ReadRes
 
-parameters {auto eio : ErrIO io}
+parameters {auto has : Has Errno es}
+           {auto eio : EIO1 f}
 
   ||| Creates a new endpoint for communication returning a file descriptor
   ||| referring to that endpoint.
   export %inline
-  socket : (d : Domain) -> SockType -> io (Socket d)
-  socket d = eprim . P.socket d
+  socket : (d : Domain) -> SockType -> f es (Socket d)
+  socket d t = elift1 $ P.socket d t
 
   ||| Listen for connections on a socket.
   |||
   ||| This marks the socket as the *passive* part that will then wait
   ||| for incoming connections using calles to `accept`.
   export %inline
-  listen : Socket d -> (backlog : Bits32) -> io ()
-  listen s = eprim . P.listen s
+  listen : Socket d -> (backlog : Bits32) -> f es ()
+  listen s b = elift1 $ P.listen s b
 
   ||| Accept connections on a socket.
   |||
   ||| Incoming connections are returned as new `Socket` file descriptors.
   export %inline
-  accept : Socket d -> io (Socket d)
-  accept = eprim . P.accept
+  accept : Socket d -> f es (Socket d)
+  accept s = elift1 $ P.accept s
 
   ||| Binds a socket to the given address.
   export %inline
-  bind_ : {d : _} -> Socket d -> Sockaddr d -> io ()
-  bind_ s = eprim . P.bind_ s
+  bind_ : {d : _} -> Socket d -> Sockaddr d -> f es ()
+  bind_ s a = elift1 $ P.bind_ s a
 
   ||| Connects a socket to the given address.
   export %inline
-  connect_ : {d : _} -> Socket d -> Sockaddr d -> io ()
-  connect_ s = eprim . P.connect_ s
+  connect_ : {d : _} -> Socket d -> Sockaddr d -> f es ()
+  connect_ s a = elift1 $ P.connect_ s a
 
   ||| Convenience alias for `bind_`.
   export
-  bind : {d : _} -> Socket d -> Addr d -> io ()
-  bind s = eprim . P.bind s
+  bind : {d : _} -> Socket d -> Addr d -> f es ()
+  bind s a = elift1 $ P.bind s a
 
   ||| Convenience alias for `connect_`.
   export
-  connect : {d : _} -> Socket d -> Addr d -> io ()
-  connect s = eprim . P.connect s
+  connect : {d : _} -> Socket d -> Addr d -> f es ()
+  connect s a = elift1 $ P.connect s a
 
   ||| Reads at most `n` bytes from a file into an allocated pointer.
   export %inline
@@ -57,8 +58,8 @@ parameters {auto eio : ErrIO io}
     -> {auto frp : FromPtr r}
     -> CPtr
     -> SockFlags
-    -> io (ReadRes r)
-  recvPtr s r cp = eprim . P.recvPtr s r cp
+    -> f es (ReadRes r)
+  recvPtr s r cp fs = elift1 $ P.recvPtr s r cp fs
 
   ||| Reads at most `n` bytes from a file into an allocated pointer.
   export %inline
@@ -70,8 +71,8 @@ parameters {auto eio : ErrIO io}
     -> CPtr
     -> SockFlags
     -> Sockaddr d
-    -> io r
-  recvFromPtr s r cp sf = eprim . P.recvFromPtr s r cp sf
+    -> f es r
+  recvFromPtr s r cp sf a = elift1 $ P.recvFromPtr s r cp sf a
 
   ||| Reads at most `n` bytes from a file into a bytestring.
   export %inline
@@ -81,8 +82,8 @@ parameters {auto eio : ErrIO io}
     -> {auto frb : FromBuf r}
     -> (n : Bits32)
     -> SockFlags
-    -> io (ReadRes r)
-  recv s r n = eprim . P.recv s r n
+    -> f es (ReadRes r)
+  recv s r n fs = elift1 $ P.recv s r n fs
 
   ||| Reads at most `n` bytes from a socket into a bytestring
   export %inline
@@ -94,8 +95,8 @@ parameters {auto eio : ErrIO io}
     -> (n : Bits32)
     -> SockFlags
     -> Sockaddr d
-    -> io r
-  recvFrom s r n sf = eprim . P.recvFrom s r n sf
+    -> f es r
+  recvFrom s r n sf a = elift1 $ P.recvFrom s r n sf a
 
   export
   sendto :
@@ -105,5 +106,5 @@ parameters {auto eio : ErrIO io}
     -> r
     -> SockFlags
     -> Sockaddr d
-    -> io Bits32
-  sendto s r f = eprim . P.sendto s r f
+    -> f es Bits32
+  sendto s r f a = elift1 $ P.sendto s r f a

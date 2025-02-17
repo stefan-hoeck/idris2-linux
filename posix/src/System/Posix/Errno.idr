@@ -6,29 +6,20 @@ import Data.Finite
 import Data.Maybe
 import Data.SortedMap
 import public System.Posix.Errno.Type
+import public Data.Linear.ELift1
 
 --------------------------------------------------------------------------------
 -- Interface
 --------------------------------------------------------------------------------
 
-public export
-data ERes : Type -> Type where
-  R : (v : t)   -> (1 w : T1 World) -> ERes t
-  E : (x : Errno) -> (1 w : T1 World) -> ERes t
-
-public export
-0 EPrim : Type -> Type
-EPrim t = (1 w : T1 World) -> ERes t
-
-||| An interface for dealing with system errors in `IO`
-public export
-interface HasIO io => ErrIO io where
-  eprim : EPrim a -> io a
-
 ||| Prints the error text and name of a system error.
 export %inline
 Interpolation Errno where
   interpolate x = "\{errorText x} (\{errorName x})"
+
+public export
+0 EPrim : Type -> Type
+EPrim a = {0 es : List Type} -> Has Errno es => E1 World es a
 
 --------------------------------------------------------------------------------
 -- Utilities
@@ -52,8 +43,8 @@ primMap f act w =
    in MkIORes (f v) w
 
 export %inline
-eprimMap : (a -> b) -> EPrim a -> EPrim b
-eprimMap f act w =
+elinMap : (a -> b) -> E1 s es a -> E1 s es b
+elinMap f act w =
   let R v w := act w | E x w => E x w
    in R (f v) w
 
@@ -61,32 +52,41 @@ export %inline
 toVal : (CInt -> a) -> PrimIO CInt -> EPrim a
 toVal f act t =
   let r # t := toF1 act t
-   in if r < 0 then E (fromNeg r) t else R (f r) t
+   in if r < 0 then E (inject $ fromNeg r) t else R (f r) t
 
 export %inline
 toSize : PrimIO SsizeT -> EPrim Bits32
 toSize act t =
   let r # t := toF1 act t
-   in if r < 0 then E (fromNeg r) t else R (cast r) t
+   in if r < 0 then E (inject $ fromNeg r) t else R (cast r) t
 
 export %inline
 toUnit : PrimIO CInt -> EPrim ()
 toUnit act t =
   let r # t := toF1 act t
-   in if r < 0 then E (fromNeg r) t else R () t
+   in if r < 0 then E (inject $ fromNeg r) t else R () t
 
 export %inline
 toPidT : PrimIO PidT -> EPrim PidT
 toPidT act t =
   let r # t := toF1 act t
-   in if r < 0 then E (fromNeg r) t else R r t
+   in if r < 0 then E (inject $ fromNeg r) t else R r t
 
 export %inline
 posToUnit : PrimIO Bits32 -> EPrim ()
 posToUnit act t =
   case toF1 act t of
     0 # t => R () t
-    x # t => E (EN x) t
+    x # t => E (inject $ EN x) t
+
+export %inline
+posNotErr : Errno -> PrimIO Bits32 -> EPrim Bool
+posNotErr err act t =
+  case toF1 act t of
+    0 # t => R True t
+    x # t => case EN x == err of
+      True  => R False t
+      False => E (inject $ EN x) t
 
 export %inline
 toRes : PrimIO a -> PrimIO CInt -> EPrim a
@@ -96,7 +96,7 @@ toRes wrap act t =
    in R r t
 
 export %inline
-ignore : EPrim a -> PrimIO ()
+ignore : E1 World es a -> PrimIO ()
 ignore act =
   primRun $ \t => case act t of
     R _ t => () # t
@@ -110,7 +110,7 @@ export %inline
 freeFail : Struct a => a -> Errno -> EPrim b
 freeFail s err t =
   let _ # t := toF1 (prim__free $ unwrap s) t
-   in E err t
+   in E (inject err) t
 
 export %inline
 finally : PrimIO () -> EPrim a -> EPrim a
@@ -156,24 +156,15 @@ filterM sa f (v::vs) t =
    in filterM (sa :< v) f vs t
 
 export
-notErr : Errno -> EPrim () -> EPrim Bool
-notErr err f w =
-  case f w of
-    R () w => R True w
-    E x  w => case x == err of
-      True  => R False w
-      False => E x w
-
-export
 values :
      {auto der : Deref b}
   -> {auto sof : SizeOf b}
   -> List c
-  -> CArrayIO n b
-  -> (b -> F1 World c)
+  -> CArray s n b
+  -> (b -> F1 s c)
   -> (k : Nat)
   -> {auto 0 prf : LTE k n}
-  -> F1 World (List c)
+  -> F1 s (List c)
 values cs arr f 0     t = cs # t
 values cs arr f (S k) t =
   let vb # t := getNat arr k t

@@ -19,8 +19,8 @@ import public System.Posix.Timer
 ||| * In general, use `readTimerfd` instead of the `read` functions
 |||   from `System.Posix.File` to read from a `timerfd`.
 export %inline
-timerfd : ErrIO io => ClockId -> TimerfdFlags -> io Timerfd
-timerfd c = eprim . P.timerfd c
+timerfd : Has Errno es => EIO1 f => ClockId -> TimerfdFlags -> f es Timerfd
+timerfd c fs = elift1 (P.timerfd c fs)
 
 ||| Sets the time of a `timerfd`.
 |||
@@ -28,8 +28,8 @@ timerfd c = eprim . P.timerfd c
 ||| Use the `TFD_TIMER_ABSTIME` flag if the time should be interpreted as
 ||| an absolute wall clock time.
 export %inline
-setitime : ErrIO io => Timerfd -> Bits32 -> (new,old : IOTimerspec) -> io ()
-setitime t f new = eprim . P.setitime t f new
+setitime : Has Errno es => EIO1 f => Timerfd -> Bits32 -> (new,old : IOTimerspec) -> f es ()
+setitime t f new old = elift1 (P.setitime t f new old)
 
 ||| Reads the currently set `itimerspec` of a `timerfd` and uses the given
 ||| pointer to place the data.
@@ -45,8 +45,8 @@ getitime t = primIO . P.getitime t
 ||| The value returned is the number of times the timer expired since
 ||| the last read.
 export %inline
-readTimerfd : ErrIO io => Timerfd -> io Bits64
-readTimerfd = eprim . P.readTimerfd
+readTimerfd : Has Errno es => EIO1 f => Timerfd -> f es Bits64
+readTimerfd fd = elift1 (P.readTimerfd fd)
 
 --------------------------------------------------------------------------------
 -- Convenience API
@@ -54,10 +54,10 @@ readTimerfd = eprim . P.readTimerfd
 
 ||| Like `setitime` but without storing the currently set `itimerspec`.
 export %inline
-setTime : ErrIO io => Timerfd -> Bits32 -> Timerspec -> io ()
-setTime t f = eprim . P.setTime t f
+setTime : Has Errno es => EIO1 f => Timerfd -> Bits32 -> Timerspec -> f es ()
+setTime t f n = elift1 (P.setTime t f n)
 
 ||| Convenience alias for `getitime`.
 export %inline
-getTime : ErrIO io => Timerfd -> io Timerspec
-getTime = eprim . P.getTime
+getTime : Has Errno es => EIO1 f => Timerfd -> f es Timerspec
+getTime fd = elift1 (P.getTime fd)

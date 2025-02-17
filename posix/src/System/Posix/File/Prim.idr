@@ -104,7 +104,7 @@ allocRead n act t =
   let buf # t := toF1 (prim__newBuf n) t
       rd  # t := toF1 (act buf n) t
    in if rd < 0
-         then E (fromNeg rd) t
+         then E (inject $ fromNeg rd) t
          else let r # t := fromBuf (B (cast rd) buf) t in R r t
 
 ||| Like `allocRead` but treats certain errors as valid results.
@@ -128,7 +128,7 @@ ptrRead : FromPtr a => AnyPtr -> PrimIO SsizeT -> EPrim a
 ptrRead ptr act t =
   let rd  # t := toF1 act t
    in if rd < 0
-         then E (fromNeg rd) t
+         then E (inject $ fromNeg rd) t
          else let res # t := fromPtr (CP (cast rd) ptr) t in R res t
 
 ||| Like `ptrRead` but treats certain errors as valid results.
@@ -306,7 +306,7 @@ parameters {auto fid : FileDesc a}
   getFlags : EPrim Flags
   getFlags t =
    let r # t := toF1 (prim__getFlags (fileDesc fd)) t
-    in if r < 0 then E (fromNeg r) t else R (F $ cast r) t
+    in if r < 0 then E (inject $ fromNeg r) t else R (F $ cast r) t
 
   ||| Sets the flags of an open file descriptor.
   |||
@@ -398,7 +398,7 @@ readlink f = allocRead 4096 $ prim__readlink f
 
 export %inline
 stdout : String -> PrimIO ()
-stdout s = ignore $ fwrite Stdout s
+stdout s = Errno.ignore $ fwrite {es = [Errno]} Stdout s
 
 export %inline
 stdoutLn : String -> PrimIO ()
@@ -414,7 +414,7 @@ prntLn = stdoutLn . show
 
 export %inline
 stderr : String -> PrimIO ()
-stderr s = ignore $ fwrite Stderr s
+stderr s = ignore $ fwrite {es = [Errno]} Stderr s
 
 export %inline
 stderrLn : String -> PrimIO ()

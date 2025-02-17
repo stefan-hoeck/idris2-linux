@@ -32,4 +32,4 @@ parameters {auto hf : Has Errno es}
   seekAppendProg [is] = do
     fi <- readOptIO OPath is
     withFile fi append 0o666 seekWriteBytes
-  seekAppendProg _ = fail (WrongArgs usage)
+  seekAppendProg _ = throw (WrongArgs usage)

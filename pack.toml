@@ -47,3 +47,9 @@ type   = "github"
 url    = "https://github.com/stefan-hoeck/idris2-bytestring"
 commit = "latest:main"
 ipkg   = "bytestring.ipkg"
+
+[custom.all.elin]
+type   = "github"
+url    = "https://github.com/stefan-hoeck/idris2-elin"
+commit = "latest:main"
+ipkg   = "elin.ipkg"

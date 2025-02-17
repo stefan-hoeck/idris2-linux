@@ -52,4 +52,4 @@ parameters {auto hf : Has Errno es}
     fi <- readOptIO OPath is
     n  <- readOptIO ONat ns
     withFile fi (O_WRONLY <+> O_CREAT) 0o666 $ seekWriteBytes n
-  atomicProg _ = fail (WrongArgs usage)
+  atomicProg _ = throw (WrongArgs usage)

@@ -101,7 +101,7 @@ other cnt ref mu co =
 covering
 prog : Prog [Errno, ArgErr] ()
 prog = do
-  (_::args) <- getArgs | [] => fail (WrongArgs usage)
+  (_::args) <- getArgs | [] => throw (WrongArgs usage)
   case args of
     ["--help"]                     => stdoutLn usage
     "copy"                    :: t => copyProg t

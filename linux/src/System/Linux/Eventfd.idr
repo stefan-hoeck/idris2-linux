@@ -23,13 +23,13 @@ import public System.Posix.File
 |||   from `System.Posix.File` to read from an `eventfd`.
 ||| * Likewise, use `writeEventfd` instead of `System.Posix.File.write`
 export %inline
-eventfd : ErrIO io => (init : Bits64) -> EventfdFlags -> io Eventfd
-eventfd init = eprim . P.eventfd init
+eventfd : Has Errno es => EIO1 f => (init : Bits64) -> EventfdFlags -> f es Eventfd
+eventfd init fs = elift1 (P.eventfd init fs)
 
 ||| Writes a value to the given event file descriptor.
 export %inline
-writeEventfd : ErrIO io => Eventfd -> Bits64 -> io ()
-writeEventfd fd = eprim . P.writeEventfd fd
+writeEventfd : Has Errno es => EIO1 f => Eventfd -> Bits64 -> f es ()
+writeEventfd fd v = elift1 (P.writeEventfd fd v)
 
 ||| Reads the current value from an event file descriptor.
 |||
@@ -38,5 +38,5 @@ writeEventfd fd = eprim . P.writeEventfd fd
 ||| if no value is ready. If opened with the `EFD_SEMAPHORE` flag, this will
 ||| return 1 if a value is ready and reduce the value by 1.
 export %inline
-readEventfd : ErrIO io => Eventfd -> io Bits64
-readEventfd = eprim . P.readEventfd
+readEventfd : Has Errno es => EIO1 f => Eventfd -> f es Bits64
+readEventfd fd = elift1 (P.readEventfd fd)

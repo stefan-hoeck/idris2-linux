@@ -98,7 +98,7 @@ export %inline
 pause : EPrim ()
 pause t =
   let r # t := toF1 (primMap fromNeg prim__pause) t
-   in if r == EINTR then R () t else E r t
+   in if r == EINTR then R () t else E (inject r) t
 
 ||| Atomically blocks the signals in `set`, then
 ||| pauses the thread (see `pause`) and restores the signal set
@@ -107,7 +107,7 @@ export %inline
 sigsuspend_ : (set : SigsetT) -> EPrim ()
 sigsuspend_ s t =
   let r # t := toF1 (primMap fromNeg (prim__sigsuspend $ unwrap s)) t
-   in if r == EINTR then R () t else E r t
+   in if r == EINTR then R () t else E (inject r) t
 
 ||| Synchronously awaits one of the signals in `set`.
 |||

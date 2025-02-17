@@ -24,5 +24,5 @@ O_DIRECT = F o_direct
 ||| Linux-specific version of `pipe` that allows setting additional
 ||| flags (`O_NONBLOCK`, `O_CLOEXEC`, `O_DIRECT`).
 export %inline
-pipe2 : ErrIO io => CArrayIO 2 Fd -> Flags -> io ()
-pipe2 p = eprim . P.pipe2 p
+pipe2 : Has Errno es => EIO1 f => CArrayIO 2 Fd -> Flags -> f es ()
+pipe2 p fs = elift1 (P.pipe2 p fs)

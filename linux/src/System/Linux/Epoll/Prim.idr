@@ -61,7 +61,7 @@ epollWait :
 epollWait efd arr timeout t =
   let p     := unsafeUnwrap arr
       r # t := ffi (prim__epoll_wait (fileDesc efd) p (cast n) timeout) t
-   in if r < 0 then E (fromNeg r) t else R (cast r ** unsafeWrap p) t
+   in if r < 0 then E (inject $ fromNeg r) t else R (cast r ** unsafeWrap p) t
 
 export
 epollWaitVals :
@@ -87,12 +87,12 @@ epollPwait2 efd arr timeout [] =
   withTimespec timeout $ \ts,t =>
     let p     := unsafeUnwrap arr
         r # t := ffi (prim__epoll_pwait2 (fileDesc efd) p (cast n) (unwrap ts)) t
-     in if r < 0 then E (fromNeg r) t else R (cast r ** unsafeWrap p) t
+     in if r < 0 then E (inject $ fromNeg r) t else R (cast r ** unsafeWrap p) t
 epollPwait2 efd arr timeout sigs =
   withTimespec timeout $ \ts => withSignals sigs $ \ss,t =>
     let p     := unsafeUnwrap arr
         r # t := ffi (prim__epoll_spwait2 (fileDesc efd) p (cast n) (unwrap ts) (unwrap ss)) t
-     in if r < 0 then E (fromNeg r) t else R (cast r ** unsafeWrap p) t
+     in if r < 0 then E (inject $ fromNeg r) t else R (cast r ** unsafeWrap p) t
 
 export
 epollPwait2Vals :

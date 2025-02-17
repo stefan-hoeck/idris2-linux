@@ -57,4 +57,4 @@ parameters {auto hf : Has Errno es}
     fo  <- readOptIO OPath o
     buf <- parseEnv OBits32 "LI_BUF_SIZE" 0x10000
     ignore $ cpRaw buf fi fo
-  copyProg _ = fail (WrongArgs usage)
+  copyProg _ = throw (WrongArgs usage)

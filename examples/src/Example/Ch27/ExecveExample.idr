@@ -28,4 +28,4 @@ execveExample ["--help"]  = stdoutLn usage
 execveExample []          = do
   p <- getcwd {r = String}
   execle"\{p}/examples/build/exec/linux-examples" args env
-execveExample args        = fail (WrongArgs usage)
+execveExample args        = throw (WrongArgs usage)

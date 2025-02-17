@@ -63,7 +63,7 @@ fromErr err t =
   else if err == EWOULDBLOCK then R NoData t
   else if err == EINTR       then R Interrupted t
   else if err == EPIPE       then R Closed t
-  else                            E err t
+  else                            E (inject err) t
 
 --------------------------------------------------------------------------------
 -- Read and Write Interfaces

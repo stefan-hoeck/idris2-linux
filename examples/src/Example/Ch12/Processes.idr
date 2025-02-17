@@ -57,6 +57,6 @@ parameters {auto hf : Has Errno es}
   processes : Has ArgErr es => List String -> Prog es ()
   processes ["--help"] = stdoutLn usage
   processes [u]        = do
-    Just uid <- getuid u | Nothing => fail (Invalid OUser u)
+    Just uid <- getuid u | Nothing => throw (Invalid OUser u)
     withDir "/proc" (inDir uid)
-  processes _          = fail (WrongArgs usage)
+  processes _          = throw (WrongArgs usage)

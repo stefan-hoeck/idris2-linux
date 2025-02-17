@@ -21,18 +21,18 @@ import public System.Posix.File
 ||| This fails if the directory exists already. It also fails, if the
 ||| parent directory does not exist.
 export %inline
-mkdir : ErrIO io => (pth : String) -> Mode -> io ()
-mkdir pth = eprim . P.mkdir pth
+mkdir : Has Errno es => EIO1 f => (pth : String) -> Mode -> f es ()
+mkdir pth m = elift1 (P.mkdir pth m)
 
 ||| Opens a directory.
 export
-opendir : ErrIO io => String -> io Dir
-opendir = eprim . P.opendir
+opendir : Has Errno es => EIO1 f => String -> f es Dir
+opendir s = elift1 (P.opendir s)
 
 ||| Opens a directory from a file descriptor.
 export
-fdopendir : FileDesc a => ErrIO io => a -> io Dir
-fdopendir = eprim . P.fdopendir
+fdopendir : FileDesc a => Has Errno es => EIO1 f => a -> f es Dir
+fdopendir v = elift1 (P.fdopendir v)
 
 ||| Closes a directory.
 export
@@ -41,25 +41,25 @@ rewinddir = primIO . P.rewinddir
 
 ||| Closes a directory.
 export
-closedir : ErrIO io => Dir -> io ()
-closedir = eprim . P.closedir
+closedir : Has Errno es => EIO1 f => Dir -> f es ()
+closedir d = elift1 (P.closedir d)
 
 ||| Reads the next entry from a directory.
 export
-readdir : (0 r : Type) -> FromBuf r => ErrIO io => Dir -> io (ReadRes r)
-readdir r = eprim . P.readdir r
+readdir : (0 r : Type) -> FromBuf r => Has Errno es => EIO1 f => Dir -> f es (ReadRes r)
+readdir r d = elift1 (P.readdir r d)
 
 ||| Returns the current working directory.
 export %inline
-getcwd : (0 r : Type) -> FromBuf r => ErrIO io => io r
-getcwd r = eprim $ P.getcwd r
+getcwd : (0 r : Type) -> FromBuf r => Has Errno es => EIO1 f => f es r
+getcwd r = elift1 (P.getcwd r)
 
 ||| Changes the current working directory
 export
-chdir : ErrIO io => String -> io ()
-chdir = eprim . P.chdir
+chdir : Has Errno es => EIO1 f => String -> f es ()
+chdir s = elift1 (P.chdir s)
 
 ||| Changes the current working directory
 export
-chroot : ErrIO io => String -> io ()
-chroot = eprim . P.chroot
+chroot : Has Errno es => EIO1 f => String -> f es ()
+chroot s = elift1 (P.chroot s)

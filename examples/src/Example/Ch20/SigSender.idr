@@ -36,4 +36,4 @@ parameters {auto hf : Has Errno es}
   sigSend ["--help"]  = stdoutLn usage
   sigSend [p,n,s1]    = app p n s1 Nothing
   sigSend [p,n,s1,s2] = app p n s1 (Just s2)
-  sigSend args       = fail (WrongArgs usage)
+  sigSend args       = throw (WrongArgs usage)

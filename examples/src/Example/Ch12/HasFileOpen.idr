@@ -35,4 +35,4 @@ parameters {auto hf : Has Errno es}
   hasOpen : Has ArgErr es => List String -> Prog es ()
   hasOpen ["--help"] = stdoutLn usage
   hasOpen [p]        = withDir "/proc" (inProc $ fromString p)
-  hasOpen _          = fail (WrongArgs usage)
+  hasOpen _          = throw (WrongArgs usage)

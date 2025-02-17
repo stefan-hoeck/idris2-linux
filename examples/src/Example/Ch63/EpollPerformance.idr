@@ -62,4 +62,4 @@ export covering
 epollPerformance : Has Errno es => Has ArgErr es => List String -> Prog es ()
 epollPerformance ["--help"] = stdoutLn usage
 epollPerformance []         = app
-epollPerformance args       = fail (WrongArgs usage)
+epollPerformance args       = throw (WrongArgs usage)

@@ -1,6 +1,6 @@
 module Example.Util.Prog
 
-import public Control.Monad.Either
+import public Control.Monad.Elin
 import public Data.List.Quantifiers.Extra
 import System.Posix.File
 import Data.C.Ptr
@@ -11,34 +11,7 @@ import Data.C.Ptr
 ||| produces a result of the given type.
 public export
 0 Prog : List Type -> Type -> Type
-Prog es a = EitherT (HSum es) IO a
-
-export %inline
-Has Errno es => ErrIO (EitherT (HSum es) IO) where
-  eprim act =
-    MkEitherT $ runIO $ \t => case act t of
-      R r t => Right r # t
-      E x t => Left (inject x) # t
-
-export %inline
-Lift1 World (EitherT (HSum es) IO) where
-  lift1 = runIO
-
---------------------------------------------------------------------------------
--- Lifting computations
---------------------------------------------------------------------------------
-
-||| Fails with the given exception
-export %inline
-fail : Has e es => e -> Prog es a
-fail v = throwError (inject v)
-
-||| Injects an `Either e a` into a `Prog es a` where `e` must be an element
-||| of `es`.
-export
-injectEither : Has e es => Either e a -> Prog es a
-injectEither (Left x)  = fail x
-injectEither (Right x) = pure x
+Prog = Elin World
 
 --------------------------------------------------------------------------------
 -- Error handling
@@ -51,8 +24,8 @@ Handler a = a -> Prog [] ()
 
 ||| Generalized continuation: Bind and error handling
 export
-bracketCase : (Either (HSum es) a -> Prog fs b) -> Prog es a -> Prog fs b
-bracketCase f prog = MkEitherT $ runEitherT prog >>= runEitherT . f
+bracketCase : (Result es a -> Prog fs b) -> Prog es a -> Prog fs b
+bracketCase = flip bindResult
 
 ||| A prog that cannot fail can always be converted to a prog that
 ||| could potentially fail.
@@ -67,8 +40,8 @@ clear = bracketCase (const $ pure ())
 
 ||| Guaranteed to run a cleanup function based on a program's outcome
 export
-guaranteeCase : (Either (HSum es) a -> Prog [] ()) -> Prog es a -> Prog es a
-guaranteeCase f = bracketCase $ \x => anyErr (f x) >> liftEither x
+guaranteeCase : (Result es a -> Prog [] ()) -> Prog es a -> Prog es a
+guaranteeCase f = bracketCase $ \x => anyErr (f x) >> fromResult x
 
 ||| Guaranteed to run a cleanup function independent of a program's outcome
 export
@@ -89,8 +62,8 @@ onErrno err h =
   bracketCase $ \case
     Right a => pure a
     Left  x => case project Errno x of
-      Just e  => if err == e then h else fail e
-      Nothing => throwError x
+      Just e  => if err == e then h else throw e
+      Nothing => fail x
 
 ||| Specialized version of `handleErrors` for better type inference
 export %inline
@@ -102,14 +75,14 @@ dropErr : Has e es => (e -> a) -> Prog es a -> Prog es a
 dropErr f =
   bracketCase $ \case
     Right v => pure v
-    Left  x => maybe (throwError x) (pure . f) (project e x)
+    Left  x => maybe (fail x) (pure . f) (project e x)
 
 export
 logAndDropErr : Has e es => (e -> Prog [] a) -> Prog es a -> Prog es a
 logAndDropErr h =
   bracketCase $ \case
     Right v => pure v
-    Left  x => maybe (throwError x) (anyErr . h) (project e x)
+    Left  x => maybe (fail x) (anyErr . h) (project e x)
 
 --------------------------------------------------------------------------------
 -- Running programs
@@ -126,7 +99,7 @@ stderrLn' = clear {es = [Errno]} . stderrLn
 ||| Runs a program that has all its errors handled.
 export
 runProg : Prog [] a -> IO a
-runProg p = runEitherT p >>= \(Right v) => pure v
+runProg p = runElinIO p >>= \(Right v) => pure v
 
 export %inline
 runProgWith : All Handler es -> Prog es () -> IO ()

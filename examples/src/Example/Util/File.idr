@@ -61,7 +61,7 @@ parameters {auto has : Has Errno es}
       vs <- readPtr fd (List a) p
       case toVect n vs of
         Just r => pure r
-        Nothing => fail EINVAL
+        Nothing => throw EINVAL
 
   export
   readVal :

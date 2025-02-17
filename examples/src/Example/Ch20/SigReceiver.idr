@@ -54,4 +54,4 @@ parameters {auto hf : Has Errno es}
   sigReceive ["--help"] = stdoutLn usage
   sigReceive [s]        = readOptIO ONat s >>= app
   sigReceive []         = app 0
-  sigReceive args       = fail (WrongArgs usage)
+  sigReceive args       = throw (WrongArgs usage)

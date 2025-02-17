@@ -10,10 +10,10 @@ import public System.Posix.File
 ||| Creates a pipe and writes the two file descriptors into the given C-array,
 ||| the read end at position 0 the write end at position 1.
 export %inline
-pipe : ErrIO io => CArrayIO 2 Fd -> io ()
-pipe = eprim . P.pipe
+pipe : Has Errno es => EIO1 f => CArrayIO 2 Fd -> f es ()
+pipe arr = elift1 (P.pipe arr)
 
 ||| Creates a new FIFO (named pipe) on disc.
 export %inline
-mkfifo : ErrIO io => String -> ModeT -> io ()
-mkfifo s = eprim . P.mkfifo s
+mkfifo : Has Errno es => EIO1 f => String -> ModeT -> f es ()
+mkfifo s m = elift1 (P.mkfifo s m)
