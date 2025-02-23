@@ -83,6 +83,11 @@ export
 closedir : Dir -> EPrim ()
 closedir p = toUnit $ prim__closedir (dirptr p)
 
+||| Closes a directory.
+export %inline
+closedir' : Dir -> F1' World
+closedir' p = e1ToF1 (closedir {es = [Errno]} p)
+
 ||| Reads the next entry from a directory.
 export
 readdir : (0 r : Type) -> FromBuf r => Dir -> EPrim (ReadRes r)

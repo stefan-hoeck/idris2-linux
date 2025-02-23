@@ -25,7 +25,7 @@ parameters {auto he : Has Errno es}
   covering
   prnt : PidT -> Vect 2 Fd -> Prog es ()
   prnt pid [i,o] =
-    use1 (cptr 0x1000) $ \cp => do
+    puse1 (cptr 0x1000) $ \cp => do
       close o
       stdoutLn "Spawned child \{show pid}"
       ignore $ streamPtr CPtr i cp (fwrite Stdout)
@@ -43,7 +43,7 @@ parameters {auto he : Has Errno es}
   covering
   run : String -> Prog es ()
   run s = do
-    fds <- use1 (malloc _ _) $ \r => pipe r >> runIO (withIArray r toVect)
+    fds <- puse1 (malloc _ _) $ \r => pipe r >> runIO (withIArray r toVect)
     0 <- fork | p => prnt p fds
     chld s fds
 

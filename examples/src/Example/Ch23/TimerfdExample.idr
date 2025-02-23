@@ -78,7 +78,7 @@ covering
 app : Has Errno es => Has ArgErr es => (t,exp : String) -> Prog es ()
 app t exps = do
   exp  <- readOptIO ONat exps
-  use [timerfd CLOCK_MONOTONIC 0] $ \[fd] => do
+  puse [timerfd CLOCK_MONOTONIC 0] $ \[fd] => do
   ts <- readSpec t
   setTime fd 0 ts
   start <- liftIO (clockTime Monotonic)

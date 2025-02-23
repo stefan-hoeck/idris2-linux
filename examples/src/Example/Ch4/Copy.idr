@@ -36,13 +36,13 @@ parameters {auto hf : Has Errno es}
   covering
   cpRaw : Bits32 -> String -> String -> Prog es Bool
   cpRaw buf i o =
-    use [openFile i 0 0, openFile o create 0o660, cptr (cast buf)] $
+    puse [openFile i 0 0, openFile o create 0o660, cptr (cast buf)] $
       \[fi,fo,p] => copyRaw p fi fo
 
   covering
   cp : Bits32 -> String -> String -> Prog es Bool
   cp buf i o =
-    use [openFile i 0 0, openFile o create 0o660] $ \[fi,fo] => copy buf fi fo
+    puse [openFile i 0 0, openFile o create 0o660] $ \[fi,fo] => copy buf fi fo
 
   export covering
   copyProg : Has ArgErr es => List String -> Prog es ()

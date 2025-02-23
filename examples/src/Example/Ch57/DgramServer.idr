@@ -36,7 +36,7 @@ app pth = do
   onErrno
     EINTR
     (stdoutLn "Server interrupted.")
-    (use1 (allocStruct _) (serve srv))
+    (puse1 (allocStruct _) (serve srv))
 
 export covering
 dgramServer : Has Errno es => Has ArgErr es => List String -> Prog es ()

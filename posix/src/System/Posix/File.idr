@@ -3,6 +3,7 @@ module System.Posix.File
 import Data.Bits
 import System.Posix.File.Prim as P
 
+import public Control.Monad.Resource
 import public Data.Buffer
 import public Data.Buffer.Core
 import public Data.ByteString
@@ -31,6 +32,10 @@ openFile p f m = elift1 (P.openFile p f m)
 export %inline
 close' : FileDesc a => HasIO io => (fd : a) -> io ()
 close' fd = primIO (P.close' fd)
+
+export %inline
+ELift1 World f => FileDesc a => Resource f a where
+  cleanup fd = lift1 {s = World} $ ffi (P.close' fd)
 
 parameters {auto fid : FileDesc a}
            (fd       : a)

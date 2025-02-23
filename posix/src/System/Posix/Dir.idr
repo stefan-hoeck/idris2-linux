@@ -12,6 +12,10 @@ import public System.Posix.File
 
 %default total
 
+export %inline
+ELift1 World f => Resource f Dir where
+  cleanup d = lift1 $ closedir' d
+
 --------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------

@@ -37,7 +37,7 @@ parameters {auto hf : Has Errno es}
   covering
   app : Has ArgErr es => Nat -> Prog es ()
   app n =
-    use1 (signalfd values 0) $ \fd => do
+    puse1 (signalfd values 0) $ \fd => do
       pid       <- getpid
       stdoutLn "PID: \{show pid}"
       sigprocmask SIG_SETMASK values

@@ -51,7 +51,7 @@ parameters {auto he : Has Errno es}
   fifoServer ["--help"]  = stdoutLn "\{usage}"
   fifoServer []          = do
     tryMkFifo serverFifo
-    use [openFile serverFifo O_RDONLY 0, openFile serverFifo O_WRONLY 0] $
+    puse [openFile serverFifo O_RDONLY 0, openFile serverFifo O_WRONLY 0] $
       \[fd,_] => serve 0 fd
   fifoServer args        = throw (WrongArgs usage)
 

@@ -36,7 +36,7 @@ parameters {auto hf : Has Errno es}
   covering
   cp : Bits32 -> String -> String -> Prog es ()
   cp buf i o =
-    use [openFile i 0 0, openFile o create 0o660] $ \[fi,fo] => copy buf fi fo
+    puse [openFile i 0 0, openFile o create 0o660] $ \[fi,fo] => copy buf fi fo
 
   export covering
   copyh : Has ArgErr es => List String -> Prog es ()

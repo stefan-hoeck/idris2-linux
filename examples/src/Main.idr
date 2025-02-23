@@ -134,7 +134,7 @@ prog = do
     "epoll_example"           :: t => epollExample t
     "epoll_performance"       :: t => epollPerformance t
     _                              =>
-      use [mkmutex MUTEX_NORMAL, mkcond] $ \[mu,co] => do
+      puse [mkmutex MUTEX_NORMAL, mkcond] $ \[mu,co] => do
         pid  <- getpid
         ppid <- getppid
         stdoutLn "Process ID: \{show pid} (parent: \{show ppid})"
@@ -143,7 +143,7 @@ prog = do
         (fd,str) <- mkstemp "linux/build/hello"
         stdoutLn "opened temporary file: \{str}"
         fwrite fd "a temporary hello world\n"
-        anyErr $ cleanup fd
+        anyErr $ cleanup {f = Elin World} fd
         tid <- pthreadSelf
         cnt <- newIORef Z
         ref <- newIORef tid

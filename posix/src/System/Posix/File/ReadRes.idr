@@ -4,6 +4,7 @@ import Derive.Prelude
 import Data.Linear.Token
 
 import Data.Vect
+import public Control.Monad.Resource
 import public Data.Buffer
 import public Data.Buffer.Core
 import public Data.ByteString
@@ -97,6 +98,10 @@ cptr = runIO . cptr1
 export %inline
 freePtr1 : CPtr -> F1' World
 freePtr1 (CP _ p) = toF1 (prim__free p)
+
+export %inline
+ELift1 World f => Resource f CPtr where
+  cleanup p = lift1 (freePtr1 p)
 
 export %inline
 freePtr : HasIO io => CPtr -> io ()

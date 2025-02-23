@@ -6,14 +6,11 @@ import public Example.Util.Prog
 
 %default total
 
-export %inline
-Resource Dir where cleanup d = handleError prettyErrno (closedir d)
-
 parameters {auto hf : Has Errno es}
 
   export covering
   withDirSt : String -> s -> (s -> String -> Prog es s) -> Prog es s
-  withDirSt pth ini f = use1 (opendir pth) (flip go ini)
+  withDirSt pth ini f = puse1 (opendir pth) (flip go ini)
 
     where
       covering

@@ -121,27 +121,14 @@ prettyErrno = prettyErr
 -- Resource handling
 --------------------------------------------------------------------------------
 
-public export
-interface Resource a where
-  cleanup : a -> Prog [] ()
-
 ||| Allocate a resource, use it in a program, and make sure to release it
 ||| afterwards.
 export %inline
-use1 : Resource a => Prog es a -> (a -> Prog es b) -> Prog es b
-use1 alloc run = alloc >>= \r => finally (cleanup r) (run r)
+puse1 : Resource Prog a => Prog es a -> (a -> Prog es b) -> Prog es b
+puse1 alloc run = alloc >>= \r => finally (cleanup r) (run r)
 
 ||| Like `use1` but for a heterogeneous list of resources.
 export %inline
-use : All Resource ts => All (Prog es) ts -> (HList ts -> Prog es b) -> Prog es b
-use @{[]}   []     run = run []
-use @{_::_} (h::t) run = use1 h (\r => use t (run . (r::)))
-
-export %inline
-Resource (CArrayIO n a) where cleanup = liftIO . free
-
-export %inline
-Resource CPtr where cleanup = freePtr
-
-export %inline
-Struct f => Resource (f World) where cleanup = freeStruct
+puse : All (Resource Prog) ts => All (Prog es) ts -> (HList ts -> Prog es b) -> Prog es b
+puse @{[]}   []     run = run []
+puse @{_::_} (h::t) run = puse1 h (\r => puse t (run . (r::)))

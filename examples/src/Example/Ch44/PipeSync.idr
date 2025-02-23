@@ -46,6 +46,6 @@ parameters {auto he : Has Errno es}
   pipeSync ["--help"]  = stdoutLn usage
   pipeSync [s]         = do
     n <- readOptIO ONat s
-    fds <- use1 (malloc _ _) $ \r => pipe r >> runIO (withIArray r toVect)
+    fds <- puse1 (malloc _ _) $ \r => pipe r >> runIO (withIArray r toVect)
     run n n fds
   pipeSync args        = throw (WrongArgs usage)

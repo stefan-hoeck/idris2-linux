@@ -1,5 +1,6 @@
 module System.Posix.Signal.Struct
 
+import public Control.Monad.Resource
 import Data.C.Ptr
 import Data.Finite
 import Data.Linear.Traverse1
@@ -79,6 +80,10 @@ freeSigset1 (S p) = ffi $ prim__free p
 export %inline
 freeSigset : Lift1 World f => SigsetT -> f ()
 freeSigset p = lift1 (freeSigset1 p)
+
+export %inline
+ELift1 World f => Resource f SigsetT where
+  cleanup = freeSigset
 
 ||| Allocates a `sigset_t` with all signals cleared.
 |||

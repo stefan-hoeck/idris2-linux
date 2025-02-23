@@ -11,10 +11,6 @@ import public System.Posix.File
 
 %default total
 
-export %inline
-FileDesc a => Resource a where
-  cleanup fd = handleError {e = Errno} prettyErr (close fd)
-
 tryLT : (m,n : Nat) -> Maybe0 (LT m n)
 tryLT m n with (m < n) proof eq
   _ | True  = Just0 (ltOpReflectsLT m n eq)
@@ -24,7 +20,7 @@ parameters {auto has : Has Errno es}
 
   export %inline
   withFile : String -> Flags -> Mode -> (Fd -> Prog es a) -> Prog es a
-  withFile pth fs m = use1 (openFile pth fs m)
+  withFile pth fs m = puse1 (openFile pth fs m)
 
   export
   readFile : (0 r : Type) -> FromBuf r => String -> Bits32 -> Prog es r
@@ -57,7 +53,7 @@ parameters {auto has : Has Errno es}
     -> (n      : Nat)
     -> Prog es (Vect n a)
   readVect fd n =
-    use1 (cptrOf a n) $ \p => do
+    puse1 (cptrOf a n) $ \p => do
       vs <- readPtr fd (List a) p
       case toVect n vs of
         Just r => pure r

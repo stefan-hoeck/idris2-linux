@@ -1,6 +1,7 @@
 module System.Posix.Pthreads
 
 import System.Posix.Pthreads.Prim as P
+import public Control.Monad.Resource
 import public Data.C.Ptr
 import public System.Posix.Errno
 import public System.Posix.Pthreads.Struct
@@ -9,6 +10,14 @@ import System.Posix.Signal
 import System.Posix.Time
 
 %default total
+
+export %inline
+ELift1 World f => Resource f MutexT where
+  cleanup m = lift1 {s = World} $ ffi (P.destroyMutex m)
+
+export %inline
+ELift1 World f => Resource f CondT where
+  cleanup m = lift1 {s = World} $ ffi (P.destroyCond m)
 
 ||| Returns the thread ID of the current thread.
 export %inline
