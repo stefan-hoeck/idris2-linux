@@ -141,7 +141,7 @@ setTimer w (TRV (TV si ui) (TV sv uv)) =
 export
 getTimer : Which -> EPrim Timerval
 getTimer wh =
-  withStruct IOTimerval $ \str,t =>
+  withStruct Itimerval $ \str,t =>
     let _ # t := toF1 (getitimer wh str) t
         r # t := timerval str t
      in R r t
@@ -150,7 +150,7 @@ getTimer wh =
 export
 getTime : (c : ClockId) -> EPrim (IClock c)
 getTime c =
-  withStruct IOTimespec $ \str,t =>
+  withStruct STimespec $ \str,t =>
     let R _ t := clockGetTime c str t | E x t => E x t
         c # t := toClock str t
      in R c t
@@ -159,7 +159,7 @@ getTime c =
 export
 getResolution : (c : ClockId) -> EPrim (IClock c)
 getResolution c =
-  withStruct IOTimespec $ \str,t =>
+  withStruct STimespec $ \str,t =>
     let R _ t := clockGetRes c str t | E x t => E x t
         c # t := toClock str t
      in R c t

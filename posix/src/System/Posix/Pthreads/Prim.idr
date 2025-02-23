@@ -95,9 +95,9 @@ pthreadJoin p = posToUnit $ prim__pthread_join p.ptr
 --------------------------------------------------------------------------------
 
 %inline
-Struct MutexT where
-  unwrap = ptr
-  wrap   = M
+Struct SMutexT where
+  sunwrap = ptr
+  swrap   = M
 
 %inline
 SizeOf MutexT where sizeof_ = mutex_t_size
@@ -108,7 +108,7 @@ SizeOf MutexT where sizeof_ = mutex_t_size
 export
 mkmutex : MutexType -> EPrim MutexT
 mkmutex mt t =
-  let m # t := primStruct MutexT t
+  let m # t := primStruct SMutexT t
       x # t := toF1 (prim__pthread_mutex_init (unwrap m) (mutexCode mt)) t
    in case x of
         0 => R m t
@@ -153,9 +153,9 @@ unlockMutex p = posToUnit $ prim__pthread_mutex_unlock (unwrap p)
 --------------------------------------------------------------------------------
 
 %inline
-Struct CondT where
-  unwrap = ptr
-  wrap   = C
+Struct SCondT where
+  sunwrap = ptr
+  swrap   = C
 
 %inline
 SizeOf CondT where sizeof_ = cond_t_size
@@ -166,7 +166,7 @@ SizeOf CondT where sizeof_ = cond_t_size
 export
 mkcond : EPrim CondT
 mkcond t =
-  let m # t := primStruct CondT t
+  let m # t := primStruct SCondT t
       x # t := toF1 (prim__pthread_cond_init m.ptr) t
    in case x of
         0 => R m t

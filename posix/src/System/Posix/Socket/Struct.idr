@@ -38,17 +38,21 @@ prim__sockaddr_un: String -> PrimIO AnyPtr
 prim__sockaddr_un_path: AnyPtr -> PrimIO String
 
 export
-record SockaddrUn where
+record SSockaddrUn (s : Type) where
   constructor SUN
   ptr : AnyPtr
 
+public export
+0 SockaddrUn : Type
+SockaddrUn = SSockaddrUn World
+
 export %inline
-Struct SockaddrUn where
-  wrap   = SUN
-  unwrap = ptr
+Struct SSockaddrUn where
+  swrap   = SUN
+  sunwrap = ptr
 
 export
-SizeOf SockaddrUn where
+SizeOf (SSockaddrUn s) where
   sizeof_ = sockaddr_un_size
 
 ||| Creates a `sockaddr_un` pointer and sets its `sun_path` value to
@@ -56,12 +60,12 @@ SizeOf SockaddrUn where
 |||
 ||| The allocated memory must be freed via `freeStruct`.
 export %inline
-sockaddrUn : (path : String) -> F1 World SockaddrUn
-sockaddrUn path = toF1 $ primMap SUN $ prim__sockaddr_un path
+sockaddrUn : (path : String) -> F1 s (SSockaddrUn s)
+sockaddrUn path = mapF1 SUN $ ffi $ prim__sockaddr_un path
 
 export %inline
-path : SockaddrUn -> F1 World String
-path (SUN p) = toF1 $ prim__sockaddr_un_path p
+path : SSockaddrUn s -> F1 s String
+path (SUN p) = ffi $ prim__sockaddr_un_path p
 
 --------------------------------------------------------------------------------
 -- SockaddrIn
@@ -98,38 +102,42 @@ splitIp4Addr x =
   [cast (shiftR x 24), cast (shiftR x 16), cast (shiftR x 8), cast x]
 
 export
-record SockaddrIn where
+record SSockaddrIn (s : Type) where
   constructor SIN
   ptr : AnyPtr
 
+public export
+0 SockaddrIn : Type
+SockaddrIn = SSockaddrIn World
+
 export %inline
-Struct SockaddrIn where
-  wrap   = SIN
-  unwrap = ptr
+Struct SSockaddrIn where
+  swrap   = SIN
+  sunwrap = ptr
 
 export
-SizeOf SockaddrIn where
+SizeOf (SSockaddrIn s) where
   sizeof_ = sockaddr_in_size
 
 namespace SockaddrIn
   export %inline
-  port : SockaddrIn -> F1 World Bits16
+  port : SSockaddrIn s -> F1 s Bits16
   port (SIN p) = ffi $ prim__sockaddr_in_port p
 
   export %inline
-  addr : SockaddrIn -> F1 World Bits32
+  addr : SSockaddrIn s -> F1 s Bits32
   addr (SIN p) = ffi $ prim__sockaddr_in_addr p
 
   export %inline
-  addrStr : SockaddrIn -> F1 World String
+  addrStr : SSockaddrIn s -> F1 s String
   addrStr (SIN p) = ffi $ prim__sockaddr_in_addr_str p
 
 ||| Creates a `sockaddr_in` pointer and sets its `sun_path` value to
 |||
 ||| The allocated memory must be freed via `freeStruct`.
 export %inline
-sockaddrIn : IP4Addr -> F1 World SockaddrIn
-sockaddrIn (IP4 a p) = toF1 $ primMap SIN $ prim__sockaddr_in (ip4addr a) p
+sockaddrIn : IP4Addr -> F1 s (SSockaddrIn s)
+sockaddrIn (IP4 a p) = mapF1 SIN $ ffi $ prim__sockaddr_in (ip4addr a) p
 
 --------------------------------------------------------------------------------
 -- SockaddrIn6
@@ -156,39 +164,43 @@ record IP6Addr where
 %runElab derive "IP6Addr" [Show,Eq]
 
 export
-record SockaddrIn6 where
+record SSockaddrIn6 (s : Type) where
   constructor SIN6
   ptr : AnyPtr
 
 export %inline
-Struct SockaddrIn6 where
-  wrap   = SIN6
-  unwrap = ptr
+Struct SSockaddrIn6 where
+  swrap   = SIN6
+  sunwrap = ptr
+
+public export
+0 SockaddrIn6 : Type
+SockaddrIn6 = SSockaddrIn6 World
 
 export
-SizeOf SockaddrIn6 where
+SizeOf (SSockaddrIn6 s) where
   sizeof_ = sockaddr_in6_size
 
 namespace SockaddrIn6
   export %inline
-  port : SockaddrIn6 -> F1 World Bits16
+  port : SSockaddrIn6 s -> F1 s Bits16
   port (SIN6 p) = ffi $ prim__sockaddr_in6_port p
 
   export %inline
-  addr6 : SockaddrIn6 -> CArrayIO 16 Bits8
+  addr6 : SSockaddrIn6 s -> CArray s 16 Bits8
   addr6 (SIN6 p) = unsafeWrap (prim__sockaddr_in6_addr p)
 
   export %inline
-  addrStr : SockaddrIn6 -> F1 World String
+  addrStr : SSockaddrIn6 s -> F1 s String
   addrStr (SIN6 p) = ffi $ prim__sockaddr_in6_addr_str p
 
 ||| Creates a `sockaddr_in` pointer and sets its `sun_path` value to
 |||
 ||| The allocated memory must be freed via `freeStruct`.
 export
-sockaddrIn6 : IP6Addr -> F1 World SockaddrIn6
+sockaddrIn6 : IP6Addr -> F1 s (SSockaddrIn6 s)
 sockaddrIn6 (IP6 addr pr) t =
-  let res # t := toF1 (prim__sockaddr_in6 pr) t
+  let res # t := ffi (prim__sockaddr_in6 pr) t
       _   # t := writeVect (addr6 $ SIN6 res) addr t
    in SIN6 res # t
 

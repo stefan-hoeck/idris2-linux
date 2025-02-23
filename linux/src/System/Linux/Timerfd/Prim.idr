@@ -86,7 +86,7 @@ setTime t f (TS i v) =
 export %inline
 getTime : Timerfd -> EPrim Timerspec
 getTime fd =
-  withStruct IOTimerspec $ \str,t =>
+  withStruct Itimerspec $ \str,t =>
     let _  # t := toF1 (getitime fd str) t
         ts # t := timerspec str t
      in R ts t

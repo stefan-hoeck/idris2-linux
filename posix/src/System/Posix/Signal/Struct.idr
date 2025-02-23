@@ -68,9 +68,17 @@ record SigsetT where
   ptr : AnyPtr
 
 export %inline
-Struct SigsetT where
+WrappedPtr SigsetT where
   wrap   = S
   unwrap = ptr
+
+export %inline
+freeSigset1 : SigsetT -> F1' World
+freeSigset1 (S p) = ffi $ prim__free p
+
+export %inline
+freeSigset : Lift1 World f => SigsetT -> f ()
+freeSigset p = lift1 (freeSigset1 p)
 
 ||| Allocates a `sigset_t` with all signals cleared.
 |||
@@ -116,9 +124,9 @@ withSignals ss f t =
       _    # t := traverse1_ (\s => sigaddset sigs s) ss t
       R res  t := f sigs t
         | E x t =>
-            let _ # t := ioToF1 (freeStruct sigs) t
+            let _ # t := freeSigset1 sigs t
              in E x t
-      _# t := ioToF1 (freeStruct sigs) t
+      _# t := freeSigset1 sigs t
    in R res t
 
 export
@@ -128,9 +136,9 @@ withoutSignals ss f t =
       _    # t := traverse1_ (\s => sigdelset sigs s) ss t
       R res  t := f sigs t
         | E x t =>
-            let _ # t := ioToF1 (freeStruct sigs) t
+            let _ # t := freeSigset1 sigs t
              in E x t
-      _ # t := ioToF1 (freeStruct sigs) t
+      _ # t := freeSigset1 sigs t
    in R res t
 
 --------------------------------------------------------------------------------
@@ -138,17 +146,21 @@ withoutSignals ss f t =
 --------------------------------------------------------------------------------
 
 export
-record SiginfoT where
+record SSiginfoT (s : Type) where
   constructor ST
   ptr : AnyPtr
 
-export %inline
-Struct SiginfoT where
-  wrap   = ST
-  unwrap = ptr
+public export
+0 SiginfoT : Type
+SiginfoT = SSiginfoT World
 
 export %inline
-SizeOf SiginfoT where
+Struct SSiginfoT where
+  swrap   = ST
+  sunwrap = ptr
+
+export %inline
+SizeOf (SSiginfoT s) where
   sizeof_ = siginfo_t_size
 
 public export
@@ -164,7 +176,7 @@ record Siginfo where
 %runElab derive "Siginfo" [Show,Eq]
 
 export
-siginfo : SiginfoT -> F1 World Siginfo
+siginfo : SSiginfoT s -> F1 s Siginfo
 siginfo (ST p) t =
   let sig # t := ffi (get_siginfo_t_si_signo p) t
       cod # t := ffi (get_siginfo_t_si_code p) t
@@ -176,4 +188,4 @@ siginfo (ST p) t =
 
 export %inline %hint
 convertSiginfo : Convert Siginfo
-convertSiginfo = C SiginfoT siginfo
+convertSiginfo = convStruct SSiginfoT siginfo

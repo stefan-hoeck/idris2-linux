@@ -46,9 +46,9 @@ namespace Timespec
     ptr : AnyPtr
 
   export %inline
-  Struct (STimespec s) where
-    wrap   = TS
-    unwrap = ptr
+  Struct STimespec where
+    swrap   = TS
+    sunwrap = ptr
 
   public export %inline
   SizeOf (STimespec s) where
@@ -89,14 +89,14 @@ namespace Timespec
   export
   withTimespec : Clock t -> (IOTimespec -> EPrim a) -> EPrim a
   withTimespec cl f =
-    withStruct (STimespec World) $ \ts,t =>
+    withStruct STimespec $ \ts,t =>
       let _ # t := setSec ts (cast $ seconds cl) t
           _ # t := setNsec ts (cast $ nanoseconds cl) t
        in f ts t
 
 export %inline %hint
 convertClock : {t : _} -> Convert (Clock t)
-convertClock = C IOTimespec (\x,t => toClock x t)
+convertClock = convStruct STimespec toClock
 
 --------------------------------------------------------------------------------
 -- STimeval
@@ -125,9 +125,9 @@ namespace STimeval
     ptr : AnyPtr
 
   export %inline
-  Struct (STimeval s) where
-    wrap   = STV
-    unwrap = ptr
+  Struct STimeval where
+    swrap   = STV
+    sunwrap = ptr
 
   export %inline
   SizeOf (STimeval s) where
@@ -175,7 +175,7 @@ namespace STimeval
 
 export %inline %hint
 convertTimeval : Convert Timeval
-convertTimeval = C IOTimeval timeval
+convertTimeval = convStruct STimeval timeval
 
 --------------------------------------------------------------------------------
 -- Timerval
@@ -203,9 +203,9 @@ namespace Itimerval
     ptr : AnyPtr
 
   export %inline
-  Struct (Itimerval s) where
-    wrap   = ITV
-    unwrap = ptr
+  Struct Itimerval where
+    swrap   = ITV
+    sunwrap = ptr
 
   export %inline
   SizeOf (Itimerval s) where
@@ -259,7 +259,7 @@ namespace Itimerval
 
 export %inline %hint
 convertTimerval : Convert Timerval
-convertTimerval = C IOTimerval timerval
+convertTimerval = convStruct Itimerval timerval
 
 --------------------------------------------------------------------------------
 -- Timerspec
@@ -290,9 +290,9 @@ namespace Itimerspec
     ptr : AnyPtr
 
   export %inline
-  Struct (Itimerspec s) where
-    wrap   = ITS
-    unwrap = ptr
+  Struct Itimerspec where
+    swrap   = ITS
+    sunwrap = ptr
 
   export %inline
   SizeOf (Itimerspec s) where
@@ -356,4 +356,4 @@ namespace Itimerspec
 
 export %inline %hint
 convTimerspec : Convert Timerspec
-convTimerspec = C IOTimerspec timerspec
+convTimerspec = convStruct Itimerspec timerspec

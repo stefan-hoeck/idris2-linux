@@ -72,7 +72,7 @@ epollWaitVals :
   -> EPrim (List EpollEvent)
 epollWaitVals efd arr timeout t =
   let R (k ** arr2) t := epollWait efd arr timeout t | E x t => E x t
-      vs # t          := values [] arr2 epollEvent k t
+      vs # t          := structs [] arr2 epollEvent k t
    in R vs t
 
 export
@@ -104,5 +104,5 @@ epollPwait2Vals :
   -> EPrim (List EpollEvent)
 epollPwait2Vals efd arr timeout sigs t =
   let R (k ** arr2) t := epollPwait2 efd arr timeout sigs t | E x t => E x t
-      vs # t          := values [] arr2 epollEvent k t
+      vs # t          := structs [] arr2 epollEvent k t
    in R vs t

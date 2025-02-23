@@ -224,6 +224,10 @@ SizeOf a => SetPtr a => ToBuf (List a) where
 -- Streaming Interfaces
 --------------------------------------------------------------------------------
 
+export %inline
+[DStruct] Struct f => Deref (f World) where
+  deref p = pure (swrap p)
+
 public export
 record Convert t where
   [noHints]
@@ -232,6 +236,15 @@ record Convert t where
   {auto sof  : SizeOf source}
   {auto derf : Deref source}
   convert : source -> F1 World t
+
+public export
+convStruct :
+     (0 f : Type -> Type)
+  -> {auto iss : Struct f}
+  -> {auto sof : SizeOf (f World)}
+  -> (fun : f World -> F1 World t)
+  -> Convert t
+convStruct f fun = C (f World) {sof} {derf = DStruct} fun
 
 ||| Interface for wrapping or converting a c-land pointer.
 |||

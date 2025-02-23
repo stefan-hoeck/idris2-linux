@@ -144,4 +144,4 @@ export %inline
 Resource CPtr where cleanup = freePtr
 
 export %inline
-Struct a => Resource a where cleanup = freeStruct
+Struct f => Resource (f World) where cleanup = freeStruct

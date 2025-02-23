@@ -107,9 +107,9 @@ ignore act =
 --------------------------------------------------------------------------------
 
 export %inline
-freeFail : Struct a => a -> Errno -> EPrim b
+freeFail : Struct f => f World -> Errno -> EPrim b
 freeFail s err t =
-  let _ # t := toF1 (prim__free $ unwrap s) t
+  let _ # t := freeStruct1 s t
    in E (inject err) t
 
 export %inline
@@ -120,14 +120,14 @@ finally cleanup act t =
     E x t => let _ # t := toF1 cleanup t in E x t
 
 export %inline
-primStruct : (0 a : Type) -> Struct a => SizeOf a => F1 World a
-primStruct a = ioToF1 (allocStruct a)
+primStruct : (0 f : _) -> Struct f => SizeOf (f World) => F1 World (f World)
+primStruct f = allocStruct1 f
 
 export %inline
-withStruct : (0 a : Type) -> Struct a => SizeOf a => (a -> EPrim b) -> EPrim b
+withStruct : (0 f : _) -> Struct f => SizeOf (f World) => (f World -> EPrim b) -> EPrim b
 withStruct a f t =
   let str # t := primStruct a t
-   in finally (prim__free (unwrap str)) (f str) t
+   in finally (prim__free (sunwrap str)) (f str) t
 
 export %inline
 withBox : (0 a : Type) -> SizeOf a => Deref a => (IOBox a -> EPrim b) -> EPrim b
@@ -170,3 +170,19 @@ values cs arr f (S k) t =
   let vb # t := getNat arr k t
       vc # t := f vb t
    in values (vc::cs) arr f k t
+
+export
+structs :
+     {auto str : Struct f}
+  -> {auto sof : SizeOf (f s)}
+  -> List c
+  -> CArray s n (f s)
+  -> (f s -> F1 s c)
+  -> (k : Nat)
+  -> {auto 0 prf : LTE k n}
+  -> F1 s (List c)
+structs cs arr f 0     t = cs # t
+structs cs arr f (S k) t =
+  let vb # t := getStructNat arr k t
+      vc # t := f vb t
+   in structs (vc::cs) arr f k t

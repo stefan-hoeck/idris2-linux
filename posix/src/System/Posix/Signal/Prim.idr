@@ -181,7 +181,7 @@ sigwait ss = withSignals ss sigwait_
 export
 sigwaitinfo : List Signal -> EPrim Siginfo
 sigwaitinfo ss =
-  withSignals ss $ \set => withStruct SiginfoT $ \si,t =>
+  withSignals ss $ \set => withStruct SSiginfoT $ \si,t =>
     let R _ t := sigwaitinfo_ set si t | E x t => E x t
         r # t := siginfo si t
      in R r t

@@ -31,17 +31,21 @@ Cast CInt Epollfd where cast = EFD . cast
 
 ||| Wrapper around a pointer of an `epoll_event` value.
 export
-record SEpollEvent where
+record SSEpollEvent (s : Type) where
   constructor SE
   ptr : AnyPtr
 
 export %inline
-Struct SEpollEvent where
-  wrap   = SE
-  unwrap = ptr
+Struct SSEpollEvent where
+  swrap   = SE
+  sunwrap = ptr
+
+public export
+0 SEpollEvent : Type
+SEpollEvent = SSEpollEvent World
 
 export %inline
-SizeOf SEpollEvent where sizeof_ = epoll_event_size
+SizeOf (SSEpollEvent s) where sizeof_ = epoll_event_size
 
 ||| Wrapper around a pointer of an `epoll_event` value.
 public export
@@ -53,7 +57,7 @@ record EpollEvent where
 %runElab derive "EpollEvent" [Show,Eq]
 
 export
-epollEvent : SEpollEvent -> F1 World EpollEvent
+epollEvent : SSEpollEvent s -> F1 s EpollEvent
 epollEvent (SE p) t =
   let fd # t := ffi (prim__get_epoll_event_fd p) t
       ev # t := ffi (prim__get_epoll_event_events p) t
@@ -61,4 +65,4 @@ epollEvent (SE p) t =
 
 export %inline %hint
 convEpollEvent : Convert EpollEvent
-convEpollEvent = C SEpollEvent epollEvent
+convEpollEvent = convStruct SSEpollEvent epollEvent

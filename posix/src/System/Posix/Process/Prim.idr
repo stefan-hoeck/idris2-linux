@@ -215,7 +215,7 @@ waitpid pid flags =
 export %inline
 waitid : IdType -> PidT -> WaitFlags -> EPrim Siginfo
 waitid it pid fs =
-  withStruct SiginfoT $ \ss,t =>
+  withStruct SSiginfoT $ \ss,t =>
     let R _  t := waitid_ it pid ss fs t | E x t => E x t
         si # t := siginfo ss t
      in R si t

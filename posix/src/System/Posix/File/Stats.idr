@@ -50,17 +50,17 @@ get_statvfs_f_flag: AnyPtr -> PrimIO ULong
 get_statvfs_f_namemax: AnyPtr -> PrimIO ULong
 
 export
-record SStatvfs where
+record SStatvfs (s : Type) where
   constructor SSF
   ptr : AnyPtr
 
 export %inline
 Struct SStatvfs where
-  wrap   = SSF
-  unwrap = ptr
+  swrap   = SSF
+  sunwrap = ptr
 
 export %inline
-SizeOf SStatvfs where
+SizeOf (SStatvfs s) where
   sizeof_ = statvfs_size
 
 public export
@@ -81,7 +81,7 @@ record Statvfs where
 %runElab derive "Statvfs" [Show,Eq]
 
 export
-toStatvfs : SStatvfs -> F1 World Statvfs
+toStatvfs : SStatvfs s -> F1 s Statvfs
 toStatvfs (SSF p) t =
   let bs  # t := ffi (get_statvfs_f_bsize p) t
       fbs # t := ffi (get_statvfs_f_frsize p) t
@@ -106,7 +106,7 @@ withStatvfs act =
 
 export %inline %hint
 convertStatvfs : Convert Statvfs
-convertStatvfs = C SStatvfs toStatvfs
+convertStatvfs = convStruct SStatvfs toStatvfs
 
 --------------------------------------------------------------------------------
 -- FileStats
@@ -152,17 +152,17 @@ get_stat_st_mtim: AnyPtr -> PrimIO AnyPtr
 get_stat_st_ctim: AnyPtr -> PrimIO AnyPtr
 
 export
-record SFileStats where
+record SFileStats (s : Type) where
   constructor SFS
   ptr : AnyPtr
 
 export %inline
 Struct SFileStats where
-  wrap   = SFS
-  unwrap = ptr
+  swrap   = SFS
+  sunwrap = ptr
 
 export %inline
-SizeOf SFileStats where
+SizeOf (SFileStats s) where
   sizeof_ = stat_size
 
 public export
@@ -184,24 +184,24 @@ record FileStats where
 
 %runElab derive "FileStats" [Show,Eq]
 
-utc : PrimIO AnyPtr -> F1 World (Clock UTC)
+utc : PrimIO AnyPtr -> F1 s (Clock UTC)
 utc act t =
-  let p # t := toF1 act t
+  let p # t := ffi act t
    in toClock (wrap p) t
 
 export
-fileStats : SFileStats -> F1 World FileStats
+fileStats : SFileStats s -> F1 s FileStats
 fileStats (SFS p) t =
-  let dev  # t := toF1 (get_stat_st_dev p) t
-      ino  # t := toF1 (get_stat_st_ino p) t
-      mode # t := toF1 (get_stat_st_mode p) t
-      lnk  # t := toF1 (get_stat_st_nlink p) t
-      uid  # t := toF1 (get_stat_st_uid p) t
-      gid  # t := toF1 (get_stat_st_gid p) t
-      rdv  # t := toF1 (get_stat_st_rdev p) t
-      siz  # t := toF1 (get_stat_st_size p) t
-      bsz  # t := toF1 (get_stat_st_blksize p) t
-      bls  # t := toF1 (get_stat_st_blocks p) t
+  let dev  # t := ffi (get_stat_st_dev p) t
+      ino  # t := ffi (get_stat_st_ino p) t
+      mode # t := ffi (get_stat_st_mode p) t
+      lnk  # t := ffi (get_stat_st_nlink p) t
+      uid  # t := ffi (get_stat_st_uid p) t
+      gid  # t := ffi (get_stat_st_gid p) t
+      rdv  # t := ffi (get_stat_st_rdev p) t
+      siz  # t := ffi (get_stat_st_size p) t
+      bsz  # t := ffi (get_stat_st_blksize p) t
+      bls  # t := ffi (get_stat_st_blocks p) t
       ati  # t := utc (get_stat_st_atim p) t
       mti  # t := utc (get_stat_st_mtim p) t
       cti  # t := utc (get_stat_st_ctim p) t
@@ -217,7 +217,7 @@ withFileStats act =
 
 export %inline %hint
 convertFileStats : Convert FileStats
-convertFileStats = C SFileStats fileStats
+convertFileStats = convStruct SFileStats fileStats
 
 --------------------------------------------------------------------------------
 -- FFI

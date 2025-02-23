@@ -40,9 +40,13 @@ Show PthreadT where
 ||| convenient to use than the garbage-collected version from
 ||| `System.Concurrency`.
 public export
-record MutexT where
+record SMutexT (s : Type) where
   constructor M
   ptr : AnyPtr
+
+public export
+0 MutexT : Type
+MutexT = SMutexT World
 
 ||| Wrapper around a `pthread_cond_t` pointer.
 |||
@@ -50,6 +54,10 @@ record MutexT where
 ||| we use (see `mkcond`) convenient to use than the garbage-collected version from
 ||| `System.Concurrency`.
 public export
-record CondT where
+record SCondT (s : Type) where
   constructor C
   ptr : AnyPtr
+
+public export
+0 CondT : Type
+CondT = SCondT World
