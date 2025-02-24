@@ -50,7 +50,7 @@ app : Has Errno es => Prog es ()
 app = do
   sigprocmask SIG_SETMASK [SIGINT]
   ref <- newref Z
-  puse
+  use
     [ epollCreate 0
     , signalfd [SIGINT] 0
     , malloc SEpollEvent 2

@@ -134,7 +134,7 @@ prog = do
     "epoll_example"           :: t => epollExample t
     "epoll_performance"       :: t => epollPerformance t
     _                              =>
-      puse [mkmutex MUTEX_NORMAL, mkcond] $ \[mu,co] => do
+      use [mkmutex MUTEX_NORMAL, mkcond] $ \[mu,co] => do
         pid  <- getpid
         ppid <- getppid
         stdoutLn "Process ID: \{show pid} (parent: \{show ppid})"

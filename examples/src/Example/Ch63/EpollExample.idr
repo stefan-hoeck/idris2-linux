@@ -93,7 +93,7 @@ app : Has Errno es => Has ArgErr es => (t : String) -> Prog es ()
 app t = do
   sigprocmask SIG_SETMASK [SIGINT]
   ts <- readSpec t
-  puse
+  use
     [ epollCreate 0
     , timerfd CLOCK_MONOTONIC 0
     , signalfd [SIGINT] 0

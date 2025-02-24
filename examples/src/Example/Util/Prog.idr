@@ -116,19 +116,3 @@ prettyErr = stderrLn' . interpolate
 export %inline
 prettyErrno : Errno -> Prog [] ()
 prettyErrno = prettyErr
-
---------------------------------------------------------------------------------
--- Resource handling
---------------------------------------------------------------------------------
-
-||| Allocate a resource, use it in a program, and make sure to release it
-||| afterwards.
-export %inline
-puse1 : Resource Prog a => Prog es a -> (a -> Prog es b) -> Prog es b
-puse1 alloc run = alloc >>= \r => finally (cleanup r) (run r)
-
-||| Like `use1` but for a heterogeneous list of resources.
-export %inline
-puse : All (Resource Prog) ts => All (Prog es) ts -> (HList ts -> Prog es b) -> Prog es b
-puse @{[]}   []     run = run []
-puse @{_::_} (h::t) run = puse1 h (\r => puse t (run . (r::)))

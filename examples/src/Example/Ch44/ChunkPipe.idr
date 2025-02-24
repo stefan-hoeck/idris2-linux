@@ -64,7 +64,7 @@ parameters {auto he : Has Errno es}
     tot <- readOptIO OBits32 ts
     rbs <- readOptIO OBits32 rs
     wbs <- readOptIO OBits32 ws
-    fds <- puse1 (malloc _ _) $ \r => pipe2 r fs >> runIO (withIArray r toVect)
+    fds <- use1 (malloc _ _) $ \r => pipe2 r fs >> runIO (withIArray r toVect)
     0 <- fork | p => prnt rbs fds
     chld tot wbs fds
 
