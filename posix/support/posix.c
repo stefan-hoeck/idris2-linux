@@ -247,6 +247,30 @@ int li_poll(struct pollfd *fds, nfds_t nfds, int timeout) {
   CHECKRES
 }
 
+uint32_t get_pollfd_fd(struct pollfd *fd) {
+  return fd->fd;
+}
+
+uint32_t get_pollfd_events(struct pollfd *fd) {
+  return fd->events;
+}
+
+uint32_t get_pollfd_revents(struct pollfd *fd) {
+  return fd->revents;
+}
+
+void set_pollfd_fd(struct pollfd *fd, uint32_t val) {
+  fd->fd = val;
+}
+
+void set_pollfd_events(struct pollfd *fd, uint32_t val) {
+  fd->events = val;
+}
+
+void set_pollfd_revents(struct pollfd *fd, uint32_t val) {
+  fd->revents = val;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Processes
 ////////////////////////////////////////////////////////////////////////////////

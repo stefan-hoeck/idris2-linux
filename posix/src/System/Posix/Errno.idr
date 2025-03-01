@@ -141,6 +141,17 @@ withPtr sz f t =
   let ptr         := prim__malloc sz
    in finally (prim__free ptr) (f ptr) t
 
+export %inline
+withCArray :
+     (0 a : Type)
+  -> {auto sz : SizeOf a}
+  -> (n   : Nat)
+  -> (CArrayIO n a -> EPrim b)
+  -> EPrim b
+withCArray a n f t =
+  let arr # t := malloc1 a n t
+   in finally (prim__free (unsafeUnwrap arr)) (f arr) t
+
 export
 primTraverse_ : (a -> PrimIO ()) -> List a -> PrimIO ()
 primTraverse_ f []        w = MkIORes () w
