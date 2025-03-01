@@ -29,6 +29,11 @@ modules = System.Posix.Dir
         , System.Posix.Pipe
         , System.Posix.Pipe.Prim
 
+        , System.Posix.Poll
+        , System.Posix.Poll.Types
+        , System.Posix.Poll.Prim
+        , System.Posix.Poll.Struct
+
         , System.Posix.Process
         , System.Posix.Process.Flags
         , System.Posix.Process.Prim

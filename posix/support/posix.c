@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
@@ -234,6 +235,15 @@ int li_chdir(const char *buf) {
 
 int li_chroot(const char *buf) {
   int res = chroot(buf);
+  CHECKRES
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Poll
+////////////////////////////////////////////////////////////////////////////////
+
+int li_poll(struct pollfd *fds, nfds_t nfds, int timeout) {
+  int res = poll(fds, nfds, timeout);
   CHECKRES
 }
 
