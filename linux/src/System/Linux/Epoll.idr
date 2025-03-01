@@ -25,7 +25,7 @@ epollCtl :
   -> Epollfd
   -> EpollOp
   -> (fd : g)
-  -> Event
+  -> PollEvent
   -> f es ()
 epollCtl efd op fd ev = elift1 (P.epollCtl efd op fd ev)
 
@@ -48,7 +48,7 @@ epollWaitVals :
   -> Epollfd
   -> CArrayIO n SEpollEvent
   -> Int32
-  -> f es (List EpollEvent)
+  -> f es (List PollPair)
 epollWaitVals efd arr timeout = elift1 (P.epollWaitVals efd arr timeout)
 
 export %inline
@@ -72,5 +72,5 @@ epollPwait2Vals :
   -> CArrayIO n SEpollEvent
   -> Clock Duration
   -> List Signal
-  -> f es (List EpollEvent)
+  -> f es (List PollPair)
 epollPwait2Vals efd arr timeout ss = elift1 (P.epollPwait2Vals efd arr timeout ss)

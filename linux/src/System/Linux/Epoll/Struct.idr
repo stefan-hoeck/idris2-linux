@@ -6,6 +6,7 @@ import Derive.Prelude
 import System.Linux.Epoll.Flags
 import System.Posix.File.FileDesc
 import System.Posix.File.ReadRes
+import public System.Posix.Poll.Struct
 
 %default total
 %language ElabReflection
@@ -47,22 +48,13 @@ SEpollEvent = SSEpollEvent World
 export %inline
 SizeOf (SSEpollEvent s) where sizeof_ = epoll_event_size
 
-||| Wrapper around a pointer of an `epoll_event` value.
-public export
-record EpollEvent where
-  constructor E
-  event : Event
-  file  : Fd
-
-%runElab derive "EpollEvent" [Show,Eq]
-
 export
-epollEvent : SSEpollEvent s -> F1 s EpollEvent
-epollEvent (SE p) t =
+pollPair : SSEpollEvent s -> F1 s PollPair
+pollPair (SE p) t =
   let fd # t := ffi (prim__get_epoll_event_fd p) t
       ev # t := ffi (prim__get_epoll_event_events p) t
-   in E (E ev) (cast fd) # t
+   in PP (cast fd) (PE ev) # t
 
 export %inline %hint
-convEpollEvent : Convert EpollEvent
-convEpollEvent = convStruct SSEpollEvent epollEvent
+convEpollEvent : Convert PollPair
+convEpollEvent = convStruct SSEpollEvent pollPair

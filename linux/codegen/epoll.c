@@ -8,7 +8,7 @@
 
 void *print_event(const char *name, unsigned int value) {
   printf("\npublic export\n");
-  printf("%s : Event\n", name);
+  printf("%s : PollEvent\n", name);
   printf("%s = %u\n", name, value);
 }
 
@@ -25,12 +25,7 @@ void *main() {
   printf("opCode Del = %d\n", EPOLL_CTL_DEL);
   printf("opCode Mod = %d\n", EPOLL_CTL_MOD);
 
-  print_event("EPOLLIN",    EPOLLIN);
-  print_event("EPOLLOUT",   EPOLLOUT);
   print_event("EPOLLRDHUP", EPOLLRDHUP);
-  print_event("EPOLLPRI",   EPOLLPRI);
-  print_event("EPOLLERR",   EPOLLERR);
-  print_event("EPOLLHUP",   EPOLLHUP);
   print_event("EPOLLET", EPOLLET);
   print_event("EPOLLONESHOT", EPOLLONESHOT);
   print_event("EPOLLWAKEUP", EPOLLWAKEUP);

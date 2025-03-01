@@ -173,27 +173,10 @@ module System.Linux.Epoll.Flags
 
 import Data.Bits
 import Derive.Prelude
+import public System.Posix.Poll.Types
 
 %default total
 %language ElabReflection
-
-public export
-record Event where
-  constructor E
-  event : Bits32
-
-%runElab derive "Event" [Show,Eq,Ord,FromInteger]
-
-public export
-Semigroup Event where
-  E x <+> E y = E $ x .|. y
-
-public export
-Monoid Event where neutral = E 0
-
-export
-hasEvent : Event -> Event -> Bool
-hasEvent (E x) (E y) = (x .&. y) == y
 
 public export
 record EpollFlags where

@@ -1,10 +1,12 @@
 module System.Posix.Poll.Struct
 
 import Data.C.Ptr
+import Derive.Prelude
 import System.Posix.File.FileDesc
 import System.Posix.Poll.Types
 
 %default total
+%language ElabReflection
 
 --------------------------------------------------------------------------------
 -- FFI
@@ -96,6 +98,8 @@ record PollPair where
   constructor PP
   fd     : Fd
   events : PollEvent
+
+%runElab derive "PollPair" [Show,Eq]
 
 export
 pollResults : {n : _} -> CArray s n (SPollFD s) -> F1 s (List PollPair)

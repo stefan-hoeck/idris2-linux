@@ -52,9 +52,9 @@ parameters {auto has : Has Errno es}
           stdoutLn "got \{show bs.size} bytes from stdin"
           readStdin
 
-      go : List EpollEvent -> Prog es ()
+      go : List PollPair -> Prog es ()
       go []     = loop
-      go (E ev fd ::t) = do
+      go (PP fd ev ::t) = do
         case fd == cast tfd of
           False => case fd == cast sfd of
             True  => stdoutLn "Got SIGINT. Terminating now."
@@ -101,9 +101,9 @@ app t = do
     ] $ \[efd,tfd,sfd,events] => do
            setTime tfd 0 ts
            addFlags Stdin O_NONBLOCK
-           epollCtl efd Add tfd   EPOLLIN
-           epollCtl efd Add sfd   EPOLLIN
-           epollCtl efd Add Stdin (EPOLLIN <+> EPOLLET)
+           epollCtl efd Add tfd   POLLIN
+           epollCtl efd Add sfd   POLLIN
+           epollCtl efd Add Stdin (POLLIN <+> EPOLLET)
            start <- liftIO (clockTime Monotonic)
            loop efd tfd sfd events start
 

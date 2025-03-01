@@ -46,9 +46,9 @@ epollCtl :
   -> Epollfd
   -> EpollOp
   -> (fd : f)
-  -> Event
+  -> PollEvent
   -> EPrim ()
-epollCtl efd op fd (E ev) =
+epollCtl efd op fd (PE ev) =
   toUnit $ prim__epoll_ctl (fileDesc efd) (opCode op) (fileDesc fd) ev
 
 export
@@ -69,10 +69,10 @@ epollWaitVals :
   -> Epollfd
   -> CArrayIO n SEpollEvent
   -> Int32
-  -> EPrim (List EpollEvent)
+  -> EPrim (List PollPair)
 epollWaitVals efd arr timeout t =
   let R (k ** arr2) t := epollWait efd arr timeout t | E x t => E x t
-      vs # t          := structs [] arr2 epollEvent k t
+      vs # t          := structs [] arr2 pollPair k t
    in R vs t
 
 export
@@ -101,8 +101,8 @@ epollPwait2Vals :
   -> CArrayIO n SEpollEvent
   -> Clock Duration
   -> List Signal
-  -> EPrim (List EpollEvent)
+  -> EPrim (List PollPair)
 epollPwait2Vals efd arr timeout sigs t =
   let R (k ** arr2) t := epollPwait2 efd arr timeout sigs t | E x t => E x t
-      vs # t          := structs [] arr2 epollEvent k t
+      vs # t          := structs [] arr2 pollPair k t
    in R vs t

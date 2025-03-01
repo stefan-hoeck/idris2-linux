@@ -36,9 +36,9 @@ parameters {auto has : Has Errno es}
     go es
 
     where
-      go : List EpollEvent -> Prog es ()
+      go : List PollPair -> Prog es ()
       go []            = loop
-      go (E ev fd ::t) = do
+      go (PP fd ev ::t) = do
         case fd == cast sfd of
           True  => do
             n <- runIO (read1 counter)
@@ -55,7 +55,7 @@ app = do
     , signalfd [SIGINT] 0
     , malloc SEpollEvent 2
     ] $ \[efd,sfd,events] => do
-           epollCtl efd Add sfd EPOLLIN
+           epollCtl efd Add sfd POLLIN
            loop efd sfd ref events
 
 export covering
