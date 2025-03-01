@@ -16,13 +16,13 @@ prim__get_pollfd_fd: AnyPtr -> PrimIO Bits32
 %foreign "C:set_pollfd_fd, posix-idris"
 prim__set_pollfd_fd: AnyPtr -> Bits32 -> PrimIO ()
 
-%foreign "C:set_pollfd_events, posix-idris"
+%foreign "C:get_pollfd_events, posix-idris"
 prim__get_pollfd_events: AnyPtr -> PrimIO Bits32
 
 %foreign "C:set_pollfd_events, posix-idris"
 prim__set_pollfd_events: AnyPtr -> Bits32 -> PrimIO ()
 
-%foreign "C:set_pollfd_revents, posix-idris"
+%foreign "C:get_pollfd_revents, posix-idris"
 prim__get_pollfd_revents: AnyPtr -> PrimIO Bits32
 
 %foreign "C:set_pollfd_revents, posix-idris"

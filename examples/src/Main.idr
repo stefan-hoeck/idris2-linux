@@ -43,6 +43,8 @@ import Example.Ch57.UnixServer
 
 import Example.Ch63.EpollExample
 import Example.Ch63.EpollPerformance
+import Example.Ch63.PollExample
+import Example.Ch63.PollPerformance
 
 import Example.Util.File
 import Example.Util.Opts
@@ -133,6 +135,8 @@ prog = do
     "dgram-server"            :: t => dgramServer t
     "epoll_example"           :: t => epollExample t
     "epoll_performance"       :: t => epollPerformance t
+    "poll_example"            :: t => pollExample t
+    "poll_performance"        :: t => pollPerformance t
     _                              =>
       use [mkmutex MUTEX_NORMAL, mkcond] $ \[mu,co] => do
         pid  <- getpid
