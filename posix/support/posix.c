@@ -818,3 +818,21 @@ ssize_t li_sendto(int fd, char *buf, size_t off, size_t bytes, int flags,
   int res = sendto(fd, buf + off, bytes, flags, addr, len);
   CHECKRES
 }
+
+void li_gmtime_r (time_t secs, struct tm *result) {
+  gmtime_r(&secs, result);
+}
+
+void li_localtime_r (time_t secs, struct tm *result) {
+  localtime_r(&secs, result);
+}
+
+char *li_asctime_r (struct tm *t) {
+  char buf[26];
+  return asctime_r(t, buf);
+}
+
+char *li_ctime_r (time_t secs) {
+  char buf[26];
+  return ctime_r(&secs, buf);
+}

@@ -357,3 +357,171 @@ namespace Itimerspec
 export %inline %hint
 convTimerspec : Convert Timerspec
 convTimerspec = convStruct Itimerspec timerspec
+
+--------------------------------------------------------------------------------
+-- Tm
+--------------------------------------------------------------------------------
+
+namespace STm
+  export %foreign "C:get_tm_sec, posix-idris"
+  get_tm_sec: AnyPtr -> PrimIO Bits8
+
+  export %foreign "C:get_tm_min, posix-idris"
+  get_tm_min: AnyPtr -> PrimIO Bits8
+
+  export %foreign "C:get_tm_hour, posix-idris"
+  get_tm_hour: AnyPtr -> PrimIO Bits8
+
+  export %foreign "C:get_tm_mday, posix-idris"
+  get_tm_mday: AnyPtr -> PrimIO Bits8
+
+  export %foreign "C:get_tm_mon, posix-idris"
+  get_tm_mon: AnyPtr -> PrimIO Bits8
+
+  export %foreign "C:get_tm_year, posix-idris"
+  get_tm_year: AnyPtr -> PrimIO Int32
+
+  export %foreign "C:get_tm_wday, posix-idris"
+  get_tm_wday: AnyPtr -> PrimIO Bits8
+
+  export %foreign "C:get_tm_yday, posix-idris"
+  get_tm_yday: AnyPtr -> PrimIO Bits8
+
+  export %foreign "C:get_tm_isdst, posix-idris"
+  get_tm_isdst: AnyPtr -> PrimIO Int8
+
+  export %foreign "C:li_gmtime_r, posix-idris"
+  prim__gmtime_r: TimeT -> AnyPtr -> PrimIO ()
+
+  export %foreign "C:li_localtime_r, posix-idris"
+  prim__localtime_r: TimeT -> AnyPtr -> PrimIO ()
+
+  export %foreign "C:li_asctime_r, posix-idris"
+  prim__asctime_r: AnyPtr -> PrimIO String
+
+  export %foreign "C:li_ctime_r, posix-idris"
+  prim__ctime_r: AnyPtr -> PrimIO String
+
+  export %foreign "C:mktime, posix-idris"
+  prim__mktime: AnyPtr -> PrimIO TimeT
+
+  ||| Note: Also this is POSIX compliant, it is not available on
+  ||| MacOS (Darwin). Idris programs making use of this might fail on
+  ||| Darwin during code generation.
+  export
+  record STm where
+    constructor STM
+    ptr : AnyPtr
+
+  export %inline
+  Struct STm where
+    wrap   = STM
+    unwrap = ptr
+
+  export %inline
+  SizeOf STm where
+    sizeof_ = tm_size
+
+  export %inline
+  getsec: STm -> F1 [World] Bits8
+  getsec (STM ptr) = ffi $ get_tm_sec ptr
+
+  export %inline
+  getmin: STm -> F1 [World] Bits8
+  getmin (STM ptr) = ffi $ get_tm_min ptr
+
+  export %inline
+  gethour: STm -> F1 [World] Bits8
+  gethour (STM ptr) = ffi $ get_tm_hour ptr
+
+  export %inline
+  getmday: STm -> F1 [World] Bits8
+  getmday (STM ptr) = ffi $ get_tm_mday ptr
+
+  export %inline
+  getmon: STm -> F1 [World] Bits8
+  getmon (STM ptr) = ffi $ get_tm_mon ptr
+
+  export %inline
+  getyear: STm -> F1 [World] Int32
+  getyear (STM ptr) = ffi $ get_tm_year ptr
+
+  export %inline
+  getwday: STm -> F1 [World] Bits8
+  getwday (STM ptr) = ffi $ get_tm_wday ptr
+
+  export %inline
+  getyday: STm -> F1 [World] Bits8
+  getyday (STM ptr) = ffi $ get_tm_yday ptr
+
+  export %inline
+  getisdst: STm -> F1 [World] Int8
+  getisdst (STM ptr) = ffi $ get_tm_isdst ptr
+
+  ||| Pure alternative to the `STm` struct.
+  |||
+  ||| Dissection of a `Clock t` into its time components.
+  public export
+  record Tm where
+    constructor TM
+    ||| Second of minute (0 - 60; could be a leap second)
+    sec:   Bits8
+
+    ||| Minute of hour (0 - 59)
+    min:   Bits8
+
+    ||| Hour of day (0 - 23)
+    hour:  Bits8
+
+    ||| Day of month (1 - 31)
+    mday:  Bits8
+
+    ||| Month (0 - 11)
+    mon:   Bits8
+
+    ||| Year since 1900
+    year:  Int32
+
+    ||| Day of week (Sunday = 0)
+    wday:  Bits8
+
+    ||| Day of year (0 - 365; 1 Jan = 0)
+    yday:  Bits8
+
+    ||| `True` if daylight safing time is active
+    isdst: Bool
+
+  %runElab derive "Tm" [Show,Eq]
+
+  export
+  tm : STm -> F1 [World] Tm
+  tm stm t =
+    let s  # t := getsec stm t
+        m  # t := getmin stm t
+        h  # t := gethour stm t
+        md # t := getmday stm t
+        mo # t := getmon stm t
+        y  # t := getyear stm t
+        wd # t := getwday stm t
+        yd # t := getyday stm t
+        id # t := getisdst stm t
+     in TM s m h md mo y wd yd (id > 0) # t
+
+  export %inline %hint
+  convTm : Convert Tm
+  convTm = C STm tm
+
+  export
+  gmtime : TimeT -> Tm
+
+  export
+  localtime : TimeT -> Tm
+
+  export
+  asctime : TimeT -> String
+
+  export
+  ctime : TimeT -> String
+
+  export
+  mktime : Tm -> TimeT

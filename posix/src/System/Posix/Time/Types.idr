@@ -16,3 +16,7 @@ import Data.C.Integer
 public export %inline
 timespec_size : Bits32
 timespec_size = 16
+
+public export %inline
+tm_size : Bits32
+tm_size = 56

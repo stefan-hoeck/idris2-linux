@@ -12,5 +12,9 @@ int main() {
   printf("timespec_size : Bits32\n");
   printf("timespec_size = %zd\n", sizeof(struct timespec));
 
+  printf("\npublic export %%inline\n");
+  printf("tm_size : Bits32\n");
+  printf("tm_size = %zd\n", sizeof(struct tm));
+
   exit(0);
 }
