@@ -247,29 +247,17 @@ int li_poll(struct pollfd *fds, nfds_t nfds, int timeout) {
   CHECKRES
 }
 
-uint32_t get_pollfd_fd(struct pollfd *fd) {
-  return fd->fd;
-}
+uint32_t get_pollfd_fd(struct pollfd *fd) { return fd->fd; }
 
-uint16_t get_pollfd_events(struct pollfd *fd) {
-  return fd->events;
-}
+uint16_t get_pollfd_events(struct pollfd *fd) { return fd->events; }
 
-uint16_t get_pollfd_revents(struct pollfd *fd) {
-  return fd->revents;
-}
+uint16_t get_pollfd_revents(struct pollfd *fd) { return fd->revents; }
 
-void set_pollfd_fd(struct pollfd *fd, uint32_t val) {
-  fd->fd = val;
-}
+void set_pollfd_fd(struct pollfd *fd, uint32_t val) { fd->fd = val; }
 
-void set_pollfd_events(struct pollfd *fd, uint16_t val) {
-  fd->events = val;
-}
+void set_pollfd_events(struct pollfd *fd, uint16_t val) { fd->events = val; }
 
-void set_pollfd_revents(struct pollfd *fd, uint16_t val) {
-  fd->revents = val;
-}
+void set_pollfd_revents(struct pollfd *fd, uint16_t val) { fd->revents = val; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Processes
@@ -738,9 +726,7 @@ struct sockaddr_in6 *li_sockaddr_in6(uint16_t port) {
   return addr;
 }
 
-char *sockaddr_un_path(struct sockaddr_un *addr) {
-  return addr->sun_path;
-}
+char *sockaddr_un_path(struct sockaddr_un *addr) { return addr->sun_path; }
 
 uint32_t sockaddr_in_addr(struct sockaddr_in *addr) {
   return ntohl(addr->sin_addr.s_addr);
@@ -819,20 +805,38 @@ ssize_t li_sendto(int fd, char *buf, size_t off, size_t bytes, int flags,
   CHECKRES
 }
 
-void li_gmtime_r (time_t secs, struct tm *result) {
-  gmtime_r(&secs, result);
-}
+void li_gmtime_r(time_t secs, struct tm *result) { gmtime_r(&secs, result); }
 
-void li_localtime_r (time_t secs, struct tm *result) {
+void li_localtime_r(time_t secs, struct tm *result) {
   localtime_r(&secs, result);
 }
 
-char *li_asctime_r (struct tm *t) {
-  char buf[26];
-  return asctime_r(t, buf);
-}
-
-char *li_ctime_r (time_t secs) {
+char *li_ctime_r(time_t secs) {
   char buf[26];
   return ctime_r(&secs, buf);
+}
+
+char *li_asctime_r(uint8_t sec, uint8_t min, uint8_t hour, uint8_t mday,
+                   uint8_t mon, int year) {
+  struct tm res;
+  res.tm_sec = sec;
+  res.tm_min = min;
+  res.tm_hour = hour;
+  res.tm_mday = mday;
+  res.tm_mon = mon;
+  res.tm_year = year;
+  char buf[26];
+  return asctime_r(&res, buf);
+}
+
+time_t li_mktime(uint8_t sec, uint8_t min, uint8_t hour, uint8_t mday,
+                 uint8_t mon, int year) {
+  struct tm res;
+  res.tm_sec = sec;
+  res.tm_min = min;
+  res.tm_hour = hour;
+  res.tm_mday = mday;
+  res.tm_mon = mon;
+  res.tm_year = year;
+  return mktime(&res);
 }

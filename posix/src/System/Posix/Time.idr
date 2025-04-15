@@ -396,66 +396,67 @@ namespace STm
   export %foreign "C:li_localtime_r, posix-idris"
   prim__localtime_r: TimeT -> AnyPtr -> PrimIO ()
 
-  export %foreign "C:li_asctime_r, posix-idris"
-  prim__asctime_r: AnyPtr -> PrimIO String
-
+  ||| Converts time to a nicely formatted string.
   export %foreign "C:li_ctime_r, posix-idris"
-  prim__ctime_r: AnyPtr -> PrimIO String
+  ctime: TimeT -> String
 
-  export %foreign "C:mktime, posix-idris"
-  prim__mktime: AnyPtr -> PrimIO TimeT
+  export %foreign "C:li_asctime_r, posix-idris"
+  prim__asctime_r: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> String
 
-  ||| Note: Also this is POSIX compliant, it is not available on
+  export %foreign "C:li_mktime, posix-idris"
+  prim__mktime: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> TimeT
+
+  ||| Note: Although this is POSIX compliant, it is not available on
   ||| MacOS (Darwin). Idris programs making use of this might fail on
   ||| Darwin during code generation.
   export
-  record STm where
+  record STm s where
     constructor STM
     ptr : AnyPtr
 
   export %inline
   Struct STm where
-    wrap   = STM
-    unwrap = ptr
+    swrap   = STM
+    sunwrap = ptr
 
   export %inline
-  SizeOf STm where
+  SizeOf (STm s) where
     sizeof_ = tm_size
 
   export %inline
-  getsec: STm -> F1 [World] Bits8
+  getsec: STm s -> F1 s Bits8
   getsec (STM ptr) = ffi $ get_tm_sec ptr
 
   export %inline
-  getmin: STm -> F1 [World] Bits8
+  getmin: STm s -> F1 s Bits8
   getmin (STM ptr) = ffi $ get_tm_min ptr
 
   export %inline
-  gethour: STm -> F1 [World] Bits8
+  gethour: STm s -> F1 s Bits8
   gethour (STM ptr) = ffi $ get_tm_hour ptr
 
   export %inline
-  getmday: STm -> F1 [World] Bits8
+  getmday: STm s -> F1 s Bits8
   getmday (STM ptr) = ffi $ get_tm_mday ptr
 
   export %inline
-  getmon: STm -> F1 [World] Bits8
+  getmon: STm s -> F1 s Bits8
   getmon (STM ptr) = ffi $ get_tm_mon ptr
 
   export %inline
-  getyear: STm -> F1 [World] Int32
+  getyear: STm s -> F1 s Int32
   getyear (STM ptr) = ffi $ get_tm_year ptr
 
   export %inline
-  getwday: STm -> F1 [World] Bits8
+  getwday: STm s -> F1 s Bits8
   getwday (STM ptr) = ffi $ get_tm_wday ptr
 
   export %inline
-  getyday: STm -> F1 [World] Bits8
+  getyday: STm s -> F1 s Bits8
   getyday (STM ptr) = ffi $ get_tm_yday ptr
 
   export %inline
-  getisdst: STm -> F1 [World] Int8
+  getisdst: STm s -> F1 s Int8
   getisdst (STM ptr) = ffi $ get_tm_isdst ptr
 
   ||| Pure alternative to the `STm` struct.
@@ -494,7 +495,7 @@ namespace STm
   %runElab derive "Tm" [Show,Eq]
 
   export
-  tm : STm -> F1 [World] Tm
+  tm : STm s -> F1 s Tm
   tm stm t =
     let s  # t := getsec stm t
         m  # t := getmin stm t
@@ -509,19 +510,40 @@ namespace STm
 
   export %inline %hint
   convTm : Convert Tm
-  convTm = C STm tm
+  convTm = convStruct STm tm
 
+  withSTm : (forall s . STm s -> F1 s a) -> a
+  withSTm f =
+    run1 $ \t =>
+     let stm # t := allocStruct1 STm t
+         res # t := f stm t
+         _   # t := freeStruct1 stm t
+      in res # t
+
+  ||| Converts time in seconds since the Epoch to broken down UTC time.
   export
   gmtime : TimeT -> Tm
+  gmtime secs =
+    withSTm $ \stm,t =>
+     let _   # t := ffi (prim__gmtime_r secs (sunwrap stm)) t
+      in tm stm t
 
+  ||| Converts time in seconds since the Epoch to broken down local time.
   export
   localtime : TimeT -> Tm
+  localtime secs =
+    withSTm $ \stm,t =>
+     let _   # t := ffi (prim__localtime_r secs (sunwrap stm)) t
+      in tm stm t
 
+  ||| Converts time to a nicely formatted string.
   export
-  asctime : TimeT -> String
+  asctime : Tm -> String
+  asctime (TM sec min hour mday mon year wday yday isdst) =
+    prim__asctime_r sec min hour mday mon year
 
+  ||| Converts a broken down time to seconds since the Epoch.
   export
-  ctime : TimeT -> String
-
-  export
-  mktime : Tm -> PrimIO TimeT
+  mktime : Tm -> TimeT
+  mktime (TM sec min hour mday mon year wday yday isdst) =
+    prim__mktime sec min hour mday mon year
