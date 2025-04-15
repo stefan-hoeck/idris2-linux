@@ -805,6 +805,10 @@ ssize_t li_sendto(int fd, char *buf, size_t off, size_t bytes, int flags,
   CHECKRES
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Time
+////////////////////////////////////////////////////////////////////////////////
+
 void li_gmtime_r(time_t secs, struct tm *result) { gmtime_r(&secs, result); }
 
 void li_localtime_r(time_t secs, struct tm *result) {
@@ -839,4 +843,40 @@ time_t li_mktime(uint8_t sec, uint8_t min, uint8_t hour, uint8_t mday,
   res.tm_mon = mon;
   res.tm_year = year;
   return mktime(&res);
+}
+
+uint8_t get_tm_sec(struct tm *val) {
+  return val->tm_sec;
+}
+
+uint8_t get_tm_min(struct tm *val) {
+  return val->tm_min;
+}
+
+uint8_t get_tm_hour(struct tm *val) {
+  return val->tm_hour;
+}
+
+uint8_t get_tm_mday(struct tm *val) {
+  return val->tm_mday;
+}
+
+uint8_t get_tm_mon(struct tm *val) {
+  return val->tm_mon;
+}
+
+uint8_t get_tm_wday(struct tm *val) {
+  return val->tm_wday;
+}
+
+uint8_t get_tm_yday(struct tm *val) {
+  return val->tm_yday;
+}
+
+int8_t get_tm_isdst(struct tm *val) {
+  return val->tm_isdst;
+}
+
+int get_tm_year(struct tm *val) {
+  return val->tm_year;
 }

@@ -53,6 +53,7 @@ import System
 import System.Posix.Dir
 import System.Posix.File.Stats
 import System.Posix.Process
+import System.Posix.Time
 
 %default total
 
