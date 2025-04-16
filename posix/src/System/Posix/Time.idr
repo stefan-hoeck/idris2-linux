@@ -401,10 +401,10 @@ namespace STm
   ctime: TimeT -> String
 
   export %foreign "C:li_asctime_r, posix-idris"
-  prim__asctime_r: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> String
+  prim__asctime_r: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> (yday : Bits16) -> String
 
   export %foreign "C:li_mktime, posix-idris"
-  prim__mktime: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> TimeT
+  prim__mktime: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> (yday : Bits16) -> TimeT
 
   ||| Note: Although this is POSIX compliant, it is not available on
   ||| MacOS (Darwin). Idris programs making use of this might fail on
@@ -530,8 +530,8 @@ namespace STm
 
   ||| Converts a UTC clock value to broken down time.
   export %inline
-  clockTime : Clock UTC -> Tm
-  clockTime = gmtime . cast . seconds
+  fromUTC : Clock UTC -> Tm
+  fromUTC = gmtime . cast . seconds
 
   ||| Converts time in seconds since the Epoch to broken down local time.
   export
@@ -545,15 +545,15 @@ namespace STm
   export
   asctime : Tm -> String
   asctime (TM sec min hour mday mon year wday yday isdst) =
-    prim__asctime_r sec min hour mday mon year
+    prim__asctime_r sec min hour mday mon year yday
 
   ||| Converts a broken down time to seconds since the Epoch.
   export
   mktime : Tm -> TimeT
   mktime (TM sec min hour mday mon year wday yday isdst) =
-    prim__mktime sec min hour mday mon year
+    prim__mktime sec min hour mday mon year yday
 
   ||| Converts broken down time to a UTC clock time.
   export %inline
-  toClock : Tm -> Clock UTC
-  toClock = fromNano . (* 1_000_000_000) . cast . mktime
+  toUTC : Tm -> Clock UTC
+  toUTC = fromNano . (* 1_000_000_000) . cast . mktime

@@ -821,7 +821,7 @@ char *li_ctime_r(time_t secs) {
 }
 
 char *li_asctime_r(uint8_t sec, uint8_t min, uint8_t hour, uint8_t mday,
-                   uint8_t mon, int year) {
+                   uint8_t mon, int year, uint16_t yday) {
   struct tm res;
   res.tm_sec = sec;
   res.tm_min = min;
@@ -829,19 +829,20 @@ char *li_asctime_r(uint8_t sec, uint8_t min, uint8_t hour, uint8_t mday,
   res.tm_mday = mday;
   res.tm_mon = mon;
   res.tm_year = year;
+  res.tm_yday = yday;
   char buf[26];
   return asctime_r(&res, buf);
 }
 
 time_t li_mktime(uint8_t sec, uint8_t min, uint8_t hour, uint8_t mday,
-                 uint8_t mon, int year) {
+                 uint8_t mon, int year, uint16_t yday) {
   struct tm res;
   res.tm_sec = sec;
   res.tm_min = min;
   res.tm_hour = hour;
   res.tm_mday = mday;
   res.tm_mon = mon;
-  res.tm_year = year;
+  res.tm_yday = yday;
   return mktime(&res);
 }
 
