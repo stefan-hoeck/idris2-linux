@@ -401,10 +401,10 @@ namespace STm
   ctime: TimeT -> String
 
   export %foreign "C:li_asctime_r, posix-idris"
-  prim__asctime_r: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> (yday : Bits16) -> String
+  prim__asctime_r: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> (wday : Bits8) -> (yday : Bits16) -> (isdst : Int8) -> String
 
   export %foreign "C:li_mktime, posix-idris"
-  prim__mktime: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> (yday : Bits16) -> TimeT
+  prim__mktime: (sec,min,hour,mday,mon : Bits8) -> (year : Int32) -> (wday : Bits8) -> (yday : Bits16) -> (isdst : Int8) -> TimeT
 
   ||| Note: Although this is POSIX compliant, it is not available on
   ||| MacOS (Darwin). Idris programs making use of this might fail on
@@ -545,13 +545,13 @@ namespace STm
   export
   asctime : Tm -> String
   asctime (TM sec min hour mday mon year wday yday isdst) =
-    prim__asctime_r sec min hour mday mon year yday
+    prim__asctime_r sec min hour mday mon year wday yday (if isdst then 1 else 0)
 
   ||| Converts a broken down time to seconds since the Epoch.
   export
   mktime : Tm -> TimeT
   mktime (TM sec min hour mday mon year wday yday isdst) =
-    prim__mktime sec min hour mday mon year yday
+    prim__mktime sec min hour mday mon year wday yday (if isdst then 1 else 0)
 
   ||| Converts broken down time to a UTC clock time.
   export %inline
