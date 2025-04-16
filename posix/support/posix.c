@@ -842,6 +842,7 @@ time_t li_mktime(uint8_t sec, uint8_t min, uint8_t hour, uint8_t mday,
   res.tm_hour = hour;
   res.tm_mday = mday;
   res.tm_mon = mon;
+  res.tm_year = year;
   res.tm_yday = yday;
   return mktime(&res);
 }
