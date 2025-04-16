@@ -557,3 +557,13 @@ namespace STm
   export %inline
   toUTC : Tm -> Clock UTC
   toUTC = fromNano . (* 1_000_000_000) . cast . mktime
+
+  ||| Keeps only the hours, seconds, and minutes of a broken down time.
+  export
+  seconds : Tm -> Integer
+  seconds tm = cast tm.sec + cast tm.min * 60 + cast tm.hour * 3600
+
+  ||| Drops the hours, seconds, and minutes from a broken down time.
+  export
+  dateOnly : Tm -> Tm
+  dateOnly = {sec := 0, min := 0, hour := 0}
