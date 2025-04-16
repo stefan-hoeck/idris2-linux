@@ -385,7 +385,7 @@ namespace STm
   get_tm_wday: AnyPtr -> PrimIO Bits8
 
   export %foreign "C:get_tm_yday, posix-idris"
-  get_tm_yday: AnyPtr -> PrimIO Bits8
+  get_tm_yday: AnyPtr -> PrimIO Bits16
 
   export %foreign "C:get_tm_isdst, posix-idris"
   get_tm_isdst: AnyPtr -> PrimIO Int8
@@ -452,7 +452,7 @@ namespace STm
   getwday (STM ptr) = ffi $ get_tm_wday ptr
 
   export %inline
-  getyday: STm s -> F1 s Bits8
+  getyday: STm s -> F1 s Bits16
   getyday (STM ptr) = ffi $ get_tm_yday ptr
 
   export %inline
@@ -487,7 +487,7 @@ namespace STm
     wday:  Bits8
 
     ||| Day of year (0 - 365; 1 Jan = 0)
-    yday:  Bits8
+    yday:  Bits16
 
     ||| `True` if daylight safing time is active
     isdst: Bool
@@ -528,6 +528,11 @@ namespace STm
      let _   # t := ffi (prim__gmtime_r secs (sunwrap stm)) t
       in tm stm t
 
+  ||| Converts a UTC clock value to broken down time.
+  export %inline
+  clockTime : Clock UTC -> Tm
+  clockTime = gmtime . cast . seconds
+
   ||| Converts time in seconds since the Epoch to broken down local time.
   export
   localtime : TimeT -> Tm
@@ -547,3 +552,8 @@ namespace STm
   mktime : Tm -> TimeT
   mktime (TM sec min hour mday mon year wday yday isdst) =
     prim__mktime sec min hour mday mon year
+
+  ||| Converts broken down time to a UTC clock time.
+  export %inline
+  toClock : Tm -> Clock UTC
+  toClock = fromNano . (* 1_000_000_000) . cast . mktime
