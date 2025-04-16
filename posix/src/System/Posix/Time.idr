@@ -528,11 +528,6 @@ namespace STm
      let _   # t := ffi (prim__gmtime_r secs (sunwrap stm)) t
       in tm stm t
 
-  ||| Converts a UTC clock value to broken down time.
-  export %inline
-  fromUTC : Clock UTC -> Tm
-  fromUTC = gmtime . cast . seconds
-
   ||| Converts time in seconds since the Epoch to broken down local time.
   export
   localtime : TimeT -> Tm
@@ -540,6 +535,11 @@ namespace STm
     withSTm $ \stm,t =>
      let _   # t := ffi (prim__localtime_r secs (sunwrap stm)) t
       in tm stm t
+
+  ||| Converts a UTC clock value to broken down local time.
+  export %inline
+  fromUTC : Clock UTC -> Tm
+  fromUTC = localtime . cast . seconds
 
   ||| Converts time to a nicely formatted string.
   export
@@ -553,7 +553,7 @@ namespace STm
   mktime (TM sec min hour mday mon year wday yday isdst) =
     prim__mktime sec min hour mday mon year wday yday (if isdst then 1 else 0)
 
-  ||| Converts broken down time to a UTC clock time.
+  ||| Converts broken down local time to a UTC clock time.
   export %inline
   toUTC : Tm -> Clock UTC
   toUTC = fromNano . (* 1_000_000_000) . cast . mktime
