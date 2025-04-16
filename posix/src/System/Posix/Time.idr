@@ -494,6 +494,11 @@ namespace STm
 
   %runElab derive "Tm" [Show,Eq]
 
+  ||| A broken down time value with all fields set to zero (and `False`).
+  export
+  blank : Tm
+  blank = TM 0 0 0 0 0 0 0 0 False
+
   ||| Unix Epoch (00:00:00 on Thursday 1 January 1970)
   export
   epoch : Tm
