@@ -494,6 +494,11 @@ namespace STm
 
   %runElab derive "Tm" [Show,Eq]
 
+  ||| Unix Epoch (00:00:00 on Thursday 1 January 1970)
+  export
+  epoch : Tm
+  epoch = TM 0 0 0 1 0 70 4 0 False
+
   export
   tm : STm s -> F1 s Tm
   tm stm t =
