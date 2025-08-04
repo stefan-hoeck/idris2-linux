@@ -63,6 +63,11 @@ parameters {auto fid : FileDesc a}
   read r n = elift1 (P.read fd r n)
 
   ||| Reads at most `n` bytes from a file into a bytestring.
+  export %inline
+  readRaw : Buf -> f es EMBuffer
+  readRaw buf = elift1 (P.readRaw fd buf)
+
+  ||| Reads at most `n` bytes from a file into a bytestring.
   |||
   ||| This is a more convenient version of `read` that gives detailed
   ||| information about why a read might fail. It is especially useful

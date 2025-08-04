@@ -186,6 +186,15 @@ parameters {auto fid : FileDesc a}
   read : (0 r : Type) -> FromBuf r => (n : Bits32) -> EPrim r
   read r n = allocRead n $  prim__read (fileDesc fd)
 
+  ||| Reads data from a file into a preallocated buffer
+  export
+  readRaw : Buf -> EPrim EMBuffer
+  readRaw (B sz buf) t =
+   let rd # t := toF1 (prim__read (fileDesc fd) buf sz) t
+    in if rd < 0
+         then E (inject $ fromNeg rd) t
+         else R (cast rd ** unsafeMBuffer buf) t
+
   ||| Reads at most `n` bytes from a file into a suitable result type.
   |||
   ||| This is a more convenient version of `read` that gives detailed
