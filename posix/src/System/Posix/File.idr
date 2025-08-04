@@ -62,7 +62,7 @@ parameters {auto fid : FileDesc a}
   read : (0 r : Type) -> FromBuf r => (n : Bits32) -> f es r
   read r n = elift1 (P.read fd r n)
 
-  ||| Reads at most `n` bytes from a file into a bytestring.
+  ||| Reads data from a file into a preallocated buffer
   export %inline
   readRaw : Buf -> f es EMBuffer
   readRaw buf = elift1 (P.readRaw fd buf)
