@@ -19,6 +19,9 @@
 #include <sys/statvfs.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
+#if !defined(__GLIBC__)
+#include <limits.h>
+#endif
 
 #define CHECKRES                                                               \
   if (res == -1) {                                                             \
@@ -84,6 +87,34 @@ int li_epoll_wait(int epfd, struct epoll_event *evlist, int max, int timeout) {
   int res = epoll_wait(epfd, evlist, max, timeout);
   CHECKRES
 }
+
+#if !defined(__GLIBC__)
+// Implementation in terms of epoll_pwait for Musl libc
+int epoll_pwait2(int epfd, struct epoll_event *events, int maxevents,
+                 const struct timespec *timeout, const sigset_t *sigmask)
+{
+  int timeout_ms;
+
+  if (timeout == NULL) {
+    timeout_ms = -1;  // Infinite timeout
+  } else {
+    // Convert timespec to milliseconds
+    long long ms =
+      (long long)timeout->tv_sec*1000LL + timeout->tv_nsec/1000000LL;
+
+    if (ms > INT_MAX) {
+      timeout_ms = INT_MAX;
+    } else if (ms < 0) {
+      errno = EINVAL;
+      return -1;
+    } else {
+      timeout_ms = (int)ms;
+    }
+  }
+
+  return epoll_pwait(epfd, events, maxevents, timeout_ms, sigmask);
+}
+#endif
 
 int li_epoll_pwait2(int epfd, struct epoll_event *evlist, int max,
                     const struct timespec *timeout) {
@@ -222,6 +253,15 @@ int li_pipe2(int fs[2], uint32_t flags) {
 ////////////////////////////////////////////////////////////////////////////////
 // pthreads
 ////////////////////////////////////////////////////////////////////////////////
+
+#if !defined(__GLIBC__)
+// stub implemetation for Musl libc
+int pthread_sigqueue(pthread_t thread, int sig, const union sigval value)
+{
+  // We can't pass the sigval, so we return EINVAL to indicate failure
+  return EINVAL;
+}
+#endif
 
 uint32_t li_pthread_sigqueue(pthread_t p, int sig, int word) {
   union sigval u = {.sival_int = word};
