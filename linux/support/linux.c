@@ -91,8 +91,7 @@ int li_epoll_wait(int epfd, struct epoll_event *evlist, int max, int timeout) {
 #if !defined(__GLIBC__)
 // Implementation in terms of epoll_pwait for Musl libc
 int epoll_pwait2(int epfd, struct epoll_event *events, int maxevents,
-                 const struct timespec *timeout, const sigset_t *sigmask)
-{
+                 const struct timespec *timeout, const sigset_t *sigmask) {
   int timeout_ms;
 
   if (timeout == NULL) {
@@ -256,8 +255,7 @@ int li_pipe2(int fs[2], uint32_t flags) {
 
 #if !defined(__GLIBC__)
 // stub implemetation for Musl libc
-int pthread_sigqueue(pthread_t thread, int sig, const union sigval value)
-{
+int pthread_sigqueue(pthread_t thread, int sig, const union sigval value) {
   // We can't pass the sigval, so we return EINVAL to indicate failure
   return EINVAL;
 }
