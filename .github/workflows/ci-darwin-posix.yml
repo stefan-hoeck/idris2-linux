@@ -4,9 +4,9 @@ name: Darwin Posix Build
 on:
   push:
     branches:
-      - '**'
+      - "**"
     tags:
-      - '**'
+      - "**"
   pull_request:
     branches:
       - main
