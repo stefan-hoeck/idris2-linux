@@ -98,8 +98,8 @@ int epoll_pwait2(int epfd, struct epoll_event *events, int maxevents,
     timeout_ms = -1;  // Infinite timeout
   } else {
     // Convert timespec to milliseconds
-    long long ms =
-      (long long)timeout->tv_sec*1000LL + timeout->tv_nsec/1000000LL;
+    int64_t ms =
+      (int64_t)timeout->tv_sec*1000LL + timeout->tv_nsec/1000000LL;
 
     if (ms > INT_MAX) {
       timeout_ms = INT_MAX;
