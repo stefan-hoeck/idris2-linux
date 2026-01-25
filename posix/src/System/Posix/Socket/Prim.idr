@@ -52,6 +52,12 @@ prim__sendto : (file : Bits32) -> Buffer -> (off,max : Bits32) -> Bits32 -> AnyP
 %foreign "C__collect_safe:li_sendto, posix-idris"
 prim__sendtoptr : (file : Bits32) -> AnyPtr -> (off,max : Bits32) -> Bits32 -> AnyPtr -> Bits32 -> PrimIO SsizeT
 
+%foreign "C:li_getpeername, posix-idris"
+prim__getpeername : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
+
+%foreign "C:li_getsockname, posix-idris"
+prim__getsockname : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
+
 --------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------
@@ -170,3 +176,47 @@ connect : {d : _} -> Socket d -> Addr d -> EPrim ()
 connect s a t =
   let addr # t := sockaddr d a t
    in finally (prim__free $ ptr d addr) (connect_ s addr) t
+
+||| Returns the address of the peer connected to a socket.
+||| The given Sockaddr buffer will be filled with the peer address.
+export
+getpeername_ : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
+getpeername_ s a = toUnit $ prim__getpeername (fileDesc s) (ptr d a) (addrSize d)
+
+||| Returns the current address to which the socket is bound.
+||| The given Sockaddr buffer will be filled with the socket's address.
+export
+getsockname_ : {d : _} -> Socket d -> Sockaddr d -> EPrim ()
+getsockname_ s a = toUnit $ prim__getsockname (fileDesc s) (ptr d a) (addrSize d)
+
+||| Returns the address of the peer connected to a socket.
+export
+getpeername : {d : _} -> Socket d -> EPrim (Addr d)
+getpeername {d = AF_UNIX} s = withStruct SSockaddrUn $ \a,t =>
+  let R _ t := getpeername_ s a t | E x t => E x t
+      p # t := path a t
+    in R p t
+getpeername {d = AF_INET} s = withStruct SSockaddrIn $ \a,t =>
+  let R _   t := getpeername_ s a t | E x t => E x t
+      ipp # t := SockaddrIn.addrIP4Addr a t
+    in R ipp t
+getpeername {d = AF_INET6} s = withStruct SSockaddrIn6 $ \a,t =>
+  let R _  t := getpeername_ s a t | E x t => E x t
+      ipp # t := SockaddrIn6.addrIP6Addr a t
+    in R ipp t
+
+||| Returns the current address to which the socket is bound.
+export
+getsockname : {d : _} -> Socket d -> EPrim (Addr d)
+getsockname {d = AF_UNIX} s = withStruct SSockaddrUn $ \a,t =>
+  let R _ t := getsockname_ s a t | E x t => E x t
+      p # t := path a t
+    in R p t
+getsockname {d = AF_INET} s = withStruct SSockaddrIn $ \a,t =>
+  let R _   t := getsockname_ s a t | E x t => E x t
+      ipp # t := SockaddrIn.addrIP4Addr a t
+    in R ipp t
+getsockname {d = AF_INET6} s = withStruct SSockaddrIn6 $ \a,t =>
+  let R _  t := getsockname_ s a t | E x t => E x t
+      ipp # t := SockaddrIn6.addrIP6Addr a t
+    in R ipp t

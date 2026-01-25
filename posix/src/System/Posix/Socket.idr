@@ -108,3 +108,24 @@ parameters {auto has : Has Errno es}
     -> Sockaddr d
     -> f es Bits32
   sendto s r f a = elift1 $ P.sendto s r f a
+
+  ||| Returns the address of the peer connected to a socket.
+  ||| The given Sockaddr buffer will be filled with the peer address.
+  export %inline
+  getpeername_ : {d : _} -> Socket d -> Sockaddr d -> f es ()
+  getpeername_ s a = elift1 $ P.getpeername_ s a
+
+  ||| Returns the current address to which the socket is bound.
+  ||| The given Sockaddr buffer will be filled with the socket's address.
+  export %inline
+  getsockname_ : {d : _} -> Socket d -> Sockaddr d -> f es ()
+  getsockname_ s a = elift1 $ P.getsockname_ s a
+
+  ||| Returns the address of the peer connected to a socket.
+  export %inline
+  getpeername : {d : _} -> Socket d -> f es (Addr d)
+  getpeername s = elift1 $ P.getpeername s
+
+  export %inline
+  getsockname : {d : _} -> Socket d -> f es (Addr d)
+  getsockname s = elift1 $ P.getsockname s

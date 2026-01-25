@@ -128,6 +128,13 @@ namespace SockaddrIn
   addr : SSockaddrIn s -> F1 s Bits32
   addr (SIN p) = ffi $ prim__sockaddr_in_addr p
 
+  export
+  addrIP4Addr : SSockaddrIn s -> F1 s IP4Addr
+  addrIP4Addr a t =
+    let p  # t := SockaddrIn.port a t
+        ad # t := SockaddrIn.addr a t
+     in IP4 (splitIp4Addr ad) p # t
+
   export %inline
   addrStr : SSockaddrIn s -> F1 s String
   addrStr (SIN p) = ffi $ prim__sockaddr_in_addr_str p
@@ -189,6 +196,14 @@ namespace SockaddrIn6
   export %inline
   addr6 : SSockaddrIn6 s -> CArray s 16 Bits8
   addr6 (SIN6 p) = unsafeWrap (prim__sockaddr_in6_addr p)
+
+  export
+  addrIP6Addr : SSockaddrIn6 s -> F1 s IP6Addr
+  addrIP6Addr a t =
+    let p  # t  := SockaddrIn6.port a t
+        bs # t  := values [] (addr6 a) (#) 16 t
+        Just ad := toVect 16 bs | Nothing => IP6 (replicate 16 0) p # t
+     in IP6 ad p # t
 
   export %inline
   addrStr : SSockaddrIn6 s -> F1 s String

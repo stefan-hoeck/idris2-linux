@@ -805,6 +805,18 @@ ssize_t li_sendto(int fd, char *buf, size_t off, size_t bytes, int flags,
   CHECKRES
 }
 
+int li_getpeername(int sfd, struct sockaddr *addr, socklen_t len) {
+  socklen_t plen = len;
+  int res = getpeername(sfd, addr, &plen);
+  CHECKRES
+}
+
+int li_getsockname(int sfd, struct sockaddr *addr, socklen_t len) {
+  socklen_t plen = len;
+  int res = getsockname(sfd, addr, &plen);
+  CHECKRES
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Time
 ////////////////////////////////////////////////////////////////////////////////
