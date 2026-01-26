@@ -129,3 +129,22 @@ parameters {auto has : Has Errno es}
   export %inline
   getsockname : {d : _} -> Socket d -> f es (Addr d)
   getsockname s = elift1 $ P.getsockname s
+
+  ||| Enables or disables the Nagle algorithm.
+  export %inline
+  setNoDelay : Socket d -> Bool -> f es ()
+  setNoDelay s b = elift1 $ P.setNoDelay s b
+
+  ||| Allows binding to an address/port before the expiry of the TIME_WAIT state.
+  export %inline
+  setReuseAddress : Socket d -> Bool -> f es ()
+  setReuseAddress s b = elift1 $ P.setReuseAddress s b
+
+  ||| Sets the linger option for a socket.
+  |||
+  ||| `Nothing` disables lingering (close returns immediately).
+  ||| `Just 0` enables a hard close (RST sent, data discarded).
+  ||| `Just n` for n > 0 waits up to n seconds for data to be sent before closing.
+  export %inline
+  setLinger : Socket d -> Maybe Bits32 -> f es ()
+  setLinger s t = elift1 $ P.setLinger s t

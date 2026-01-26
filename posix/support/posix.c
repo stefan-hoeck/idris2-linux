@@ -817,6 +817,19 @@ int li_getsockname(int sfd, struct sockaddr *addr, socklen_t len) {
   CHECKRES
 }
 
+int li_setsockopt_int(int sfd, int level, int optname, int optval) {
+  int res = setsockopt(sfd, level, optname, &optval, sizeof(optval));
+  CHECKRES
+}
+
+int li_setsockopt_linger(int sfd, int onoff, int linger_time) {
+  struct linger lg;
+  lg.l_onoff = onoff;
+  lg.l_linger = linger_time;
+  int res = setsockopt(sfd, SOL_SOCKET, SO_LINGER, &lg, sizeof(lg));
+  CHECKRES
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Time
 ////////////////////////////////////////////////////////////////////////////////

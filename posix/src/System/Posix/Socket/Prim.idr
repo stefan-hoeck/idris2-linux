@@ -58,6 +58,12 @@ prim__getpeername : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
 %foreign "C:li_getsockname, posix-idris"
 prim__getsockname : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
 
+%foreign "C:li_setsockopt_int, posix-idris"
+prim__setsockopt_int : Bits32 -> Bits32 -> Bits32 -> Bits32 -> PrimIO CInt
+
+%foreign "C:li_setsockopt_linger, posix-idris"
+prim__setsockopt_linger : Bits32 -> Bits32 -> Bits32 -> PrimIO CInt
+
 --------------------------------------------------------------------------------
 -- API
 --------------------------------------------------------------------------------
@@ -220,3 +226,31 @@ getsockname {d = AF_INET6} s = withStruct SSockaddrIn6 $ \a,t =>
   let R _  t := getsockname_ s a t | E x t => E x t
       ipp # t := SockaddrIn6.addrIP6Addr a t
     in R ipp t
+
+--------------------------------------------------------------------------------
+-- Socket Options
+--------------------------------------------------------------------------------
+
+boolToInt : Bool -> Bits32
+boolToInt False = 0
+boolToInt True  = 1
+
+||| Enables or disables the Nagle algorithm.
+export
+setNoDelay : Socket d -> Bool -> EPrim ()
+setNoDelay s b = toUnit $ prim__setsockopt_int (fileDesc s) IPPROTO_TCP TCP_NODELAY (boolToInt b)
+
+||| Allows binding to an address/port before the expiry of the TIME_WAIT state.
+export
+setReuseAddress : Socket d -> Bool -> EPrim ()
+setReuseAddress s b = toUnit $ prim__setsockopt_int (fileDesc s) SOL_SOCKET SO_REUSEADDR (boolToInt b)
+
+||| Sets the linger option for a socket.
+|||
+||| `Nothing` disables lingering (close returns immediately).
+||| `Just 0` enables a hard close (RST sent, data discarded).
+||| `Just n` for n > 0 waits up to n seconds for data to be sent before closing.
+export
+setLinger : Socket d -> Maybe Bits32 -> EPrim ()
+setLinger s Nothing  = toUnit $ prim__setsockopt_linger (fileDesc s) 0 0
+setLinger s (Just t) = toUnit $ prim__setsockopt_linger (fileDesc s) 1 t

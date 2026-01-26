@@ -104,3 +104,23 @@ sockaddr_in_size = 16
 public export
 sockaddr_in6_size : Bits32
 sockaddr_in6_size = 28
+
+public export
+SOL_SOCKET : Bits32
+SOL_SOCKET = 1
+
+public export
+IPPROTO_TCP : Bits32
+IPPROTO_TCP = 6
+
+public export
+SO_REUSEADDR : Bits32
+SO_REUSEADDR = 2
+
+public export
+SO_LINGER : Bits32
+SO_LINGER = 13
+
+public export
+TCP_NODELAY : Bits32
+TCP_NODELAY = 1

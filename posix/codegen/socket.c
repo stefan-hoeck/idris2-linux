@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 
 void print_domain(const char *name, int value) {
   printf("domainCode %s = %d\n", name, value);
@@ -21,6 +22,12 @@ void print_type(const char *name, int value) {
 void print_flag(const char *name, int value) {
   printf("\npublic export\n");
   printf("%s : SockFlags\n", name);
+  printf("%s = %d\n", name, value);
+}
+
+void print_sockopt(const char *name, int value) {
+  printf("\npublic export\n");
+  printf("%s : Bits32\n", name);
   printf("%s = %d\n", name, value);
 }
 
@@ -59,6 +66,15 @@ int main() {
   printf("\npublic export\n");
   printf("sockaddr_in6_size : Bits32\n");
   printf("sockaddr_in6_size = %zd\n", sizeof(struct sockaddr_in6));
+
+  // Socket option levels
+  print_sockopt("SOL_SOCKET", SOL_SOCKET);
+  print_sockopt("IPPROTO_TCP", IPPROTO_TCP);
+
+  // Socket options
+  print_sockopt("SO_REUSEADDR", SO_REUSEADDR);
+  print_sockopt("SO_LINGER", SO_LINGER);
+  print_sockopt("TCP_NODELAY", TCP_NODELAY);
 
   exit(0);
 }
