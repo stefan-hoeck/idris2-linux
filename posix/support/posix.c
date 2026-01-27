@@ -817,7 +817,7 @@ int li_getsockname(int sfd, struct sockaddr *addr, socklen_t len) {
   CHECKRES
 }
 
-int li_setsockopt_int(int sfd, int level, int optname, int optval) {
+int li_setsockopt_bool(int sfd, int level, int optname, int optval) {
   int res = setsockopt(sfd, level, optname, &optval, sizeof(optval));
   CHECKRES
 }

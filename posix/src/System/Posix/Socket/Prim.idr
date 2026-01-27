@@ -58,8 +58,8 @@ prim__getpeername : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
 %foreign "C:li_getsockname, posix-idris"
 prim__getsockname : Bits32 -> AnyPtr -> Bits32 -> PrimIO CInt
 
-%foreign "C:li_setsockopt_int, posix-idris"
-prim__setsockopt_int : Bits32 -> Bits32 -> Bits32 -> Bits32 -> PrimIO CInt
+%foreign "C:li_setsockopt_bool, posix-idris"
+prim__setsockopt_bool : Bits32 -> Bits32 -> Bits32 -> Bits8 -> PrimIO CInt
 
 %foreign "C:li_setsockopt_linger, posix-idris"
 prim__setsockopt_linger : Bits32 -> Bits32 -> Bits32 -> PrimIO CInt
@@ -231,19 +231,19 @@ getsockname {d = AF_INET6} s = withStruct SSockaddrIn6 $ \a,t =>
 -- Socket Options
 --------------------------------------------------------------------------------
 
-boolToInt : Bool -> Bits32
+boolToInt : Bool -> Bits8
 boolToInt False = 0
 boolToInt True  = 1
 
 ||| Enables or disables the Nagle algorithm.
 export
 setNoDelay : Socket d -> Bool -> EPrim ()
-setNoDelay s b = toUnit $ prim__setsockopt_int (fileDesc s) IPPROTO_TCP TCP_NODELAY (boolToInt b)
+setNoDelay s b = toUnit $ prim__setsockopt_bool (fileDesc s) IPPROTO_TCP TCP_NODELAY (boolToInt b)
 
 ||| Allows binding to an address/port before the expiry of the TIME_WAIT state.
 export
 setReuseAddress : Socket d -> Bool -> EPrim ()
-setReuseAddress s b = toUnit $ prim__setsockopt_int (fileDesc s) SOL_SOCKET SO_REUSEADDR (boolToInt b)
+setReuseAddress s b = toUnit $ prim__setsockopt_bool (fileDesc s) SOL_SOCKET SO_REUSEADDR (boolToInt b)
 
 ||| Sets the linger option for a socket.
 |||
