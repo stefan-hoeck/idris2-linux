@@ -12,7 +12,6 @@ ifeq ($(findstring clang,$(CC_VERSION)),clang)
 	DYLIB_WORKAROUND = cp "${INSTALLDIR}/${TARGET}" "${INSTALLDIR}/${TARGET}.dylib"
 else
 	DYLIB_WORKAROUND = cp "${INSTALLDIR}/${TARGET}" "${INSTALLDIR}/${TARGET}.so"
-	LDFLAGS += -fuse-ld=gold
 endif
 
 SRCS = $(wildcard *.c)
@@ -21,7 +20,7 @@ OBJS = $(SRCS:.c=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) -shared $(LDFLAGS) -o $@ $^
+	$(CC) -shared -o $@ $^ $(LDFLAGS)
 
 .PHONY: clean
 
