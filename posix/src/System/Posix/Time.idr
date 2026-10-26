@@ -217,11 +217,11 @@ namespace Itimerval
 
   export %inline
   interval : Itimerval s -> F1 s (STimeval s)
-  interval s t = mapR1 STV $ ffi (get_itimerval_it_interval s.ptr) t
+  interval s t = mapR1 swrap $ ffi (get_itimerval_it_interval s.ptr) t
 
   export %inline
   value : Itimerval s -> F1 s (STimeval s)
-  value s t = mapR1 STV $ ffi (get_itimerval_it_value s.ptr) t
+  value s t = mapR1 swrap $ ffi (get_itimerval_it_value s.ptr) t
 
   export %inline
   setinterval : Itimerval s -> STimeval s -> F1 s ()
