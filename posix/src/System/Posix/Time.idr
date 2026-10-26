@@ -225,11 +225,11 @@ namespace Itimerval
 
   export %inline
   setinterval : Itimerval s -> STimeval s -> F1 s ()
-  setinterval s v = ffi $ set_itimerval_it_interval s.ptr v.ptr
+  setinterval s v = ffi $ set_itimerval_it_interval s.ptr (sunwrap v)
 
   export %inline
   setvalue : Itimerval s -> STimeval s -> F1 s ()
-  setvalue s v = ffi $ set_itimerval_it_value s.ptr v.ptr
+  setvalue s v = ffi $ set_itimerval_it_value s.ptr (sunwrap v)
 
   ||| Pure alternative to the `Itimerval` struct.
   public export
